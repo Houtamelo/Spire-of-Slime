@@ -1,0 +1,31 @@
+﻿namespace Core.Combat.Scripts.Barks
+{
+    public enum BarkType
+    {
+        DealtCrit,
+        ReceivedCrit,
+        AllyDealtCrit,
+        AlyReceivedCrit,
+        DodgedAttack,
+        BuffOrHealSelf,
+        BuffOrHealAlly,
+        ReceivedDebuff,
+        DealtDebuff,
+        DefeatedEnemy,
+        ReceivedLust0To50,
+        ReceivedLust50To100,
+        ReceivedLust100To150,
+        ReceivedLust150To200,
+        AlyReceivedLust0To100,
+        AlyReceivedLust100To200,
+        KnockedDown,
+        AlyKnockedDown,
+        OrgasmWithMoreThanOneRemaining,
+        OrgasmWithOnlyOneRemaining,
+        Temptation0To25,
+        Temptation25To50,
+        Temptation50To75,
+        Temptation75To100,
+        Custom,
+    }
+}

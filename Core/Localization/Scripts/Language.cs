@@ -1,0 +1,36 @@
+﻿namespace Core.Localization.Scripts
+{
+    public enum Language : byte
+    {
+        English = 0,
+        Bulgarian,
+        Chinese,
+        Czech,
+        Danish,
+        Dutch,
+        Estonian,
+        Finnish,
+        French,
+        German,
+        Greek,
+        Hungarian,
+        Indonesian,
+        Italian,
+        Japanese,
+        Korean,
+        Latvian,
+        Lithuanian,
+        Norwegian,
+        Polish,
+        Romanian,
+        Russian,
+        Slovak,
+        Slovenian,
+        Spanish,
+        Swedish,
+        Turkish,
+        Ukrainian,
+        PortugueseBrazilian,
+        PortugueseEuropean,
+    }
+}

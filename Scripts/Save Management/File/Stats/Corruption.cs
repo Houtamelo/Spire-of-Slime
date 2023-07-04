@@ -1,0 +1,115 @@
+﻿using System;
+using Core.Combat.Scripts;
+
+namespace Save_Management.Stats
+{
+    public static class Corruption
+    {
+        private static class CorruptionThresholds
+        {
+            public const float Max = 1f;
+            public const float High = 0.75f;
+            public const float Medium = 0.5f;
+            public const float Low = 0.25f;
+        }
+
+        private static class LustThresholds
+        {
+            public const int Max = 200;
+            public const int High = 180;
+            public const int Medium = 140;
+            public const int Low = 100;
+        }
+        
+        private static class TemptationThresholds
+        {
+            public const float Max = 1f;
+            public const float High = 0.9f;
+            public const float Medium = 0.7f;
+            public const float Low = 0.5f;
+        }
+        
+        private static class RaceExpThresholds
+        {
+            public const uint Max = 400;
+            public const uint High = 200;
+            public const uint Medium = 150;
+            public const uint Low = 100;
+            public const uint VeryLow = 50;
+        }
+        
+        public static Threshold DesireThreshold(IReadonlyCharacterStats stats, Race partnerRace)
+        {
+            int score = 0;
+
+            score += stats.Lust switch
+            {
+                >= LustThresholds.Max    => 6,
+                >= LustThresholds.High   => 5,
+                >= LustThresholds.Medium => 3,
+                >= LustThresholds.Low    => 2,
+                _                        => 0
+            };
+
+            score += (float)stats.Temptation switch
+            {
+                >= TemptationThresholds.Max    => 6,
+                >= TemptationThresholds.High   => 5,
+                >= TemptationThresholds.Medium => 3,
+                >= TemptationThresholds.Low    => 2,
+                _                              => 0
+            };
+            
+            stats.SexualExpByRace.TryGetValue(partnerRace, out uint raceExpCount);
+
+            score += raceExpCount switch
+            {
+                >= RaceExpThresholds.Max     => 6,
+                >= RaceExpThresholds.High    => 4,
+                >= RaceExpThresholds.Medium  => 3,
+                >= RaceExpThresholds.Low     => 2,
+                >= RaceExpThresholds.VeryLow => 1,
+                _                            => 0
+            };
+
+            score += (float)stats.Corruption switch
+            {
+                >= CorruptionThresholds.Max    => 5,
+                >= CorruptionThresholds.High   => 3,
+                >= CorruptionThresholds.Medium => 2,
+                >= CorruptionThresholds.Low    => 1,
+                _                              => 0
+            };
+
+            return score switch
+            {
+                >= 16 => Threshold.Max,
+                >= 12 => Threshold.High,
+                >= 8  => Threshold.Medium,
+                >= 4  => Threshold.Low,
+                _     => Threshold.VeryLow
+            };
+        }
+        
+        public static Threshold CorruptionOnlyThreshold(IReadonlyCharacterStats stats)
+        {
+            return (float)stats.Corruption switch
+            {
+                >= CorruptionThresholds.Max    => Threshold.Max,
+                >= CorruptionThresholds.High   => Threshold.High,
+                >= CorruptionThresholds.Medium => Threshold.Medium,
+                >= CorruptionThresholds.Low    => Threshold.Low,
+                _                              => Threshold.VeryLow
+            };
+        }
+
+        public enum Threshold
+        {
+            VeryLow,
+            Low,
+            Medium,
+            High,
+            Max
+        }
+    }
+}

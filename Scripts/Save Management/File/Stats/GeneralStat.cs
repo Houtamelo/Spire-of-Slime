@@ -1,0 +1,32 @@
+﻿namespace Save_Management
+{
+    public enum GeneralStat
+    {
+        Experience,
+        Speed,
+        Stamina,
+        Resilience,
+        DamageLower,
+        DamageUpper,
+        Lust,
+        Temptation,
+        Composure,
+        OrgasmLimit,
+        OrgasmCount,
+        Accuracy,
+        CriticalChance,
+        Dodge,
+        StunRecoverySpeed,
+        PoisonResistance,
+        PoisonApplyChance,
+        DebuffResistance,
+        DebuffApplyChance,
+        MoveResistance,
+        MoveApplyChance,
+        ArousalApplyChance,
+        PrimaryPoints,
+        SecondaryPoints,
+        PerkPoints,
+        Corruption,
+    }
+}
