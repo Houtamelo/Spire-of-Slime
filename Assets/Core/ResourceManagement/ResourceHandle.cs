@@ -1,10 +1,11 @@
 ﻿using System;
+using Core.Utils.Patterns;
 using JetBrains.Annotations;
 using UnityEngine;
 using Utils.Patterns;
 using Object = UnityEngine.Object;
 
-namespace ResourceManagement
+namespace Core.ResourceManagement
 {
     public class ResourceHandle<T> : IDisposable where T : Object
     {

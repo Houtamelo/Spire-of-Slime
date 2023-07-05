@@ -4,7 +4,7 @@ using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
 
-namespace Main_Database.Combat
+namespace Core.Main_Database.Combat
 {
     [CreateAssetMenu]
     public sealed class MonsterTeam : SerializedScriptableObject

@@ -5,10 +5,11 @@ using Core.Local_Map.Scripts.Events.Combat;
 using Core.Local_Map.Scripts.Events.Dialogue;
 using Core.Local_Map.Scripts.Events.ReachLocation;
 using Core.Local_Map.Scripts.Events.Rest;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
 using KGySoft.CoreLibraries;
 using ListPool;
-using Save_Management;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
@@ -16,7 +17,7 @@ using Utils.Patterns;
 
 // ReSharper disable Unity.RedundantHideInInspectorAttribute
 
-namespace Main_Database.Local_Map
+namespace Core.Main_Database.Local_Map
 {
     public sealed class MapEventDatabase : ScriptableObject
     {

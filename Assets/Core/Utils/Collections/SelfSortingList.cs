@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Utils.Collections
+namespace Core.Utils.Collections
 {
     public class SelfSortingList<T> : List<T>
     {

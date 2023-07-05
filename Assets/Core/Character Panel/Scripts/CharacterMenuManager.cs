@@ -4,18 +4,19 @@ using Core.Character_Panel.Scripts.Positioning;
 using Core.Character_Panel.Scripts.Skills;
 using Core.Character_Panel.Scripts.Stats;
 using Core.Main_Characters.Nema.Combat;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
+using Core.Utils.Handlers;
+using Core.Utils.Patterns;
 using Data.Main_Characters.Ethel;
 using DG.Tweening;
 using DG.Tweening.Plugins.Core.PathCore;
-using Save_Management;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Extensions;
-using Utils.Handlers;
 using Utils.Patterns;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Character_Panel.Scripts
 {

@@ -5,15 +5,16 @@ using Core.Combat.Scripts;
 using Core.Combat.Scripts.BackgroundGeneration;
 using Core.Combat.Scripts.Interfaces;
 using Core.Combat.Scripts.WinningCondition;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
 using JetBrains.Annotations;
-using Save_Management;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Utils.Patterns;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
-namespace Main_Database.Combat
+namespace Core.Main_Database.Combat
 {
     public sealed class CombatScriptDatabase : ScriptableObject
     {

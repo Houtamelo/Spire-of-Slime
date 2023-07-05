@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 using Random = UnityEngine.Random;
 
-namespace Utils.Objects
+namespace Core.Utils.Objects
 {
     [ExecuteInEditMode]
     public class CustomAudioSource : MonoBehaviour

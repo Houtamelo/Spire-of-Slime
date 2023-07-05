@@ -1,8 +1,7 @@
-﻿using System;
-using Sirenix.OdinInspector;
+﻿using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 
-namespace Save_Management.Editor
+namespace Core.Save_Management.SaveObjects.Editor
 {
     public class SaveInspector : SerializedScriptableObject
     {

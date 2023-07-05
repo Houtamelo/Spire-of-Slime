@@ -1,7 +1,7 @@
 ﻿using DG.Tweening;
 using UnityEngine;
 
-namespace Animation
+namespace Core.Animation
 {
     public sealed class CameraAnimator : MonoBehaviour
     {

@@ -3,11 +3,12 @@ using CartoonFX;
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills.Action;
+using Core.Utils.Extensions;
+using Core.Utils.Objects;
+using Core.Utils.Patterns;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Extensions;
-using Utils.Objects;
 using Utils.Patterns;
 
 namespace Core.Main_Characters.Ethel.Combat.Skills.Poison_Dagger.Anim

@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using Core.Utils.Patterns;
 using ListPool;
 
-namespace Utils.Collections
+namespace Core.Utils.Collections
 {
     /// <summary> Caches a collection when created </summary>
     public ref struct FixedEnumerable<T> where T : IEquatable<T>
@@ -54,7 +55,7 @@ namespace Utils.Collections
             return _pool.GetEnumerator();
         }
 
-        public Patterns.Option<TDesired> FindType<TDesired>()
+        public Option<TDesired> FindType<TDesired>()
         {
             if (Disposed)
             {
@@ -65,10 +66,10 @@ namespace Utils.Collections
                 if (variable is TDesired casted)
                     return casted;
 
-            return Patterns.Option.None;
+            return Option.None;
         }
 
-        public Utils.Patterns.Option<int> IndexOf(T value)
+        public Option<int> IndexOf(T value)
         {
             if (Disposed)
             {
@@ -80,13 +81,13 @@ namespace Utils.Collections
             {
                 if (EqualityComparer<T>.Default.Equals(element, value))
                 {
-                    return Patterns.Option<int>.Some(index);
+                    return Option<int>.Some(index);
                 }
 
                 index++;
             }
             
-            return Patterns.Option.None;
+            return Option.None;
         }
     }
 }

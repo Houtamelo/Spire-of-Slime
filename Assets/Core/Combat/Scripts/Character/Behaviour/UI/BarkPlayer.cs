@@ -1,12 +1,13 @@
 ﻿using Core.Combat.Scripts.Barks;
 using Core.Combat.Scripts.Managers;
 using Core.Pause_Menu.Scripts;
+using Core.Utils.Collections;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
-using Utils.Collections;
-using Utils.Extensions;
 using Utils.Patterns;
 using Random = System.Random;
 

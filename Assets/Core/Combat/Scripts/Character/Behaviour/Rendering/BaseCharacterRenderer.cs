@@ -1,8 +1,9 @@
 ﻿using Core.Combat.Scripts.Animations;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Extensions;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Behaviour.Rendering

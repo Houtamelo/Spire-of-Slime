@@ -6,7 +6,8 @@ using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills.Interfaces;
-using Save_Management;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Patterns;
 using UnityEngine;
 using Utils.Patterns;
 

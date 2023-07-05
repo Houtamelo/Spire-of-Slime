@@ -1,13 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Core.Main_Database.Visual_Novel;
+using Core.ResourceManagement;
+using Core.Utils.Extensions;
+using Core.Utils.Handlers;
+using Core.Utils.Patterns;
 using Core.Visual_Novel.Scripts.Animations;
 using DG.Tweening;
-using Main_Database.Visual_Novel;
-using ResourceManagement;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Extensions;
-using Utils.Handlers;
 using Utils.Patterns;
 
 // ReSharper disable StringLiteralTypo

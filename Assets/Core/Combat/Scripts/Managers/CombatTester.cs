@@ -2,13 +2,13 @@
 using System.Linq;
 using Core.Combat.Scripts.Interfaces;
 using Core.Combat.Scripts.WinningCondition;
+using Core.Main_Database.Combat;
+using Core.Main_Database.Local_Map;
+using Core.Save_Management.SaveObjects;
 using Core.World_Map.Scripts;
-using Main_Database.Combat;
-using Main_Database.Local_Map;
-using Save_Management;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Combat.Scripts.Managers
 {

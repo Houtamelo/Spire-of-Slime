@@ -9,24 +9,23 @@ using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Managers;
 using Core.Main_Characters.Ethel.Combat;
 using Core.Main_Characters.Nema.Combat;
+using Core.Main_Database;
+using Core.Main_Database.Combat;
+using Core.Main_Database.Visual_Novel;
+using Core.Utils.Collections;
+using Core.Utils.Extensions;
+using Core.Utils.Handlers;
+using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
 using Data.Main_Characters.Ethel;
 using Data.Main_Characters.Nema;
 using KGySoft.CoreLibraries;
-using Main_Database;
-using Main_Database.Combat;
-using Main_Database.Visual_Novel;
-using Save_Management.Serialization;
-using Save_Management.Stats;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Collections;
-using Utils.Extensions;
-using Utils.Handlers;
 using Utils.Patterns;
 using Random = UnityEngine.Random;
 
-namespace Save_Management
+namespace Core.Save_Management.SaveObjects
 {
     public delegate void BoolChanged(CleanString variableName, bool oldValue, bool newValue);
     public delegate void FloatChanged(CleanString variableName, float oldValue, float newValue);
@@ -44,10 +43,10 @@ namespace Save_Management
         public const float MediumExhaustion = 0.7f;
         public const float HighExhaustion = 1f;
 
-        public static readonly ValueHandler<Save> Handler = new();
-        public static Save Current => Handler.Value;
+        public static readonly ValueHandler<Core.Save_Management.SaveObjects.Save> Handler = new();
+        public static Core.Save_Management.SaveObjects.Save Current => Handler.Value;
 
-        public static bool AssertInstance(out Save save)
+        public static bool AssertInstance(out Core.Save_Management.SaveObjects.Save save)
         {
             if (Current != null)
             {
@@ -393,14 +392,14 @@ namespace Save_Management
                 return;
             }
             
-            Save save = new(name);
+            Core.Save_Management.SaveObjects.Save save = new(name);
             Handler.SetValue(save);
         }
         
 #if UNITY_EDITOR
         public static void StartSaveAsTesting()
         {
-            Save save = new("test");
+            Core.Save_Management.SaveObjects.Save save = new("test");
             Handler.SetValue(save);
         }
 #endif
@@ -456,13 +455,13 @@ namespace Save_Management
                 _recentRecords.RemoveAt(0);
         }
 
-        public static Result<Save> FromRecord(SaveRecord record)
+        public static Result<Core.Save_Management.SaveObjects.Save> FromRecord(SaveRecord record)
         {
             if (VALIDATE)
             {
                 StringBuilder errors = new();
                 if (record.IsDataValid(errors) == false)
-                    return Result<Save>.Error(errors.ToString());
+                    return Result<Core.Save_Management.SaveObjects.Save>.Error(errors.ToString());
             }
             
             Option<CharacterStats> ethel = Option.None;
@@ -476,9 +475,9 @@ namespace Save_Management
             }
             
             if (ethel.IsNone || nema.IsNone)
-                return Result<Save>.Error($"Could not find both Ethel and Nema in the save record, {(ethel.IsSome ? "missing Nema" : nema.IsSome ? "missing Ethel" : "missing Both" )}");
+                return Result<Core.Save_Management.SaveObjects.Save>.Error($"Could not find both Ethel and Nema in the save record, {(ethel.IsSome ? "missing Nema" : nema.IsSome ? "missing Ethel" : "missing Both" )}");
 
-            return Result<Save>.Ok(new Save
+            return Result<Core.Save_Management.SaveObjects.Save>.Ok(new Core.Save_Management.SaveObjects.Save
             {
                 Name = record.Name,
                 Date = record.Date,

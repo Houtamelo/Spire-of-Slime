@@ -1,14 +1,15 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Core.ResourceManagement;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using Core.Visual_Novel.Scripts.Animations;
-using ResourceManagement;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
-using Utils.Extensions;
 using Utils.Patterns;
 
-namespace Main_Database.Visual_Novel
+namespace Core.Main_Database.Visual_Novel
 {
     public class CgDatabase : SerializedScriptableObject
     {

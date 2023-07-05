@@ -8,10 +8,10 @@ using Core.Combat.Scripts.Interfaces;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
-using Main_Database.Combat;
-using Save_Management;
+using Core.Main_Database.Combat;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
 using UnityEngine;
-using Utils.Extensions;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
 {

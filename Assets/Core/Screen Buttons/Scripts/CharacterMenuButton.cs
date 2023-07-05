@@ -1,16 +1,17 @@
 ﻿using Core.Character_Panel.Scripts;
 using Core.Combat.Scripts.Managers;
 using Core.Game_Manager.Scripts;
+using Core.Save_Management;
+using Core.Save_Management.SaveObjects;
 using Core.Shaders;
+using Core.Utils.Extensions;
 using DG.Tweening;
-using Save_Management;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Extensions;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Screen_Buttons.Scripts
 {

@@ -1,4 +1,5 @@
 ﻿using Core.Combat.Scripts.Behaviour.UI;
+using Core.Utils.Patterns;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Effects.BaseTypes

@@ -1,7 +1,8 @@
 ﻿using Core.Combat.Scripts.Interfaces;
 using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Localization.Scripts;
-using Save_Management;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;

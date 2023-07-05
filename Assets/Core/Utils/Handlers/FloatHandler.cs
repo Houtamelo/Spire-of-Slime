@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Utils.Handlers
+namespace Core.Utils.Handlers
 {
     [Serializable]
     public class FloatHandler

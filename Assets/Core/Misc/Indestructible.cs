@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Misc
+namespace Core.Misc
 {
     public sealed class Indestructible : MonoBehaviour
     {

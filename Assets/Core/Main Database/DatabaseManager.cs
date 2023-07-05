@@ -1,15 +1,15 @@
 ﻿using Core.Combat.Scripts.Cues;
 using Core.Localization.Scripts;
+using Core.Main_Database.Audio;
+using Core.Main_Database.Combat;
+using Core.Main_Database.Local_Map;
+using Core.Main_Database.Visual_Novel;
+using Core.Main_Database.World_Map;
 using Core.Visual_Novel.Scripts;
-using Main_Database.Audio;
-using Main_Database.Combat;
-using Main_Database.Local_Map;
-using Main_Database.Visual_Novel;
-using Main_Database.World_Map;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 
-namespace Main_Database
+namespace Core.Main_Database
 {
     public sealed class DatabaseManager : SerializedScriptableObject
     {

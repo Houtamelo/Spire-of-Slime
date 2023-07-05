@@ -2,13 +2,14 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using Core.Combat.Scripts.BackgroundGeneration;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
-using Save_Management;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Utils.Patterns;
 
-namespace Main_Database.Combat
+namespace Core.Main_Database.Combat
 {
     public sealed class BackgroundDatabase : ScriptableObject
     {

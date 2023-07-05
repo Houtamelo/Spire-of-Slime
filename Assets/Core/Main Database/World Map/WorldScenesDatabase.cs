@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
 using KGySoft.CoreLibraries;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Utils.Patterns;
 using Yarn.Unity;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
-namespace Main_Database.World_Map
+namespace Core.Main_Database.World_Map
 {
     public class WorldScenesDatabase : ScriptableObject
     {

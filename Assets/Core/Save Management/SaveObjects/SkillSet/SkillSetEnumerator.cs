@@ -1,6 +1,7 @@
-﻿using Utils.Patterns;
+﻿using Core.Utils.Patterns;
+using Utils.Patterns;
 
-namespace Save_Management
+namespace Core.Save_Management.SaveObjects
 {
     public ref struct SkillSetEnumerator
     {

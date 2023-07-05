@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
 using CsvHelper;
 using CsvHelper.Configuration;
 using KGySoft.CoreLibraries;
-using Save_Management;
 using UnityEngine;
-using Utils.Extensions;
 
 namespace Core.Localization.Scripts
 {

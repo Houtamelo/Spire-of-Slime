@@ -1,10 +1,11 @@
 ﻿using System;
-using Save_Management;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Math;
+using Core.Utils.Patterns;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Math;
 using Utils.Patterns;
 
 namespace Core.Character_Panel.Scripts.Stats

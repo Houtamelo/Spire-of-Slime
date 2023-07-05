@@ -1,14 +1,16 @@
 ﻿using System.Text;
 using Core.Localization.Scripts;
-using Save_Management;
+using Core.Save_Management;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Extensions;
 using Utils.Patterns;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Screen_Buttons.Scripts
 {

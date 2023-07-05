@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.Animations;
 
-namespace Animation
+namespace Core.Animation
 {
     public class RandomStateMachinePicker : StateMachineBehaviour
     {

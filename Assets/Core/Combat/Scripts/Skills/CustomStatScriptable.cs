@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Utils.Patterns;
 using UnityEngine;
 using Utils.Patterns;
 

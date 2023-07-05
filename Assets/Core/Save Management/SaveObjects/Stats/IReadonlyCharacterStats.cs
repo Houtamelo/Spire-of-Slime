@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Interfaces;
+using Core.Utils.Patterns;
 using JetBrains.Annotations;
 using ListPool;
 using Utils.Patterns;
 
-namespace Save_Management
+namespace Core.Save_Management.SaveObjects
 {
     public interface IReadonlyCharacterStats
     {
@@ -45,12 +46,12 @@ namespace Save_Management
         Dictionary<PrimaryUpgrade, uint> PrimaryUpgrades { get; }
         Dictionary<SecondaryUpgrade, uint> SecondaryUpgrades { get; }
         
-        [MustUseReturnValue] ValueListPool<CleanString> GetUnlockedPerksAndSkills(Save save);
-        [MustUseReturnValue] ValueListPool<CleanString> GetUnlockedPerks(Save save);
-        [MustUseReturnValue] ValueListPool<CleanString> GetEnabledPerks(Save save);
+        [MustUseReturnValue] ValueListPool<CleanString> GetUnlockedPerksAndSkills(Core.Save_Management.SaveObjects.Save save);
+        [MustUseReturnValue] ValueListPool<CleanString> GetUnlockedPerks(Core.Save_Management.SaveObjects.Save save);
+        [MustUseReturnValue] ValueListPool<CleanString> GetEnabledPerks(Core.Save_Management.SaveObjects.Save save);
         
-        bool IsPerkUnlocked(CleanString key, Save save);
-        bool IsSkillUnlocked(CleanString skillKey, Save save);
+        bool IsPerkUnlocked(CleanString key, Core.Save_Management.SaveObjects.Save save);
+        bool IsSkillUnlocked(CleanString skillKey, Core.Save_Management.SaveObjects.Save save);
         
         uint AvailablePerkPoints { get; }
         uint AvailablePrimaryPoints { get; }

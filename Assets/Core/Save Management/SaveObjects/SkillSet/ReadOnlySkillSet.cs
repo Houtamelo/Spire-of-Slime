@@ -1,7 +1,8 @@
 ﻿using System;
+using Core.Utils.Patterns;
 using Utils.Patterns;
 
-namespace Save_Management
+namespace Core.Save_Management.SaveObjects
 {
     public readonly ref struct ReadOnlySkillSet
     {

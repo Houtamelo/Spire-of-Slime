@@ -2,15 +2,16 @@
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills;
 using Core.Game_Manager.Scripts;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Patterns;
 using ListPool;
-using Save_Management;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Utils.Patterns;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Character_Panel.Scripts.Perks
 {

@@ -3,10 +3,11 @@ using System.Text;
 using Core.Audio.Scripts;
 using Core.Combat.Scripts.WinningCondition;
 using Core.Game_Manager.Scripts;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using Core.Visual_Novel.Scripts;
 using UnityEngine;
 using Utils.Patterns;
-using Utils.Extensions;
 
 namespace Core.Combat.Scripts
 {

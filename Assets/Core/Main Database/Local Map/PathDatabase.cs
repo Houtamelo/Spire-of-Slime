@@ -1,11 +1,12 @@
 ﻿using Core.Combat.Scripts.BackgroundGeneration;
 using Core.Local_Map.Scripts;
+using Core.Main_Database.Combat;
+using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
-using Main_Database.Combat;
 using Sirenix.OdinInspector;
 using Utils.Patterns;
 
-namespace Main_Database.Local_Map
+namespace Core.Main_Database.Local_Map
 {
     public sealed class PathDatabase: SerializedScriptableObject
     {

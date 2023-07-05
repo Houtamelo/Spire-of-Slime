@@ -4,9 +4,10 @@ using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Effects.Interfaces;
 using Core.Combat.Scripts.Enums;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using UnityEngine;
 using Utils.Patterns;
-using Utils.Extensions;
 
 namespace Core.Combat.Scripts.Effects.Types.BuffOrDebuff
 {

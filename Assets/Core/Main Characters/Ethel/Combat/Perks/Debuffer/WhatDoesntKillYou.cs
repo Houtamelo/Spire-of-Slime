@@ -9,9 +9,10 @@ using Core.Combat.Scripts.Interfaces.Events;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills.Action;
-using Main_Database.Combat;
-using Save_Management;
-using Utils.Extensions;
+using Core.Main_Database.Combat;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using Utils.Patterns;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer

@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using Yarn.Unity;
+using Save = Core.Save_Management.SaveObjects.Save;
 
-namespace Save_Management
+namespace Core.Save_Management
 {
     public class VariableManager : VariableStorageBehaviour
     {

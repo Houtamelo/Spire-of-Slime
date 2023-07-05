@@ -4,6 +4,7 @@ using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;

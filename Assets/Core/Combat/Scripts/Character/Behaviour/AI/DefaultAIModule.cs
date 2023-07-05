@@ -11,13 +11,13 @@ using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Utils.Collections;
+using Core.Utils.Extensions;
+using Core.Utils.Math;
 using ListPool;
 using NetFabric.Hyperlinq;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utils.Collections;
-using Utils.Extensions;
-using Utils.Math;
 using Random = UnityEngine.Random;
 
 // ReSharper disable HeuristicUnreachableCode

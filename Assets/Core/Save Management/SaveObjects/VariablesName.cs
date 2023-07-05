@@ -5,15 +5,15 @@ using System.Linq;
 using System.Text;
 using Core.Combat.Scripts;
 using Core.Main_Characters.Nema.Combat;
+using Core.Utils.Extensions;
 using Core.World_Map.Scripts;
 using Data.Main_Characters.Ethel;
 using KGySoft.CoreLibraries;
-using Save_Management.Stats;
 using UnityEngine;
-using Utils.Extensions;
+
 // ReSharper disable InconsistentNaming
 
-namespace Save_Management
+namespace Core.Save_Management.SaveObjects
 {
     public static class VariablesName
     {

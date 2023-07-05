@@ -1,13 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using Core.Game_Manager.Scripts;
+using Core.Main_Database.Audio;
+using Core.ResourceManagement;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using Core.Visual_Novel.Scripts;
-using Main_Database.Audio;
-using ResourceManagement;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
-using Utils.Extensions;
 using Utils.Patterns;
 
 namespace Core.Audio.Scripts

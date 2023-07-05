@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace Utils.Editor
+namespace Core.Utils.Editor
 {
     public static class ChildSorter
     {

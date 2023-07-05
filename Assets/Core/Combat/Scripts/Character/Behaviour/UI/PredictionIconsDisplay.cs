@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Skills.Action;
+using Core.Utils.Collections;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Collections;
-using Utils.Extensions;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Behaviour.UI

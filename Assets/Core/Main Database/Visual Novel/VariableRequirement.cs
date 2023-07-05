@@ -1,12 +1,12 @@
 ﻿using System;
-using Main_Database.Visual_Novel.Enums;
+using Core.Main_Database.Visual_Novel.Enums;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 // ReSharper disable CompareOfFloatsByEqualityOperator
 
-namespace Main_Database.Visual_Novel
+namespace Core.Main_Database.Visual_Novel
 {
     [Serializable]
     public struct VariableRequirement

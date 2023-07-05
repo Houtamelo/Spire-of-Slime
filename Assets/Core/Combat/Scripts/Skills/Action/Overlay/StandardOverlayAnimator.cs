@@ -1,8 +1,8 @@
 ﻿using Core.Combat.Scripts.Managers;
+using Core.Utils.Extensions;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Extensions;
 
 namespace Core.Combat.Scripts.Skills.Action.Overlay
 {

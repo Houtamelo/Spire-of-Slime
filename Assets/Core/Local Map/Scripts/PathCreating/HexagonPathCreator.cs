@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Core.Local_Map.Scripts.Coordinates;
+using Core.Utils.Extensions;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utils.Extensions;
 using static Core.Local_Map.Scripts.Coordinates.PathUtils;
 
 namespace Core.Local_Map.Scripts.PathCreating

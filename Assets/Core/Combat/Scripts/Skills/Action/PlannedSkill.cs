@@ -4,8 +4,9 @@ using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Main_Database.Combat;
+using Core.Utils.Patterns;
 using ListPool;
-using Main_Database.Combat;
 using UnityEngine;
 using Utils.Patterns;
 

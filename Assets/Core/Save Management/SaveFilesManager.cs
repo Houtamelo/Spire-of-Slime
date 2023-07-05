@@ -4,14 +4,16 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using Core.Game_Manager.Scripts;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using NetFabric.Hyperlinq;
-using Save_Management.Serialization;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utils.Extensions;
 using Utils.Patterns;
+using Save = Core.Save_Management.SaveObjects.Save;
 
-namespace Save_Management
+namespace Core.Save_Management
 {
     public sealed class SaveFilesManager : Singleton<SaveFilesManager>
     {

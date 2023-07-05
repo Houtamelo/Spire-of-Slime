@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Save_Management;
+using Core.Save_Management.SaveObjects;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Yarn;
 using Yarn.Unity;
 
-namespace Main_Database.Visual_Novel
+namespace Core.Main_Database.Visual_Novel
 {
     public class VariableDatabase : ScriptableObject
     {

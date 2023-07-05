@@ -1,10 +1,11 @@
 ﻿using System.Collections;
+using Core.Utils.Patterns;
 using DG.Tweening;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Utils.Extensions
+namespace Core.Utils.Extensions
 {
     public static class UnityExtensions
     {
@@ -139,17 +140,17 @@ namespace Utils.Extensions
             return $"{current.parent.GetPath()}/{current.name}";
         }
 
-        public static Patterns.Option<Transform> FindChildByPath(this Transform self, string path)
+        public static Option<Transform> FindChildByPath(this Transform self, string path)
         {
             if (string.IsNullOrEmpty(path))
-                return Patterns.Option<Transform>.None;
+                return Option<Transform>.None;
 
             string[] pathSplit = path.Split(separator: '/');
             if (pathSplit.Length == 0)
-                return Patterns.Option<Transform>.None;
+                return Option<Transform>.None;
 
             if (pathSplit[0] != self.name)
-                return Patterns.Option<Transform>.None;
+                return Option<Transform>.None;
 
             Transform current = self;
             for (int i = 1; i < pathSplit.Length; i++)
@@ -166,7 +167,7 @@ namespace Utils.Extensions
                 }
 
                 if (!found)
-                    return Patterns.Option<Transform>.None;
+                    return Option<Transform>.None;
             }
 
             return current;

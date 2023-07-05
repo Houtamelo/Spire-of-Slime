@@ -1,15 +1,16 @@
 ﻿using System.Collections;
 using Core.Local_Map.Scripts.Enums;
+using Core.Main_Database.Visual_Novel;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Async;
+using Core.Utils.Patterns;
 using Core.Visual_Novel.Scripts;
 using Core.World_Map.Scripts;
 using JetBrains.Annotations;
-using Main_Database.Visual_Novel;
-using Save_Management.Serialization;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Async;
 using Utils.Patterns;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Local_Map.Scripts.Events.Dialogue
 {

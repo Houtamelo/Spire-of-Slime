@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-namespace Utils.Objects
+namespace Core.Utils.Objects
 {
     [RequireComponent(typeof(ToggleGroup))]
     public class ToggleChildrenOffOnDisable : MonoBehaviour

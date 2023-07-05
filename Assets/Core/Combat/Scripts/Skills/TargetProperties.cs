@@ -2,6 +2,7 @@
 using System.Diagnostics.Contracts;
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Utils.Patterns;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Skills

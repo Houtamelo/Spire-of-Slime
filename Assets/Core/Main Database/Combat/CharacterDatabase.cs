@@ -3,13 +3,14 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using Core.Combat.Scripts;
 using Core.Main_Characters.Nema.Combat;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Patterns;
 using Data.Main_Characters.Ethel;
-using Save_Management;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Utils.Patterns;
 
-namespace Main_Database.Combat
+namespace Core.Main_Database.Combat
 {
     public sealed class CharacterDatabase : ScriptableObject
     {

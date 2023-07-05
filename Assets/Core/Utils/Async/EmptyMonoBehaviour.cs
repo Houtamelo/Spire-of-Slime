@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Utils.Async
+namespace Core.Utils.Async
 {
     public class EmptyMonoBehaviour : MonoBehaviour
     {

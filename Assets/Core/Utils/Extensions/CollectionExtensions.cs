@@ -4,14 +4,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Core.Utils.Collections;
 using JetBrains.Annotations;
 using ListPool;
 using NetFabric.Hyperlinq;
 using UnityEngine;
-using Utils.Collections;
 using Random = System.Random;
 
-namespace Utils.Extensions
+namespace Core.Utils.Extensions
 {
     public static class CollectionExtensions
     {
@@ -66,28 +66,28 @@ namespace Utils.Extensions
             source.Insert(index: targetIndex, item: element);
         }
 
-        public static Patterns.Option<int> IndexOf<T>(this T[] source, T value)
+        public static Core.Utils.Patterns.Option<int> IndexOf<T>(this T[] source, T value)
         {
             int result = Array.IndexOf(array: source, value: value);
-            return result != -1 ? result : Patterns.Option<int>.None;
+            return result != -1 ? result : Core.Utils.Patterns.Option<int>.None;
         }
 
-        public static Patterns.Option<T> FindType<T>([NotNull] this IEnumerable source)
+        public static Core.Utils.Patterns.Option<T> FindType<T>([NotNull] this IEnumerable source)
         {
             foreach (object variable in source)
                 if (variable is T casted)
                     return casted;
 
-            return Patterns.Option<T>.None;
+            return Core.Utils.Patterns.Option<T>.None;
         }
 
-        public static Patterns.Option<T> Find<T>(this IEnumerable<T> source, Predicate<T> predicate)
+        public static Core.Utils.Patterns.Option<T> Find<T>(this IEnumerable<T> source, Predicate<T> predicate)
         {
             foreach (T element in source)
                 if (predicate.Invoke(obj: element))
                     return element;
 
-            return Patterns.Option<T>.None;
+            return Core.Utils.Patterns.Option<T>.None;
         }
 
         public static bool IsNullOrEmpty<_>(this IEnumerable<_> source) => source == null || !source.Any();

@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Text;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Behaviour;
-using Core.Combat.Scripts.Effects.Interfaces;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
-using Main_Database.Combat;
-using Save_Management;
-using Utils.Extensions;
+using Core.Main_Database.Combat;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
 
 namespace Core.Local_Map.Data.Paths.Chapel___Grove.Events.Wounded_Crabdra
 {

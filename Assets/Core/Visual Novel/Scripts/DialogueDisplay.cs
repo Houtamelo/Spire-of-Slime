@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using Core.Pause_Menu.Scripts;
+using Core.Utils.Extensions;
+using Core.Utils.Handlers;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
-using Utils.Extensions;
-using Utils.Handlers;
 using Yarn.Unity;
 
 namespace Core.Visual_Novel.Scripts

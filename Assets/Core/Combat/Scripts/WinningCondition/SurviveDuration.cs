@@ -1,6 +1,6 @@
 ﻿using System.Text;
 using Core.Combat.Scripts.Managers;
-using Utils.Extensions;
+using Core.Utils.Extensions;
 
 namespace Core.Combat.Scripts.WinningCondition
 {

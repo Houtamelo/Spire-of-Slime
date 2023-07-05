@@ -1,5 +1,5 @@
 ﻿using Core.Combat.Scripts.Effects.Interfaces;
-using Utils.Math;
+using Core.Utils.Math;
 
 namespace Core.Combat.Scripts.Interfaces.Modules
 {

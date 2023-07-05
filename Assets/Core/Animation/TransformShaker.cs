@@ -2,7 +2,7 @@
 using JetBrains.Annotations;
 using UnityEngine;
 
-namespace Animation
+namespace Core.Animation
 {
     public class TransformShaker : MonoBehaviour
     {

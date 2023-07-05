@@ -1,7 +1,7 @@
 ﻿using System;
-using Utils.Patterns;
+using Core.Utils.Patterns;
 
-namespace Utils.Handlers
+namespace Core.Utils.Handlers
 {
     public class ValueHandler<T>
     {

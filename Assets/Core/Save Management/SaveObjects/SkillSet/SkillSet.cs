@@ -1,8 +1,9 @@
 ﻿using System;
+using Core.Utils.Patterns;
 using UnityEngine;
 using Utils.Patterns;
 
-namespace Save_Management
+namespace Core.Save_Management.SaveObjects
 {
     public record SkillSet(CleanString One, CleanString Two, CleanString Three, CleanString Four) : IReadOnlySkillSet, IDeepCloneable<SkillSet>
     {

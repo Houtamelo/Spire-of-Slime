@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using Core.Combat.Scripts.Interfaces;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Main_Database.Combat;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using ListPool;
-using Main_Database.Combat;
-using Save_Management;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Extensions;
 using Utils.Patterns;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Character_Panel.Scripts.Skills
 {

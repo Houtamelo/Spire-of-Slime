@@ -2,12 +2,13 @@
 using System.Diagnostics.Contracts;
 using System.Linq;
 using Core.Local_Map.Scripts.Events.Rest;
+using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Utils.Patterns;
 
-namespace Main_Database.Local_Map
+namespace Core.Main_Database.Local_Map
 {
     public class RestEventsDatabase : SerializedScriptableObject
     {

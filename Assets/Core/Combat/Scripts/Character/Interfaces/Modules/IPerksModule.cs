@@ -1,5 +1,5 @@
 ﻿using Core.Combat.Scripts.Perks;
-using Utils.Collections;
+using Core.Utils.Collections;
 
 namespace Core.Combat.Scripts.Interfaces.Modules
 {

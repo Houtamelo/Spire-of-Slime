@@ -1,4 +1,5 @@
 ﻿using Core.Combat.Scripts.Perks;
+using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;

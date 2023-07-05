@@ -10,8 +10,9 @@ using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Utils.Collections;
+using Core.Utils.Patterns;
 using DG.Tweening;
-using Utils.Collections;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts.DefaultModules

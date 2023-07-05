@@ -1,10 +1,10 @@
 ﻿using System;
+using Core.Utils.Patterns;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using UnityEngine;
-using Utils.Patterns;
 
-namespace Utils.Extensions
+namespace Core.Utils.Extensions
 {
     public static class ParsingExtensions
     {

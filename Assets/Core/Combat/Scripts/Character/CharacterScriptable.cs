@@ -9,12 +9,13 @@ using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Interfaces;
-using Main_Database.Combat;
-using Save_Management;
+using Core.Main_Database.Combat;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
-using Utils.Extensions;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts

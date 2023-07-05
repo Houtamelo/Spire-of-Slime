@@ -5,8 +5,8 @@ using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.WinningCondition;
+using Core.Utils.Extensions;
 using UnityEngine;
-using Utils.Extensions;
 
 namespace Core.Combat.Scripts
 {

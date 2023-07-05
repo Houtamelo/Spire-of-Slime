@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Core.Utils.Extensions;
 using KGySoft.CoreLibraries;
-using Utils.Extensions;
 
-namespace Save_Management
+namespace Core.Save_Management.SaveObjects
 {
     public static class UpgradeHelper
     {

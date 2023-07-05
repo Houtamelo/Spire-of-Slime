@@ -1,13 +1,14 @@
 ﻿using System.Collections.Generic;
+using Core.Utils.Patterns;
 
-namespace Utils.Collections
+namespace Core.Utils.Collections
 {
     public class ListQueue<T> : List<T>
     {
-        public Patterns.Option<T> Dequeue()
+        public Option<T> Dequeue()
         {
             if (Count == 0)
-                return Patterns.Option<T>.None;
+                return Option<T>.None;
             
             T value = this[0];
             RemoveAt(0);

@@ -2,7 +2,7 @@
 using JetBrains.Annotations;
 using UnityEngine;
 
-namespace Utils.Async
+namespace Core.Utils.Async
 {
     public static class CoroutineWrapperManager
     {

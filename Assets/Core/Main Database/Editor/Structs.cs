@@ -1,7 +1,7 @@
 ﻿using Core.Combat.Scripts.Barks;
 using JetBrains.Annotations;
 
-namespace Main_Database.Editor
+namespace Core.Main_Database.Editor
 {
     public static partial class DataBuilder
     {

@@ -2,10 +2,10 @@
 using System.Collections;
 using System.Threading.Tasks;
 using Core.Game_Manager.Scripts;
-using Save_Management;
+using Core.Save_Management;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Character_Panel.Scripts
 {

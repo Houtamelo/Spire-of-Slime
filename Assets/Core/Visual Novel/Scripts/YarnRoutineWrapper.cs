@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
+using Core.Utils.Async;
 using UnityEngine;
-using Utils.Async;
 
 namespace Core.Visual_Novel.Scripts
 {

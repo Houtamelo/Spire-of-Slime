@@ -13,8 +13,8 @@ using Core.Combat.Scripts.Effects.Types.Riposte;
 using Core.Combat.Scripts.Effects.Types.Stun;
 using Core.Combat.Scripts.Effects.Types.Summon;
 using Core.Combat.Scripts.Effects.Types.Tempt;
-using Utils.Collections;
-using Utils.Math;
+using Core.Utils.Collections;
+using Core.Utils.Math;
 
 namespace Core.Combat.Scripts.Interfaces.Modules
 {

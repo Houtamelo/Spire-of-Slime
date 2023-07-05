@@ -1,14 +1,15 @@
 ﻿using System.Collections.Generic;
 using Core.Main_Characters.Nema.Combat;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Patterns;
 using Data.Main_Characters.Ethel;
 using KGySoft.CoreLibraries;
 using ListPool;
-using Save_Management;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using Utils.Patterns;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Character_Panel.Scripts.Perks
 {

@@ -1,12 +1,12 @@
 ﻿using System.Text;
 using Core.Combat.Scripts.Managers;
+using Core.Utils.Extensions;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Extensions;
 
 namespace Core.Combat.Scripts.Behaviour.UI
 {

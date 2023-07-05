@@ -1,6 +1,6 @@
 ﻿using System;
 using Core.Combat.Scripts.Behaviour;
-using Utils.Collections;
+using Core.Utils.Collections;
 
 namespace Core.Combat.Scripts.Managers.Enumerators
 {

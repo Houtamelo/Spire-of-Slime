@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+
 // ReSharper disable NonReadonlyMemberInGetHashCode
 
-namespace Misc
+namespace Core.Misc
 {
     [Serializable]
     public class SerializableTuple<T1, T2> : IEquatable<SerializableTuple<T1, T2>>

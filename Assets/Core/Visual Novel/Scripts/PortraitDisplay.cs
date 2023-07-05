@@ -1,9 +1,10 @@
-﻿using DG.Tweening;
-using Main_Database.Visual_Novel;
+﻿using Core.Main_Database.Visual_Novel;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
+using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Extensions;
 using Utils.Patterns;
 // ReSharper disable Unity.InefficientPropertyAccess
 

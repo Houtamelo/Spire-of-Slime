@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using UnityEngine;
 
-namespace Utils.Patterns
+namespace Core.Utils.Patterns
 {
     public readonly struct Option<T>
     {

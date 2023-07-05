@@ -2,7 +2,7 @@
 using TMPro;
 using UnityEngine;
 
-namespace Utils.Objects
+namespace Core.Utils.Objects
 {
     public class FileToTmpText : MonoBehaviour
     {

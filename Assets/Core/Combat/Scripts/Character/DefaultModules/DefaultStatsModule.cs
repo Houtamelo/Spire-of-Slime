@@ -1,7 +1,7 @@
 ﻿using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Effects.Interfaces;
 using Core.Combat.Scripts.Interfaces.Modules;
-using Utils.Collections;
+using Core.Utils.Collections;
 
 namespace Core.Combat.Scripts.DefaultModules
 {

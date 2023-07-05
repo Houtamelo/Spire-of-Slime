@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Utils.Collections
+namespace Core.Utils.Collections
 {
     public class IndexableHashSet<T> : List<T> 
     {

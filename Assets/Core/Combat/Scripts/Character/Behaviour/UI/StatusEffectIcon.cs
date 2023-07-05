@@ -3,6 +3,7 @@ using System.Text;
 using Core.Combat.Scripts.Cues;
 using Core.Combat.Scripts.Effects;
 using Core.Combat.Scripts.Effects.BaseTypes;
+using Core.Utils.Patterns;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;

@@ -1,4 +1,5 @@
-﻿using Utils.Async;
+﻿using Core.Utils.Async;
+using Core.Utils.Patterns;
 using Utils.Patterns;
 
 namespace Core.Local_Map.Scripts.Events

@@ -1,10 +1,11 @@
-﻿using DG.Tweening;
+﻿using Core.Utils.Extensions;
+using Core.Utils.Objects;
+using Core.Utils.Patterns;
+using DG.Tweening;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Extensions;
-using Utils.Objects;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Cues

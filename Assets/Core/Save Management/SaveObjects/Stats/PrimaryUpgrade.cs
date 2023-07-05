@@ -1,4 +1,4 @@
-﻿namespace Save_Management
+﻿namespace Core.Save_Management.SaveObjects
 {
     public enum PrimaryUpgrade
     {

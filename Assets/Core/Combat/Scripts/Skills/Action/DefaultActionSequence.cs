@@ -6,6 +6,7 @@ using Core.Combat.Scripts.Animations;
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Managers;
+using Core.Utils.Patterns;
 using DG.Tweening;
 using ListPool;
 using UnityEngine;

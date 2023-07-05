@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using Core.Game_Manager.Scripts;
+using Core.Utils.Async;
 using Core.World_Map.Scripts;
-using Utils.Async;
 
 namespace Core.Local_Map.Scripts.Events.ReachLocation
 {

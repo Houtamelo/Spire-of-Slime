@@ -19,6 +19,7 @@ using Core.Combat.Scripts.Effects.Types.Tempt;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Interfaces;
 using Core.Combat.Scripts.Perks;
+using Core.Utils.Patterns;
 using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Misc
+namespace Core.Misc
 {
     [ExecuteInEditMode]
     public class SpriteRendererListener : MonoBehaviour

@@ -6,13 +6,14 @@ using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Utils.Extensions;
+using Core.Utils.Math;
+using Core.Utils.Patterns;
 using ListPool;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Extensions;
-using Utils.Math;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts.UI.Highlighted

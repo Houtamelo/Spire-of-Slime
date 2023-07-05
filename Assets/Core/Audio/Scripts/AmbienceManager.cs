@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using Core.Main_Database.Audio;
+using Core.ResourceManagement;
+using Core.Utils.Patterns;
 using DG.Tweening;
-using Main_Database.Audio;
-using ResourceManagement;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;

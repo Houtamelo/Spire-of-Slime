@@ -5,13 +5,13 @@ using Core.Combat.Scripts.BackgroundGeneration;
 using Core.Combat.Scripts.Interfaces;
 using Core.Combat.Scripts.WinningCondition;
 using Core.Main_Characters.Nema.Combat;
+using Core.Main_Database.Combat;
+using Core.Save_Management.SaveObjects;
 using Data.Main_Characters.Ethel;
-using Main_Database.Combat;
-using Save_Management;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Serialization;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Combat.Scripts
 {

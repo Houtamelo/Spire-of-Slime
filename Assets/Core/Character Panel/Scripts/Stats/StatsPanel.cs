@@ -3,17 +3,17 @@ using System.Linq;
 using Core.Combat.Scripts.Managers;
 using Core.Game_Manager.Scripts;
 using Core.Main_Characters.Nema.Combat;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Math;
+using Core.Utils.Patterns;
 using Data.Main_Characters.Ethel;
 using KGySoft.CoreLibraries;
-using Save_Management;
-using Save_Management.Stats;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using TMPro;
 using UnityEngine;
-using Utils.Math;
 using Utils.Patterns;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Character_Panel.Scripts.Stats
 {

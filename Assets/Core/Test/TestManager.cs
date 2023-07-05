@@ -1,12 +1,12 @@
 ﻿using System.Collections;
 using Core.Game_Manager.Scripts;
+using Core.Utils.Async;
 using Core.Visual_Novel.Scripts;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Async;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Test
 {

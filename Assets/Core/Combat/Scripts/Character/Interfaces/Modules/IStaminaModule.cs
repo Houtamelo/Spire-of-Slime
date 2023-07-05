@@ -1,6 +1,7 @@
 ﻿using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Effects.Interfaces;
-using Utils.Math;
+using Core.Utils.Math;
+using Core.Utils.Patterns;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Interfaces.Modules

@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using Core.Combat.Scripts.Interfaces;
+using Core.Utils.Extensions;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Extensions;
 
 namespace Core.Combat.Scripts.UI
 {

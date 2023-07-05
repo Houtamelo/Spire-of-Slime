@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
-namespace Misc
+namespace Core.Misc
 {
     public class HyperlinkOpener : MonoBehaviour, IPointerClickHandler
     {

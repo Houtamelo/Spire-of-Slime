@@ -3,12 +3,12 @@ using System.Collections;
 using System.Threading.Tasks;
 using Core.Character_Panel.Scripts;
 using Core.Game_Manager.Scripts;
-using Save_Management;
+using Core.Save_Management;
+using Core.Utils.Async;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using Utils.Async;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Visual_Novel.Scripts
 {

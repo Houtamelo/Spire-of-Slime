@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Core.Utils.Extensions;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utils.Extensions;
 using Random = UnityEngine.Random;
 
 namespace Core.Combat.Scripts.BackgroundGeneration

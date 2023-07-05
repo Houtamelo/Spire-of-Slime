@@ -11,13 +11,14 @@ using Core.Combat.Scripts.Effects.Types.OvertimeHeal;
 using Core.Combat.Scripts.Effects.Types.Perk;
 using Core.Combat.Scripts.Effects.Types.Poison;
 using Core.Combat.Scripts.Effects.Types.Riposte;
-using Save_Management;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
+using Core.Utils.Math;
+using Core.Utils.Patterns;
 using UnityEngine;
-using Utils.Extensions;
-using Utils.Math;
 using Utils.Patterns;
 using static Core.Combat.Scripts.ColorReferences;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Combat.Scripts.Effects
 {

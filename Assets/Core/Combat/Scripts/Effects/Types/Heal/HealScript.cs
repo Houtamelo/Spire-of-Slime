@@ -5,8 +5,8 @@ using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Utils.Math;
 using UnityEngine;
-using Utils.Math;
 using Random = UnityEngine.Random;
 
 namespace Core.Combat.Scripts.Effects.Types.Heal

@@ -1,4 +1,5 @@
-﻿using Sirenix.OdinInspector;
+﻿using Core.Utils.Patterns;
+using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;

@@ -4,10 +4,10 @@ using Core.Combat.Scripts.Animations;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Main_Characters.Nema.Combat.Skills.Calm.Anim;
 using Core.Main_Characters.Nema.Combat.Skills.Serenity.Anim;
+using Core.Utils.Extensions;
+using Core.Utils.Objects;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Extensions;
-using Utils.Objects;
 
 namespace Core.Main_Characters.Nema.Combat
 {

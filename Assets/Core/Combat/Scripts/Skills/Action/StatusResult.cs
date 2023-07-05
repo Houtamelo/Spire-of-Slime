@@ -2,6 +2,7 @@
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Effects;
 using Core.Combat.Scripts.Effects.BaseTypes;
+using Core.Utils.Patterns;
 using UnityEngine;
 using Utils.Patterns;
 

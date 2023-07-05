@@ -4,8 +4,8 @@ using Core.Combat.Scripts.Cues;
 using Core.Combat.Scripts.Effects.Types.BuffOrDebuff;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Interfaces.Modules;
+using Core.Utils.Math;
 using UnityEngine;
-using Utils.Math;
 using static Core.Combat.Scripts.Interfaces.Modules.IDownedModule;
 
 namespace Core.Combat.Scripts.DefaultModules

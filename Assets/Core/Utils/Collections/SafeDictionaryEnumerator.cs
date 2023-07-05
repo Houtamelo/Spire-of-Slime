@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using NetFabric.Hyperlinq;
 
-namespace Utils.Collections
+namespace Core.Utils.Collections
 {
     public ref struct SafeDictionaryEnumerator<TKey, TValue>
     {

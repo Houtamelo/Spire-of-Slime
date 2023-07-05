@@ -2,12 +2,13 @@
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.WinningCondition;
-using Main_Database.Combat;
-using Save_Management;
+using Core.Main_Database.Combat;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using UnityEngine;
 using Utils.Patterns;
-using Utils.Extensions;
-using static Utils.Patterns.Result<Core.Combat.Scripts.WinningCondition.IWinningCondition>;
+using static Core.Utils.Patterns.Result<Core.Combat.Scripts.WinningCondition.IWinningCondition>;
 
 namespace Core.Visual_Novel.Data.Chapter_1.Scenes.Midnight_Mayhem
 {

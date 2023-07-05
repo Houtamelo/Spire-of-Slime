@@ -1,4 +1,5 @@
 ﻿using Core.Combat.Scripts.Managers;
+using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.EventSystems;

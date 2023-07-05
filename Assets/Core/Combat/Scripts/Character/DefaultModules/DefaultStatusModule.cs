@@ -4,8 +4,8 @@ using Core.Combat.Scripts.Effects;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Skills.Action;
-using Utils.Collections;
-using Utils.Extensions;
+using Core.Utils.Collections;
+using Core.Utils.Extensions;
 
 namespace Core.Combat.Scripts.DefaultModules
 {

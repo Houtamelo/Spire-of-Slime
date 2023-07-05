@@ -1,7 +1,9 @@
 ﻿using System.Text;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Patterns;
 using Utils.Patterns;
 
-namespace Save_Management
+namespace Core.Save_Management
 {
     public readonly struct NemaStatus
     {

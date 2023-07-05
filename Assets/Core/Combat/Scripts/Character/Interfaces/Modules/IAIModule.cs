@@ -1,5 +1,5 @@
 ﻿using Core.Combat.Scripts.Behaviour;
-using Utils.Collections;
+using Core.Utils.Collections;
 
 namespace Core.Combat.Scripts.Interfaces.Modules
 {

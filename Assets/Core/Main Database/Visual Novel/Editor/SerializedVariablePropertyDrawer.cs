@@ -1,9 +1,9 @@
 ﻿using System;
-using Main_Database.Visual_Novel.Enums;
+using Core.Main_Database.Visual_Novel.Enums;
 using UnityEditor;
 using UnityEngine;
 
-namespace Main_Database.Visual_Novel.Editor
+namespace Core.Main_Database.Visual_Novel.Editor
 {
     [CustomPropertyDrawer(typeof(VariableRequirement))]
     public class SerializedVariablePropertyDrawer : PropertyDrawer

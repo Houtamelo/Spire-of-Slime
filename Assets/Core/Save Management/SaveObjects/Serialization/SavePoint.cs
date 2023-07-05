@@ -4,10 +4,10 @@ using Core.Combat.Scripts;
 using Core.Combat.Scripts.Managers;
 using Core.Game_Manager.Scripts;
 using Core.Local_Map.Scripts;
+using Core.Utils.Extensions;
 using Core.Visual_Novel.Scripts;
-using Utils.Extensions;
 
-namespace Save_Management.Serialization
+namespace Core.Save_Management.SaveObjects
 {
     public static class SavePoint
     {
@@ -22,7 +22,7 @@ namespace Save_Management.Serialization
 
         public static void TryGenerateFromCurrentSession()
         {
-            if (Save.AssertInstance(out Save save) == false)
+            if (Core.Save_Management.SaveObjects.Save.AssertInstance(out Core.Save_Management.SaveObjects.Save save) == false)
                 return;
             
             if (DialogueController.Instance.TrySome(out DialogueController dialogueController) && dialogueController.IsDialogueRunning)
@@ -63,7 +63,7 @@ namespace Save_Management.Serialization
         public static void RecordLocalMap(LocalMapManager manager)
         {
             if (manager.RunningEvent || 
-                Save.AssertInstance(out Save save) == false ||
+                Core.Save_Management.SaveObjects.Save.AssertInstance(out Core.Save_Management.SaveObjects.Save save) == false ||
                 (DialogueController.Instance.TrySome(out DialogueController dialogueController) && dialogueController.IsDialogueRunning) || 
                 SceneRef.Combat.IsLoadedAndActive())
                 return;
@@ -75,7 +75,7 @@ namespace Save_Management.Serialization
 
         public static void RecordLocalMapEventStart(string sceneName)
         {
-            if (Save.AssertInstance(out Save save) == false ||
+            if (Core.Save_Management.SaveObjects.Save.AssertInstance(out Core.Save_Management.SaveObjects.Save save) == false ||
                 (DialogueController.Instance.TrySome(out DialogueController dialogueController) && dialogueController.IsDialogueRunning) || 
                 SceneRef.Combat.IsLoadedAndActive())
                 return;
@@ -93,7 +93,7 @@ namespace Save_Management.Serialization
 
         public static void RecordWorldMapPure()
         {
-            if (Save.AssertInstance(out Save save) == false ||
+            if (Core.Save_Management.SaveObjects.Save.AssertInstance(out Core.Save_Management.SaveObjects.Save save) == false ||
                 (DialogueController.Instance.TrySome(out DialogueController dialogueController) && dialogueController.IsDialogueRunning) || 
                 SceneRef.Combat.IsLoadedAndActive() || 
                 SceneRef.LocalMap.IsLoadedAndActive())
@@ -105,7 +105,7 @@ namespace Save_Management.Serialization
 
         public static void RecordWorldMapEvent(string scene)
         {
-            if (Save.AssertInstance(out Save save) == false ||
+            if (Core.Save_Management.SaveObjects.Save.AssertInstance(out Core.Save_Management.SaveObjects.Save save) == false ||
                 (DialogueController.Instance.TrySome(out DialogueController dialogueController) && dialogueController.IsDialogueRunning) || 
                 SceneRef.Combat.IsLoadedAndActive() || 
                 SceneRef.LocalMap.IsLoadedAndActive())
@@ -117,7 +117,7 @@ namespace Save_Management.Serialization
 
         public static void RecordSceneStartAnonymously(string sceneName)
         {
-            if (Save.AssertInstance(out Save save) == false ||
+            if (Core.Save_Management.SaveObjects.Save.AssertInstance(out Core.Save_Management.SaveObjects.Save save) == false ||
                 (DialogueController.Instance.TrySome(out DialogueController dialogueController) && dialogueController.IsDialogueRunning) ||
                 SceneRef.Combat.IsLoadedAndActive())
                 return;
@@ -137,7 +137,7 @@ namespace Save_Management.Serialization
 
         public static void RecordCombatStart()
         {
-            if (Save.AssertInstance(out Save save) == false ||
+            if (Core.Save_Management.SaveObjects.Save.AssertInstance(out Core.Save_Management.SaveObjects.Save save) == false ||
                 (DialogueController.Instance.TrySome(out DialogueController dialogueController) && dialogueController.IsDialogueRunning) ||
                 SceneRef.Combat.IsLoadedAndActive() == false ||
                 CombatManager.Instance.TrySome(out CombatManager combatManager) == false ||

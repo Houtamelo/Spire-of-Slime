@@ -2,9 +2,9 @@
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Perks;
+using Core.Utils.Collections;
+using Core.Utils.Extensions;
 using UnityEngine;
-using Utils.Collections;
-using Utils.Extensions;
 
 namespace Core.Combat.Scripts.DefaultModules
 {

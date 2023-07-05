@@ -4,6 +4,7 @@ using Core.Combat.Scripts.Effects.Types.Grappled;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Skills.Action;
+using Core.Utils.Patterns;
 using UnityEngine;
 using Utils.Patterns;
 

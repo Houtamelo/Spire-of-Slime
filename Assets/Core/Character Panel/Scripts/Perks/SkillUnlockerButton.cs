@@ -3,16 +3,17 @@ using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills;
 using Core.Game_Manager.Scripts;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using DG.Tweening;
 using ListPool;
-using Save_Management;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Extensions;
 using Utils.Patterns;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Character_Panel.Scripts.Perks
 {

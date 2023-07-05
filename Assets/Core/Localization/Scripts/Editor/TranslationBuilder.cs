@@ -1,20 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Core.Combat.Scripts.Barks;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
 using CsvHelper;
-using CsvHelper.Configuration;
 using DeepL;
 using DeepL.Model;
 using JetBrains.Annotations;
 using KGySoft.CoreLibraries;
-using Save_Management;
 using UnityEditor;
 using UnityEngine;
-using Utils.Extensions;
 using static Core.Localization.Scripts.TranslationUtils;
 
 namespace Core.Localization.Scripts.Editor

@@ -2,11 +2,11 @@
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Game_Manager.Scripts;
+using Core.Utils.Extensions;
+using Core.Utils.Objects;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Utils.Extensions;
-using Utils.Objects;
 
 namespace Core.Main_Characters.Ethel.Combat.Skills.Challenge.Anim
 {

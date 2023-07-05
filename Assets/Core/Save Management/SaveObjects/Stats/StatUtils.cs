@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Text;
+using Core.Utils.Extensions;
+using Core.Utils.Math;
 using UnityEngine;
-using Utils.Extensions;
-using Utils.Math;
 
-namespace Save_Management.Stats
+namespace Core.Save_Management.SaveObjects
 {
     public static class StatUtils
     {

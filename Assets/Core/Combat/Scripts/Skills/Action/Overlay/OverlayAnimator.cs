@@ -1,7 +1,6 @@
 ﻿using Core.Combat.Scripts.Managers;
 using DG.Tweening;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Skills.Action.Overlay
 {

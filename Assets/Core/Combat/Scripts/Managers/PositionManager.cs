@@ -7,13 +7,14 @@ using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Utils.Async;
+using Core.Utils.Collections;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using JetBrains.Annotations;
 using KGySoft.CoreLibraries;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Async;
-using Utils.Collections;
-using Utils.Extensions;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Managers

@@ -2,17 +2,17 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Core.Combat.Scripts;
+using Core.Main_Database.Audio;
+using Core.Main_Database.Combat;
+using Core.Main_Database.Visual_Novel;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using Core.Visual_Novel.Scripts;
-using Main_Database.Audio;
-using Main_Database.Combat;
-using Main_Database.Visual_Novel;
 using UnityEditor;
 using UnityEngine;
-using Utils.Extensions;
 using Utils.Patterns;
 
-namespace Main_Database.Editor
+namespace Core.Main_Database.Editor
 {
     public static class YarnChecker
     {
@@ -24,7 +24,7 @@ namespace Main_Database.Editor
         {
             // get all text assets that have the extension .yarn
 
-            List<TextAsset> textAssets = Utils.FindAssetsByType<TextAsset>(extension: ".yarn");
+            List<TextAsset> textAssets = Core.Main_Database.Editor.Utils.FindAssetsByType<TextAsset>(extension: ".yarn");
             
             // keep only files in the Assets/Data folder
 
@@ -56,7 +56,7 @@ namespace Main_Database.Editor
 
         private static void CheckCGs(List<TextAsset> assets, StringBuilder builder)
         {
-            Utils.TryFindAssetWithType(out CgDatabase cgDatabase);
+            Core.Main_Database.Editor.Utils.TryFindAssetWithType(out CgDatabase cgDatabase);
 
             StringBuilder missingDoubleArrowsBuilder = new();
             Dictionary<string, List<(int lineNumber, string asset)>> missingCGs = new();
@@ -200,7 +200,7 @@ namespace Main_Database.Editor
         // lines that have the <<set_ambience name volume>> or <<set_ambience name>> or <<add_ambience name volume>> or <<add_ambience name>> tags
         private static void CheckAmbienceSounds(List<TextAsset> assets, StringBuilder builder)
         {
-            Utils.TryFindAssetWithType(out AudioPathsDatabase soundDatabase);
+            Core.Main_Database.Editor.Utils.TryFindAssetWithType(out AudioPathsDatabase soundDatabase);
 
             StringBuilder missingDoubleArrowsBuilder = new();
             Dictionary<string, List<(int lineNumber, string asset)>> missingFiles = new();
@@ -278,7 +278,7 @@ namespace Main_Database.Editor
         // lines that have the <<sfx name>> or <<sfx name volume>> or <<wait_sfx name>> or <<wait_sfx name volume>> tags
         private static void CheckSfxs(List<TextAsset> assets, StringBuilder builder)
         {
-            Utils.TryFindAssetWithType(out AudioPathsDatabase soundDatabase);
+            Core.Main_Database.Editor.Utils.TryFindAssetWithType(out AudioPathsDatabase soundDatabase);
 
             StringBuilder missingDoubleArrowsBuilder = new();
             Dictionary<string, List<(int lineNumber, string asset)>> missingFiles = new();
@@ -413,7 +413,7 @@ namespace Main_Database.Editor
         // lines that have the <<music name>> or <<music name volume>> tags
         private static void CheckMusic(List<TextAsset> assets, StringBuilder builder)
         {
-            Utils.TryFindAssetWithType(out AudioPathsDatabase soundDatabase);
+            Core.Main_Database.Editor.Utils.TryFindAssetWithType(out AudioPathsDatabase soundDatabase);
             StringBuilder missingDoubleArrowsBuilder = new();
             Dictionary<string, List<(int lineNumber, string asset)>> missingFiles = new();
 
@@ -488,7 +488,7 @@ namespace Main_Database.Editor
         // scenes are on the line with format: title: name
         private static void CheckCombatScripts(List<TextAsset> assets, StringBuilder builder)
         {
-            Utils.TryFindAssetWithType(out CombatScriptDatabase combatScriptDatabase);
+            Core.Main_Database.Editor.Utils.TryFindAssetWithType(out CombatScriptDatabase combatScriptDatabase);
             StringBuilder missingDoubleArrowsBuilder = new();
             Dictionary<string, List<(int lineNumber, string asset)>> missingFiles = new();
             HashSet<string> allScenes = new();
@@ -623,7 +623,7 @@ namespace Main_Database.Editor
         // variables can be found in every single line, their format is $variableName, variables are alphanumeric and can contain underscores and dashes
         private static void CheckVariables(List<TextAsset> assets, StringBuilder builder)
         {
-            Utils.TryFindAssetWithType(out VariableDatabase variableDatabase);
+            Core.Main_Database.Editor.Utils.TryFindAssetWithType(out VariableDatabase variableDatabase);
             Dictionary<string, List<(string asset, int lineNumber)>> missingFiles = new();
             foreach (TextAsset asset in assets)
             {
@@ -700,7 +700,7 @@ namespace Main_Database.Editor
 
         private static void CheckPortraits(List<TextAsset> assets, StringBuilder builder)
         {
-            Utils.TryFindAssetWithType(out PortraitDatabase portraitDatabase);
+            Core.Main_Database.Editor.Utils.TryFindAssetWithType(out PortraitDatabase portraitDatabase);
             
             Dictionary<string, List<(int lineNumber, string asset)>> missingPortraits = new();
             

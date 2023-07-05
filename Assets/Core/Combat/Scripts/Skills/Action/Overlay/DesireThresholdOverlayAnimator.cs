@@ -2,15 +2,16 @@
 using Core.Combat.Scripts.Managers;
 using Core.Localization.Scripts;
 using Core.Main_Characters.Nema.Combat;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using Data.Main_Characters.Ethel;
 using DG.Tweening;
-using Save_Management;
-using Save_Management.Stats;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Extensions;
 using Utils.Patterns;
-using Threshold = Save_Management.Stats.Corruption.Threshold;
+using Save = Core.Save_Management.SaveObjects.Save;
+using Threshold = Core.Save_Management.SaveObjects.Corruption.Threshold;
 
 namespace Core.Combat.Scripts.Skills.Action.Overlay
 {

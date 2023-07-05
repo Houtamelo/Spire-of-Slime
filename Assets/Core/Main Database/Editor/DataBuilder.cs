@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,27 +13,24 @@ using Core.Combat.Scripts.Skills;
 using Core.Local_Map.Scripts;
 using Core.Local_Map.Scripts.Enums;
 using Core.Local_Map.Scripts.Events;
-using Core.Local_Map.Scripts.Events.ReachLocation;
 using Core.Local_Map.Scripts.Events.Rest;
 using Core.Main_Characters.Nema.Combat;
+using Core.Main_Database.Audio;
+using Core.Main_Database.Combat;
+using Core.Main_Database.Local_Map;
+using Core.Main_Database.Visual_Novel;
+using Core.Main_Database.World_Map;
+using Core.Save_Management.SaveObjects;
 using Core.Visual_Novel.Scripts.Animations;
 using Core.World_Map.Scripts;
+using CsvHelper;
 using Data.Main_Characters.Ethel;
-using Data.Main_Characters.Nema;
 using KGySoft.CoreLibraries;
-using Main_Database.Audio;
-using Main_Database.Combat;
-using Main_Database.Local_Map;
-using Main_Database.Visual_Novel;
-using Main_Database.World_Map;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
-using Utils.Extensions;
-using CsvHelper;
-using Save_Management;
 
-namespace Main_Database.Editor
+namespace Core.Main_Database.Editor
 {
     public static partial class DataBuilder
     {
@@ -132,37 +128,37 @@ namespace Main_Database.Editor
 
         private static void MusicControllers()
         {
-            Utils.TryFindAssetWithType(out MusicDatabase musicDatabase);
-            List<MusicController> musicControllers = Utils.FindAssetsByType<MusicController>();
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out MusicDatabase musicDatabase);
+            List<MusicController> musicControllers = global::Core.Main_Database.Editor.Utils.FindAssetsByType<MusicController>();
             musicDatabase.AssignData(musicControllers);
         }
 
         private static void Portraits()
         {
-            Utils.TryFindAssetWithType(out PortraitDatabase portraitDatabase);
-            List<Sprite> sprites = Utils.GetAllAssetsOfTypeInFoldersWithName<Sprite>("Portraits", "Assets/Core");
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out PortraitDatabase portraitDatabase);
+            List<Sprite> sprites = global::Core.Main_Database.Editor.Utils.GetAllAssetsOfTypeInFoldersWithName<Sprite>("Portraits", "Assets/Core");
             portraitDatabase.AssignData(sprites.ToHashSet());
         }
 
         private static void MapEvents()
         {
-            Utils.TryFindAssetWithType(out MapEventDatabase database);
-            List<ScriptableLocalMapEvent> mapEvents = Utils.FindAssetsByType<ScriptableLocalMapEvent>();
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out MapEventDatabase database);
+            List<ScriptableLocalMapEvent> mapEvents = global::Core.Main_Database.Editor.Utils.FindAssetsByType<ScriptableLocalMapEvent>();
             database.AssignData(mapEvents);
         }
 
         private static void WorldPaths()
         {
-            Utils.TryFindAssetWithType(out WorldPathDatabase worldPathDatabase);
-            List<WorldPath> worldPaths = Utils.FindAssetsByType<WorldPath>();
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out WorldPathDatabase worldPathDatabase);
+            List<WorldPath> worldPaths = global::Core.Main_Database.Editor.Utils.FindAssetsByType<WorldPath>();
             worldPathDatabase.AssignData(worldPaths);
         }
 
         private static void TileInfos()
         {
-            Utils.TryFindAssetWithType(out TileInfoDatabase tileInfoDatabase);
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out TileInfoDatabase tileInfoDatabase);
             
-            List<TileInfo> tileInfos = Utils.FindAssetsByType<TileInfo>();
+            List<TileInfo> tileInfos = global::Core.Main_Database.Editor.Utils.FindAssetsByType<TileInfo>();
             tileInfoDatabase.AssignData(tileInfos);
             
             LocationEnum[] allWorldLocations = Enum<LocationEnum>.GetValues();
@@ -185,36 +181,36 @@ namespace Main_Database.Editor
 
         private static void Monsters()
         {
-            Utils.TryFindAssetWithType(out MonsterTeamDatabase monsterTeamDatabase);
-            List<MonsterTeam> monsterTeams = Utils.FindAssetsByType<MonsterTeam>();
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out MonsterTeamDatabase monsterTeamDatabase);
+            List<MonsterTeam> monsterTeams = global::Core.Main_Database.Editor.Utils.FindAssetsByType<MonsterTeam>();
             monsterTeamDatabase.AssignData(monsterTeams);
         }
 
         private static void Backgrounds()
         {
-            Utils.TryFindAssetWithType(out BackgroundDatabase backgroundDatabase);
-            List<CombatBackground> backgrounds = Utils.FindComponentsByType<CombatBackground>();
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out BackgroundDatabase backgroundDatabase);
+            List<CombatBackground> backgrounds = global::Core.Main_Database.Editor.Utils.FindComponentsByType<CombatBackground>();
             backgroundDatabase.AssignData(backgrounds);
         }
 
         private static void Characters()
         {
-            Utils.TryFindAssetWithType(out CharacterDatabase characterDatabase);
-            List<CharacterScriptable> characters = Utils.FindAssetsByType<CharacterScriptable>();
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out CharacterDatabase characterDatabase);
+            List<CharacterScriptable> characters = global::Core.Main_Database.Editor.Utils.FindAssetsByType<CharacterScriptable>();
             characterDatabase.AssignData(characters);
         }
         
         private static void Skills()
         {
-            Utils.TryFindAssetWithType(out SkillDatabase skillDatabase);
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out SkillDatabase skillDatabase);
 
-            List<SkillScriptable> skills = Utils.FindAssetsByType<SkillScriptable>();
+            List<SkillScriptable> skills = global::Core.Main_Database.Editor.Utils.FindAssetsByType<SkillScriptable>();
             Dictionary<CleanString, SkillScriptable> skillDictionary = skills.ToDictionary(s => s.Key);
 
             using (StreamReader textReader = File.OpenText($"{Application.dataPath}{DescriptionsPath}"))
             using (CsvReader csvReader = new(textReader))
             {
-                foreach (DescriptionData data in csvReader.GetRecords<DescriptionData>())
+                foreach (global::Core.Main_Database.Editor.DataBuilder.DescriptionData data in csvReader.GetRecords<global::Core.Main_Database.Editor.DataBuilder.DescriptionData>())
                 {
                     if (skillDictionary.TryGetValue(data.Key, out SkillScriptable skill) == false)
                         continue;
@@ -226,7 +222,7 @@ namespace Main_Database.Editor
             skillDatabase.AssignData(skills);
 
             List<SkillScriptable> skillsMissingIcons = new();
-            List<Ethel> ethelScripts = Utils.FindAssetsByType<Ethel>();
+            List<Ethel> ethelScripts = global::Core.Main_Database.Editor.Utils.FindAssetsByType<Ethel>();
             SkillScriptable[] ethelSkills = skillDictionary.Where(pair => pair.Key.StartsWith("skill_ethel")).Select(pair => pair.Value).ToArray();
             foreach (SkillScriptable skill in ethelSkills)
             {
@@ -267,7 +263,7 @@ namespace Main_Database.Editor
             foreach (Ethel ethel in ethelScripts)
                 ethel.AssignAllPossibleSkills(ethelSkills);
             
-            List<Nema> nemaScripts = Utils.FindAssetsByType<Nema>();
+            List<Nema> nemaScripts = global::Core.Main_Database.Editor.Utils.FindAssetsByType<Nema>();
             SkillScriptable[] nemaSkills = skillDictionary.Where(pair => pair.Key.StartsWith("skill_nema")).Select(pair => pair.Value).ToArray();
             foreach (SkillScriptable skill in nemaSkills)
             {
@@ -311,14 +307,14 @@ namespace Main_Database.Editor
 
         private static void Perks()
         {
-            Utils.TryFindAssetWithType(out PerkDatabase perkDatabase);
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out PerkDatabase perkDatabase);
 
-            List<PerkScriptable> perks = Utils.FindAssetsByType<PerkScriptable>();
+            List<PerkScriptable> perks = global::Core.Main_Database.Editor.Utils.FindAssetsByType<PerkScriptable>();
             Dictionary<CleanString, PerkScriptable> perkDictionary = perks.ToDictionary(p => p.Key);
             Dictionary<CleanString, PerkScriptable> perksMissingDescription = perkDictionary.ToDictionary(p => p.Key, p => p.Value);
             
             List<PerkScriptable> perksMissingIcon = new();
-            List<Sprite> icons = Utils.GetAllAssetsOfTypeWhereNameStartsWith<Sprite>("icon_");
+            List<Sprite> icons = global::Core.Main_Database.Editor.Utils.GetAllAssetsOfTypeWhereNameStartsWith<Sprite>("icon_");
             foreach (PerkScriptable perk in perkDictionary.Values)
             {
                 bool found = false;
@@ -338,7 +334,7 @@ namespace Main_Database.Editor
 
             using StreamReader textReader = File.OpenText($"{Application.dataPath}{DescriptionsPath}");
             using CsvReader csvReader = new(textReader);
-            foreach (DescriptionData data in csvReader.GetRecords<DescriptionData>())
+            foreach (global::Core.Main_Database.Editor.DataBuilder.DescriptionData data in csvReader.GetRecords<global::Core.Main_Database.Editor.DataBuilder.DescriptionData>())
             {
                 if (perkDictionary.TryGetValue(data.Key, out PerkScriptable perk) == false)
                     continue;
@@ -365,13 +361,13 @@ namespace Main_Database.Editor
 
         private static void Barks()
         {
-            Utils.TryFindAssetWithType(out BarkDatabase barkDatabase);
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out BarkDatabase barkDatabase);
 
             Dictionary<(string, BarkType), List<string>> barkDictionary = new();
 
             using StreamReader textReader = File.OpenText($"{Application.dataPath}{BarksPath}");
             using CsvReader csvReader = new(textReader);
-            foreach (BarkData data in csvReader.GetRecords<BarkData>())
+            foreach (global::Core.Main_Database.Editor.DataBuilder.BarkData data in csvReader.GetRecords<global::Core.Main_Database.Editor.DataBuilder.BarkData>())
             {
                 if (barkDictionary.ContainsKey((data.CharacterKeyOne, data.BarkType)) == false)
                     barkDictionary[(data.CharacterKeyOne, data.BarkType)] = new List<string> { data.BarkOne };
@@ -389,7 +385,7 @@ namespace Main_Database.Editor
 
         private static void AudioFiles()
         {
-            Utils.TryFindAssetWithType(out AudioPathsDatabase audioDatabase);
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out AudioPathsDatabase audioDatabase);
             Dictionary<string, string> audioPaths = new(); // Key: file name, value: file path
             AudioClip[] allAudioFiles = Resources.LoadAll<AudioClip>("");
             foreach (AudioClip audioClip in allAudioFiles)
@@ -411,9 +407,9 @@ namespace Main_Database.Editor
 
         private static void CGs()
         {
-            Utils.TryFindAssetWithType(out CgDatabase cgDatabase);
-            List<Sprite> sprites = Utils.GetAllAssetsOfTypeWhereNameStartsWith<Sprite>("CG_");
-            List<VisualNovelAnimation> animations = Utils.FindComponentsByType<VisualNovelAnimation>();
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out CgDatabase cgDatabase);
+            List<Sprite> sprites = global::Core.Main_Database.Editor.Utils.GetAllAssetsOfTypeWhereNameStartsWith<Sprite>("CG_");
+            List<VisualNovelAnimation> animations = global::Core.Main_Database.Editor.Utils.FindComponentsByType<VisualNovelAnimation>();
             Dictionary<string, string> animationFilePaths = new(); // Key: file name, value: file path
             foreach (VisualNovelAnimation animation in animations)
             {
@@ -434,30 +430,30 @@ namespace Main_Database.Editor
 
         private static void CombatEvents()
         {
-            Utils.TryFindAssetWithType(out CombatScriptDatabase combatScriptDatabase);
-            List<ScriptableCombatSetupInfo> combatScriptableInfos = Utils.FindAssetsByType<ScriptableCombatSetupInfo>();
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out CombatScriptDatabase combatScriptDatabase);
+            List<ScriptableCombatSetupInfo> combatScriptableInfos = global::Core.Main_Database.Editor.Utils.FindAssetsByType<ScriptableCombatSetupInfo>();
             combatScriptDatabase.AssignData(combatScriptableInfos);
         }
         
         private static void RestEvents()
         {
-            Utils.TryFindAssetWithType(out RestEventsDatabase restEventsDatabase);
-            List<RestDialogue> restDialogues = Utils.FindAssetsByType<RestDialogue>();
-            List<RestEventBackground> restEventBackgrounds = Utils.FindComponentsByType<RestEventBackground>();
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out RestEventsDatabase restEventsDatabase);
+            List<RestDialogue> restDialogues = global::Core.Main_Database.Editor.Utils.FindAssetsByType<RestDialogue>();
+            List<RestEventBackground> restEventBackgrounds = global::Core.Main_Database.Editor.Utils.FindComponentsByType<RestEventBackground>();
             restEventsDatabase.AssignData(restDialogues, restEventBackgrounds);
         }
 
         private static void Variables()
         {
-            Utils.TryFindAssetWithType(out VariableDatabase variableDatabase);
-            List<SerializedVariable> variables = Utils.FindAssetsByType<SerializedVariable>();
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out VariableDatabase variableDatabase);
+            List<SerializedVariable> variables = global::Core.Main_Database.Editor.Utils.FindAssetsByType<SerializedVariable>();
             variableDatabase.AssignData(variables);
         }
 
         private static void WorldYarnScenes()
         {
-            Utils.TryFindAssetWithType(out WorldScenesDatabase worldYarnDatabase);
-            List<WorldYarnScene> worldYarnScenes = Utils.FindAssetsByType<WorldYarnScene>();
+            global::Core.Main_Database.Editor.Utils.TryFindAssetWithType(out WorldScenesDatabase worldYarnDatabase);
+            List<WorldYarnScene> worldYarnScenes = global::Core.Main_Database.Editor.Utils.FindAssetsByType<WorldYarnScene>();
             worldYarnDatabase.AssignData(worldYarnScenes);
         }
     }

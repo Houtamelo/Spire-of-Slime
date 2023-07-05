@@ -1,7 +1,8 @@
 ﻿using Core.Local_Map.Scripts.Enums;
+using Core.Utils.Async;
+using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
 using UnityEngine;
-using Utils.Async;
 using Utils.Patterns;
 
 namespace Core.Local_Map.Scripts.Events.ReachLocation

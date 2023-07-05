@@ -1,7 +1,8 @@
 ﻿using System;
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Enums;
-using Utils.Async;
+using Core.Utils.Async;
+using Core.Utils.Patterns;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Animations

@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections;
+using Core.Utils.Extensions;
+using Core.Utils.Handlers;
+using Core.Utils.Patterns;
 using DG.Tweening;
 using UnityEngine;
-using Utils.Extensions;
-using Utils.Handlers;
 using Utils.Patterns;
 
 namespace Core.Visual_Novel.Scripts

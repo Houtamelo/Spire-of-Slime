@@ -1,4 +1,5 @@
-﻿using Sirenix.OdinInspector;
+﻿using Core.Utils.Patterns;
+using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using Utils.Patterns;
 using Yarn.Unity;

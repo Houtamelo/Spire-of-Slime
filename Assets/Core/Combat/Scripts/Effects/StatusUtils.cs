@@ -17,6 +17,7 @@ using Core.Combat.Scripts.Effects.Types.Stun;
 using Core.Combat.Scripts.Effects.Types.Summon;
 using Core.Combat.Scripts.Effects.Types.Tempt;
 using Core.Combat.Scripts.Enums;
+using Core.Utils.Patterns;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Effects

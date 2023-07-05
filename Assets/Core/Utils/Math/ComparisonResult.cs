@@ -1,4 +1,4 @@
-﻿namespace Utils.Math
+﻿namespace Core.Utils.Math
 {
     public enum ComparisonResult
     {

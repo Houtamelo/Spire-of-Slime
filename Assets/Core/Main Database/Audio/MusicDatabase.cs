@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Core.Audio.Scripts.MusicControllers;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
-using Save_Management;
 using UnityEngine;
 using Utils.Patterns;
 
-namespace Main_Database.Audio
+namespace Core.Main_Database.Audio
 {
     public class MusicDatabase : ScriptableObject
     {

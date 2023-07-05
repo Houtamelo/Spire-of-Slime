@@ -1,9 +1,8 @@
 ﻿using System;
+using Core.Utils.Extensions;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Extensions;
-using Utils.Patterns;
 
 namespace Core.Audio.Scripts.MusicControllers
 {

@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Core.Game_Manager.Scripts;
 using Core.Localization.Scripts;
+using Core.Save_Management;
+using Core.Utils.Extensions;
+using Core.Utils.Handlers;
+using Core.Utils.Patterns;
 using Core.Visual_Novel.Scripts;
 using KGySoft.CoreLibraries;
-using Save_Management;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using TMPro;
@@ -14,8 +17,6 @@ using UnityEngine.Audio;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using Utils.Extensions;
-using Utils.Handlers;
 using Utils.Patterns;
 
 namespace Core.Pause_Menu.Scripts

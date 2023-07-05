@@ -6,6 +6,7 @@ using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Utils.Patterns;
 using UnityEngine;
 using Utils.Patterns;
 using Random = UnityEngine.Random;

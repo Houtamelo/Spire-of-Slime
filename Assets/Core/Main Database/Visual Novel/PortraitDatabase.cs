@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
+using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
 using Utils.Patterns;
 
-namespace Main_Database.Visual_Novel
+namespace Core.Main_Database.Visual_Novel
 {
     public class PortraitDatabase : SerializedScriptableObject
     {

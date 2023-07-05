@@ -1,6 +1,7 @@
-﻿using Sirenix.OdinInspector;
+﻿using Core.Utils.Objects;
+using Core.Utils.Patterns;
+using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Objects;
 using Utils.Patterns;
 
 namespace Core.Audio.Scripts

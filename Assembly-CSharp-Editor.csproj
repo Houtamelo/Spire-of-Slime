@@ -42,7 +42,7 @@
   </PropertyGroup>
   <ItemGroup>
      <Compile Include="Assets\Core\Utils\Editor\PlayTestManager.cs" />
-     <Compile Include="Assets\Core\Save Management\File\Editor\SaveInspector.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\Editor\SaveInspector.cs" />
      <Compile Include="Assets\Core\Main Database\Editor\Utils.cs" />
      <Compile Include="Assets\Core\Main Database\Editor\Structs.cs" />
      <Compile Include="Assets\Core\Main Database\Visual Novel\Editor\SerializedVariablePropertyDrawer.cs" />
@@ -105,7 +105,7 @@
      <None Include="Assets\Core\Localization\Scripts\Editor\DeepLAuthKey.txt" />
      <Folder Include="Assets\Core\Visual Novel\Scripts\Editor" />
      <None Include="Assets\Core\Localization\Scripts\Editor\Plugs\System.Diagnostics.DiagnosticSource.xml" />
-     <Folder Include="Assets\Core\Save Management\File\Editor" />
+     <Folder Include="Assets\Core\Save Management\SaveObjects\Editor" />
      <Folder Include="Assets\Core\Combat\Scripts\Editor\Deprecated" />
      <Folder Include="Assets\Core\Main Database\Editor" />
      <None Include="Assets\Core\Localization\Scripts\Editor\Plugs\System.Numerics.Vectors.xml" />

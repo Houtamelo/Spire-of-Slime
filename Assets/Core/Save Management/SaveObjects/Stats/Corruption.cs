@@ -1,7 +1,6 @@
-﻿using System;
-using Core.Combat.Scripts;
+﻿using Core.Combat.Scripts;
 
-namespace Save_Management.Stats
+namespace Core.Save_Management.SaveObjects
 {
     public static class Corruption
     {

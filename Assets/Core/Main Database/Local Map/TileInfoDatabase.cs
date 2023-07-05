@@ -2,15 +2,16 @@
 using System.Linq;
 using Core.Local_Map.Scripts;
 using Core.Local_Map.Scripts.Enums;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
-using Save_Management;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Utils.Patterns;
 
 // ReSharper disable Unity.RedundantHideInInspectorAttribute
 
-namespace Main_Database.Local_Map
+namespace Core.Main_Database.Local_Map
 {
     public sealed class TileInfoDatabase : ScriptableObject
     {

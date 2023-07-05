@@ -14,7 +14,7 @@ using Core.Combat.Scripts.Effects.Types.Riposte;
 using Core.Combat.Scripts.Effects.Types.Stun;
 using Core.Combat.Scripts.Effects.Types.Tempt;
 using Core.Combat.Scripts.Interfaces.Modules;
-using Utils.Collections;
+using Core.Utils.Collections;
 
 namespace Core.Combat.Scripts.DefaultModules
 {

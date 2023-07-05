@@ -1,5 +1,5 @@
-﻿using UnityEngine;
-using Utils.Extensions;
+﻿using Core.Utils.Extensions;
+using UnityEngine;
 
 namespace Core.Audio.Scripts
 {

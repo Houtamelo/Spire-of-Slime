@@ -1,7 +1,7 @@
 ﻿using Sirenix.OdinInspector;
 using UnityEngine;
 
-namespace Utils.Objects
+namespace Core.Utils.Objects
 {
     [ExecuteInEditMode]
     public class PositionDisplay : MonoBehaviour

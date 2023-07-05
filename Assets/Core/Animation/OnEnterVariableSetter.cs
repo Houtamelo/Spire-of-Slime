@@ -2,7 +2,7 @@
 using Sirenix.OdinInspector;
 using UnityEngine;
 
-namespace Animation
+namespace Core.Animation
 {
     public class OnEnterVariableSetter : StateMachineBehaviour
     {

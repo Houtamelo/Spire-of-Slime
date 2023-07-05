@@ -1,8 +1,8 @@
-﻿using Misc;
+﻿using Core.Misc;
 using UnityEditor;
 using UnityEngine;
 
-namespace Utils.Editor
+namespace Core.Utils.Editor
 {
     [CustomPropertyDrawer(typeof(SerializableTuple<,>))]
     public class SerializableTuplePropertyDrawer : PropertyDrawer

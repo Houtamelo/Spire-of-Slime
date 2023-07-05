@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Main_Database.Local_Map;
+using Core.Main_Database.Local_Map;
+using Core.Utils.Extensions;
 using UnityEngine;
-using Utils.Extensions;
 using Random = UnityEngine.Random;
 
 namespace Core.Local_Map.Scripts.PathCreating

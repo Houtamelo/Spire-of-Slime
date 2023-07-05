@@ -1,9 +1,11 @@
 ﻿using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Effects.Interfaces;
 using Core.Combat.Scripts.Effects.Types.Grappled;
-using Save_Management;
-using Utils.Math;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Math;
+using Core.Utils.Patterns;
 using Utils.Patterns;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Combat.Scripts.Interfaces.Modules
 {

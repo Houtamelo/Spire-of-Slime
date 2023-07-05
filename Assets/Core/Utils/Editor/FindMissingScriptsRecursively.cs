@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Utils.Editor
+namespace Core.Utils.Editor
 {
     public class FindMissingScriptsRecursively : UnityEditor.EditorWindow 
     {

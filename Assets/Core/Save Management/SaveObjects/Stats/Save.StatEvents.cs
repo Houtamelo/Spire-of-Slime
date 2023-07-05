@@ -2,15 +2,15 @@
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Main_Characters.Nema.Combat;
+using Core.Utils.Math;
+using Core.Utils.Patterns;
 using Data.Main_Characters.Ethel;
 using JetBrains.Annotations;
-using Save_Management.Stats;
 using UnityEngine;
-using Utils.Math;
 using Utils.Patterns;
-using static Utils.Patterns.Option<Save_Management.Stats.CharacterStats>;
+using static Core.Utils.Patterns.Option<Core.Save_Management.SaveObjects.CharacterStats>;
 
-namespace Save_Management
+namespace Core.Save_Management.SaveObjects
 {
     public partial class Save
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
+using Core.Utils.Extensions;
 using UnityEngine;
-using Utils.Extensions;
 using Random = UnityEngine.Random;
 
 namespace Core.Combat.Scripts.BackgroundGeneration

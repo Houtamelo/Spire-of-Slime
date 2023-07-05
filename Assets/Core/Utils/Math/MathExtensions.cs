@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Text;
+using Core.Utils.Extensions;
 using UnityEngine;
-using Utils.Extensions;
 
-namespace Utils.Math
+namespace Core.Utils.Math
 {
     public static class MathExtensions
     {

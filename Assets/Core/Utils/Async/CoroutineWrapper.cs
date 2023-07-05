@@ -4,7 +4,7 @@ using System.Diagnostics;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Utils.Async
+namespace Core.Utils.Async
 {
     public sealed class CoroutineWrapper : CustomYieldInstruction
     {

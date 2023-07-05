@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
-namespace Save_Management
+namespace Core.Save_Management.SaveObjects
 {
     /// <summary>  Only letters, digits and underscore '_' are allowed. </summary>
     [Serializable, DataContract, InlineProperty]

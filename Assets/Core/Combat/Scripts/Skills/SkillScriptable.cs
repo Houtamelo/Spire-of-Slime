@@ -1,19 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Action.Overlay;
 using Core.Combat.Scripts.Skills.Interfaces;
-using Core.Main_Characters.Nema.Combat;
-using Data.Main_Characters.Ethel;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Patterns;
 using DG.Tweening;
 using JetBrains.Annotations;
-using Save_Management;
 using Sirenix.OdinInspector;
-using Sirenix.Serialization;
 using UnityEngine;
 using Utils.Patterns;
 // ReSharper disable Unity.RedundantHideInInspectorAttribute

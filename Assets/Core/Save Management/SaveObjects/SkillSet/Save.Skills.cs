@@ -2,12 +2,12 @@
 using Core.Combat.Scripts.Interfaces;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
-using Main_Database.Combat;
-using Save_Management.Stats;
+using Core.Main_Database.Combat;
+using Core.Utils.Patterns;
 using UnityEngine;
 using Utils.Patterns;
 
-namespace Save_Management
+namespace Core.Save_Management.SaveObjects
 {
     public partial class Save 
     {

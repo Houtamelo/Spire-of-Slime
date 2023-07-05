@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Core.Utils.Extensions;
 using Core.World_Map.Scripts;
-using Save_Management.Stats;
 using Sirenix.Serialization;
-using Utils.Extensions;
 
-namespace Save_Management.Serialization
+namespace Core.Save_Management.SaveObjects
 {
     public record SaveRecord(string Name, DateTime Date, Dictionary<CleanString, bool> Booleans, Dictionary<CleanString, float> Floats, Dictionary<CleanString, CleanString> Strings, LocationEnum Location,
                              LocationEnum[] LocationsUnlocked, CharacterStats[] Characters, float NemaExhaustion, bool IsNemaClearingMist, Random GeneralRandomizer, CleanString[] CombatOrder, SavePoint.Base SavePoint)

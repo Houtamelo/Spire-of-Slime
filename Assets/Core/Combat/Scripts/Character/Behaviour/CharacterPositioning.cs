@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Runtime.Serialization;
 using System.Text;
+using Core.Utils.Extensions;
 using UnityEngine;
-using Utils.Extensions;
 
 namespace Core.Combat.Scripts.Behaviour
 {

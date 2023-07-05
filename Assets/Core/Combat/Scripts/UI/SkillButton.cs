@@ -1,12 +1,13 @@
 ﻿using Core.Character_Panel.Scripts.Skills;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Extensions;
 using Utils.Patterns;
 using static UnityEngine.EventSystems.PointerEventData;
 

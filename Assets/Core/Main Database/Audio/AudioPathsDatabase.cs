@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
+using Core.ResourceManagement;
+using Core.Utils.Patterns;
 using JetBrains.Annotations;
-using ResourceManagement;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
 using Utils.Patterns;
 
-namespace Main_Database.Audio
+namespace Core.Main_Database.Audio
 {
     public class AudioPathsDatabase : SerializedScriptableObject
     {

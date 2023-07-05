@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using Core.Combat.Scripts.Behaviour;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using Sirenix.Serialization;
 using UnityEngine;
-using Utils.Extensions;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Cues

@@ -6,17 +6,17 @@ using System.Text;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Interfaces;
 using Core.Combat.Scripts.Interfaces.Modules;
-using Data.Main_Characters.Ethel;
+using Core.Main_Database.Combat;
+using Core.Utils.Extensions;
+using Core.Utils.Math;
+using Core.Utils.Patterns;
 using JetBrains.Annotations;
 using ListPool;
-using Main_Database.Combat;
 using UnityEngine;
-using Utils.Extensions;
-using Utils.Math;
 using Utils.Patterns;
 using Random = System.Random;
 
-namespace Save_Management.Stats
+namespace Core.Save_Management.SaveObjects
 {
     [DataContract]
     public class CharacterStats : IReadonlyCharacterStats, IDeepCloneable<CharacterStats>
@@ -90,7 +90,7 @@ namespace Save_Management.Stats
         }
 
         [MustUseReturnValue]
-        public ValueListPool<CleanString> GetUnlockedPerksAndSkills(Save save)
+        public ValueListPool<CleanString> GetUnlockedPerksAndSkills(Core.Save_Management.SaveObjects.Save save)
         {
             ValueListPool<CleanString> list = new(32);
             CleanString perkPrefix = VariablesName.PerkPrefix(Key);
@@ -104,7 +104,7 @@ namespace Save_Management.Stats
         }
 
         [MustUseReturnValue]
-        public ValueListPool<CleanString> GetUnlockedPerks(Save save)
+        public ValueListPool<CleanString> GetUnlockedPerks(Core.Save_Management.SaveObjects.Save save)
         {
             ValueListPool<CleanString> list = new(32);
             CleanString perkPrefix = VariablesName.PerkPrefix(Key);
@@ -117,7 +117,7 @@ namespace Save_Management.Stats
         }
         
         [MustUseReturnValue]
-        public ValueListPool<CleanString> GetUnlockedSkills(Save save)
+        public ValueListPool<CleanString> GetUnlockedSkills(Core.Save_Management.SaveObjects.Save save)
         {
             ValueListPool<CleanString> list = new(32);
             CleanString skillPrefix = VariablesName.SkillPrefix(Key);
@@ -130,7 +130,7 @@ namespace Save_Management.Stats
         }
 
         [MustUseReturnValue]
-        public ValueListPool<CleanString> GetEnabledPerks(Save save)
+        public ValueListPool<CleanString> GetEnabledPerks(Core.Save_Management.SaveObjects.Save save)
         {
             ValueListPool<CleanString> list = new(32);
             foreach (CleanString perkKey in GetUnlockedPerks(save))
@@ -143,7 +143,7 @@ namespace Save_Management.Stats
             return list;
         }
 
-        public bool IsPerkUnlocked(CleanString key, Save save)
+        public bool IsPerkUnlocked(CleanString key, Core.Save_Management.SaveObjects.Save save)
         {
             foreach (CleanString perk in GetUnlockedPerks(save))
                 if (perk == key)
@@ -152,7 +152,7 @@ namespace Save_Management.Stats
             return false;
         }
         
-        public bool IsSkillUnlocked(CleanString key, Save save)
+        public bool IsSkillUnlocked(CleanString key, Core.Save_Management.SaveObjects.Save save)
         {
             foreach (CleanString skill in GetUnlockedSkills(save))
                 if (skill == key)

@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Text;
 using Core.Combat.Scripts;
-using Main_Database.Combat;
+using Core.Main_Database.Combat;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using UnityEngine;
-using Utils.Extensions;
 using Utils.Patterns;
+using Save = Core.Save_Management.SaveObjects.Save;
 
-namespace Save_Management
+namespace Core.Save_Management
 {
     public static class ExperienceCalculator
     {

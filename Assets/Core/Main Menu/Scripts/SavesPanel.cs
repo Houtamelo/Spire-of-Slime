@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using Save_Management;
-using Save_Management.Serialization;
+using Core.Save_Management;
+using Core.Save_Management.SaveObjects;
 using UnityEngine;
 
 namespace Core.Main_Menu.Scripts

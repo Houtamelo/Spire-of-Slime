@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections;
 using Core.Combat.Scripts.Skills.Action;
+using Core.Save_Management;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using DG.Tweening;
-using Save_Management;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Extensions;
 using Utils.Patterns;
 using CombatManager = Core.Combat.Scripts.Managers.CombatManager;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Combat.Scripts
 {

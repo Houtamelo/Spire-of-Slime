@@ -1,6 +1,7 @@
 ﻿using Core.Local_Map.Scripts.Enums;
+using Core.Utils.Async;
+using Core.Utils.Patterns;
 using UnityEngine;
-using Utils.Async;
 using Utils.Patterns;
 
 namespace Core.Local_Map.Scripts.Events.Rest

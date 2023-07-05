@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Core.Utils.Async;
+using Core.Utils.Patterns;
 using UnityEngine;
-using Utils.Async;
 using Utils.Patterns;
 
 namespace Core.Pause_Menu.Scripts

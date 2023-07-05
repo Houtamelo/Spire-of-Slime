@@ -1,8 +1,8 @@
 ﻿using System.Runtime.Serialization;
+using Core.Utils.Math;
 using UnityEngine;
-using Utils.Math;
 
-namespace Utils.Patterns
+namespace Core.Utils.Patterns
 {
     [DataContract, System.Serializable]
     public struct ClampedPercentage

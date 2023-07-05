@@ -4,9 +4,10 @@ using Core.Combat.Scripts.Cues;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills.Action;
+using Core.Utils.Collections;
+using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Collections;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Animations

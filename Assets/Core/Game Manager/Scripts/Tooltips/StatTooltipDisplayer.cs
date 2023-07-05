@@ -1,6 +1,5 @@
 ﻿using Core.Localization.Scripts;
-using Save_Management;
-using Save_Management.Stats;
+using Core.Save_Management.SaveObjects;
 using UnityEngine;
 using UnityEngine.EventSystems;
 

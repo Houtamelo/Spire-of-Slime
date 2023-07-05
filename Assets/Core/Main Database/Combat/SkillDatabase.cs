@@ -2,12 +2,13 @@
 using System.Diagnostics.Contracts;
 using System.Linq;
 using Core.Combat.Scripts.Skills;
-using Save_Management;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Utils.Patterns;
 
-namespace Main_Database.Combat
+namespace Core.Main_Database.Combat
 {
     public sealed class SkillDatabase : ScriptableObject
     {

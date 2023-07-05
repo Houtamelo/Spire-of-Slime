@@ -1,10 +1,10 @@
 ﻿using Core.Combat.Scripts.Skills.Action;
+using Core.Utils.Extensions;
+using Core.Utils.Objects;
 using DG.Tweening;
 using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Extensions;
-using Utils.Objects;
 
 namespace Core.Main_Characters.Nema.Combat.Skills.Wrath.Anim
 {

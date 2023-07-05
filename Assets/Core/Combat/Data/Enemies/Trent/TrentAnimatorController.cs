@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using Core.Combat.Scripts.Animations;
 using Core.Combat.Scripts.Skills.Action;
+using Core.Utils.Extensions;
+using Core.Utils.Objects;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Extensions;
-using Utils.Objects;
 
 namespace Core.Combat.Data.Enemies.Trent
 {

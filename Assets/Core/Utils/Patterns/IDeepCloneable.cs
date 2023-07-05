@@ -1,4 +1,4 @@
-﻿namespace Utils.Patterns
+﻿namespace Core.Utils.Patterns
 {
     public interface IDeepCloneable<T>
     {

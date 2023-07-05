@@ -1,13 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Core.Combat.Scripts.Barks;
-using Save_Management;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
-using Utils.Extensions;
 using Utils.Patterns;
 
-namespace Main_Database.Combat
+namespace Core.Main_Database.Combat
 {
     public class BarkDatabase : SerializedScriptableObject
     {

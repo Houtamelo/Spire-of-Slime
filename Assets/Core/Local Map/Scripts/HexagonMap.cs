@@ -5,10 +5,10 @@ using Core.Local_Map.Scripts.Coordinates;
 using Core.Local_Map.Scripts.Events;
 using Core.Local_Map.Scripts.Events.Combat;
 using Core.Local_Map.Scripts.HexagonObject;
+using Core.Utils.Extensions;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
-using Utils.Extensions;
 
 namespace Core.Local_Map.Scripts
 {

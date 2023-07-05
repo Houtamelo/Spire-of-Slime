@@ -1,7 +1,7 @@
-﻿using DG.Tweening;
+﻿using Core.Utils.Extensions;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
-using Utils.Extensions;
 
 namespace Core.Game_Manager.Scripts
 {

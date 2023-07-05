@@ -1,9 +1,9 @@
 ﻿using Core.Combat.Scripts.Skills.Action;
+using Core.Utils.Extensions;
 using DG.Tweening;
 using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Extensions;
 
 namespace Core.Main_Characters.Nema.Combat.Skills.Woe.Anim
 {

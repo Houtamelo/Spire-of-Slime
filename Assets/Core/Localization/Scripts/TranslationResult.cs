@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Text;
+using Core.Utils.Extensions;
 using UnityEngine;
-using Utils.Extensions;
 
 namespace Core.Localization.Scripts
 {

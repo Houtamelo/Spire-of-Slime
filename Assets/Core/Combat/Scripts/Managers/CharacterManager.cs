@@ -15,15 +15,16 @@ using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Main_Characters.Nema.Combat;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using JetBrains.Annotations;
-using Save_Management;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Collections;
-using Utils.Extensions;
 using Utils.Patterns;
-using static Utils.Patterns.Option<Core.Combat.Scripts.Behaviour.CharacterStateMachine>;
-using Save = Save_Management.Save;
+using static Core.Utils.Patterns.Option<Core.Combat.Scripts.Behaviour.CharacterStateMachine>;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Combat.Scripts.Managers
 {

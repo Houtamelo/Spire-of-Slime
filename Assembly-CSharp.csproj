@@ -93,7 +93,7 @@
      <Compile Include="Assets\Core\Main Characters\Nema\Combat\Skills\Calm\Anim\CalmAnimator.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Managers\Enumerators\EnemyEnumerator.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Skills\Common Custom Stats\BonusVsMarkedStat.cs" />
-     <Compile Include="Assets\Core\Save Management\File\Stats\SecondaryUpgrade.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\Stats\SecondaryUpgrade.cs" />
      <Compile Include="Assets\Core\Game Manager\Scripts\CameraSetter.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\YarnSpinner.Compiler\DeclarationVisitor.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Skills\Action\ActionResult.cs" />
@@ -156,7 +156,7 @@
      <Compile Include="Assets\Core\Combat\Scripts\Character\Interfaces\Modules\IStatusApplierModule.cs" />
      <Compile Include="Assets\Core\Visual Novel\Scripts\DialogueController.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Character\DefaultModules\DefaultStateEvaluator.cs" />
-     <Compile Include="Assets\Core\Save Management\File\Stats\StatUtils.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\Stats\StatUtils.cs" />
      <Compile Include="Assets\Core\Local Map\Scripts\PathCreating\PathBetweenNodesBlueprint.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Skills\Action\Overlay\DesireThresholdOverlayAnimator.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Perks\PerkScriptable.cs" />
@@ -168,18 +168,18 @@
      <Compile Include="Assets\Core\Local Map\Scripts\Events\Dialogue\YarnSceneEvent.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\CombatTracker.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Skills\Action\DefaultActionSequence.cs" />
-     <Compile Include="Assets\Core\Save Management\File\Save.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\Save.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Character\Behaviour\UI\PredictionIconsDisplay.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Effects\Types\Perk\PerkStatusToApply.cs" />
      <Compile Include="Assets\Core\Utils\Extensions\ParsingExtensions.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\Runtime\LineMetadata.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\YarnSpinner\VirtualMachine.cs" />
-     <Compile Include="Assets\Core\Save Management\File\Save.Variables.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\Save.Variables.cs" />
      <Compile Include="Assets\Core\Main Database\Combat\BarkDatabase.cs" />
      <Compile Include="Assets\Unused\GUI PRO Kit - Fantasy RPG\Scripts\PanelFantasyRPG.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\YarnSpinner.Compiler\YarnSpinnerParserExpression.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Animations\CombatAnimation.cs" />
-     <Compile Include="Assets\Core\Save Management\File\SkillSet\IReadOnlySkillSet.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\SkillSet\IReadOnlySkillSet.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Effects\Types\Riposte\IRiposteModifier.cs" />
      <Compile Include="Assets\Core\Utils\Patterns\Result.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Skills\Action\ReadOnlyPaddingSettings.cs" />
@@ -199,7 +199,7 @@
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\Runtime\LineProviders\TextLineProvider.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\YarnSpinner\YarnSpinner.Markup\MarkupParseException.cs" />
      <Compile Include="Assets\Core\Pause Menu\Scripts\InputEnum.cs" />
-     <Compile Include="Assets\Core\Save Management\File\SkillSet\SkillSet.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\SkillSet\SkillSet.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Effects\StatusInstanceDescriptions.cs" />
      <Compile Include="Assets\Core\Pause Menu\Scripts\PlayerPrefsReferences.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\Runtime\VariableStorageBehaviour.cs" />
@@ -298,7 +298,7 @@
      <Compile Include="Assets\Core\Combat\Scripts\Effects\Types\Stun\StunToApply.cs" />
      <Compile Include="Assets\Core\Main Characters\Ethel\Combat\Perks\Duelist\Release.cs" />
      <Compile Include="Assets\Core\Utils\Extensions\UnityExtensions.cs" />
-     <Compile Include="Assets\Core\Save Management\File\Stats\PrimaryUpgrade.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\Stats\PrimaryUpgrade.cs" />
      <Compile Include="Assets\Core\World Map\Scripts\Helper.cs" />
      <Compile Include="Assets\Core\Main Characters\Ethel\Combat\Perks\Duelist\EnGarde.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\NemaClearingMistToggle.cs" />
@@ -313,7 +313,7 @@
      <Compile Include="Assets\Core\Audio\Scripts\MusicControllers\OldMusicController.cs" />
      <Compile Include="Assets\Core\Visual Novel\Data\Chapter 1\Scenes\Midnight Mayhem\MidnightMayhemWinningCondition.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Character\Interfaces\Modules\IStunModule.cs" />
-     <Compile Include="Assets\Core\Save Management\File\SkillSet\ReadOnlySkillSet.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\SkillSet\ReadOnlySkillSet.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\YarnSpinner.Compiler\YarnSpinnerParserListener.cs" />
      <Compile Include="Assets\Core\Local Map\Scripts\Coordinates\NeighborEnumerator.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Perks\PerkRecord.cs" />
@@ -333,7 +333,7 @@
      <Compile Include="Assets\Core\Localization\Scripts\TranslationUtils.cs" />
      <Compile Include="Assets\Core\Audio\Scripts\MusicManager.cs" />
      <Compile Include="Assets\Core\Utils\Patterns\Init.cs" />
-     <Compile Include="Assets\Core\Save Management\File\CleanString.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\CleanString.cs" />
      <Compile Include="Assets\Core\Main Characters\Nema\Combat\Perks\Healer\Adoration.cs" />
      <Compile Include="Assets\Core\Local Map\Scripts\HexagonObject\Cell.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\Runtime\Views\DialogueCharacterNameView.cs" />
@@ -344,7 +344,7 @@
      <Compile Include="Assets\Core\Main Database\Combat\SkillDatabase.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Skills\Interfaces\ICustomSkillStat.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Effects\Types\Lust\ILustModifier.cs" />
-     <Compile Include="Assets\Core\Save Management\File\VariablesName.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\VariablesName.cs" />
      <Compile Include="Assets\Core\Start Screen\Scripts\StartScreenManager.cs" />
      <Compile Include="Assets\Core\Local Map\Scripts\LocalMapTestInitiator.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Effects\Types\Marked\Marked.cs" />
@@ -429,10 +429,10 @@
      <Compile Include="Assets\Core\Utils\Handlers\ValueHandler.cs" />
      <Compile Include="Assets\Core\Main Characters\Nema\Combat\NemaAnimatorController.cs" />
      <Compile Include="Assets\Core\Local Map\Scripts\Enums\DiagonalEnum.cs" />
-     <Compile Include="Assets\Core\Save Management\File\Stats\GeneralStat.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\Stats\GeneralStat.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\YarnSpinner.Compiler\AssemblyInfo.cs" />
      <Compile Include="Assets\Core\UI\ImageAlphaThresholdChanger.cs" />
-     <Compile Include="Assets\Core\Save Management\File\Stats\IReadonlyCharacterStats.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\Stats\IReadonlyCharacterStats.cs" />
      <Compile Include="Assets\Core\Main Characters\Nema\Combat\Perks\Poison\Acceptance.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Character\Interfaces\Modules\IEventsHandler.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Character\Interfaces\Modules\IAIModule.cs" />
@@ -487,7 +487,7 @@
      <Compile Include="Assets\Core\Main Characters\Nema\Combat\Perks\BattleMage\Triumph.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Managers\PositionManager.cs" />
      <Compile Include="Assets\Core\Game Manager\Scripts\AreYouSurePanel.cs" />
-     <Compile Include="Assets\Core\Save Management\File\Stats\Save.StatEvents.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\Stats\Save.StatEvents.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Character\DefaultModules\DefaultStatsModule.cs" />
      <Compile Include="Assets\Core\Localization\Scripts\Language.cs" />
      <Compile Include="Assets\Core\Localization\Scripts\LocalizedTMP.cs" />
@@ -495,7 +495,7 @@
      <Compile Include="Assets\Core\Combat\Scripts\Character\DefaultModules\DefaultStunModule.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Character\DefaultModules\DefaultStatusModule.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\OtherStats.cs" />
-     <Compile Include="Assets\Core\Save Management\File\Serialization\SaveRecord.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\Serialization\SaveRecord.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\AI_Deprecated\Training\CombatTester.cs" />
      <Compile Include="Assets\Core\Main Menu\Scripts\SavesPanel.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Effects\Interfaces\IBaseIntAttributeModifier.cs" />
@@ -535,7 +535,7 @@
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\YarnSpinner\YarnSpinner.Markup\TagType.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Skills\Action\ActionUtils.cs" />
      <Compile Include="Assets\Core\Local Map\Scripts\PathCreating\HexagonGrid.cs" />
-     <Compile Include="Assets\Core\Save Management\File\Serialization\SavePoint.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\Serialization\SavePoint.cs" />
      <Compile Include="Assets\Core\Save Management\SaveFilesManager.cs" />
      <Compile Include="Assets\Core\Game Manager\Scripts\FadePanel.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\Runtime\LineProviders\AudioLineProvider.cs" />
@@ -585,7 +585,7 @@
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\YarnSpinner.Compiler\Upgrader\Upgraders\V1toV2\YarnSpinnerV1Parser.cs" />
      <Compile Include="Assets\Core\Utils\Collections\SafeDictionaryEnumerator.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\YarnSpinner.Compiler\IndentAwareLexer.cs" />
-     <Compile Include="Assets\Core\Save Management\File\SkillSet\SkillSetEnumerator.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\SkillSet\SkillSetEnumerator.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Character\CharacterRecord.cs" />
      <Compile Include="Assets\Core\Local Map\Scripts\Enums\TileType.cs" />
      <Compile Include="Assets\Core\Local Map\Scripts\Enums\IconType.cs" />
@@ -625,7 +625,7 @@
      <Compile Include="Assets\Core\Combat\Scripts\Skills\Action\Overlay\OverlayAnimator.cs" />
      <Compile Include="Assets\Core\Local Map\Scripts\PathCreating\PathTrio.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\AI_Deprecated\Behaviour\EffectValuesStruct.cs" />
-     <Compile Include="Assets\Core\Save Management\File\SkillSet\Save.Skills.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\SkillSet\Save.Skills.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\Runtime\Commands\YarnActionAttribute.cs" />
      <Compile Include="Assets\Core\Game Manager\Scripts\WorldTextCueManager.cs" />
      <Compile Include="Assets\Core\Local Map\Scripts\Events\Combat\ScriptableCombatEvent.cs" />
@@ -640,7 +640,7 @@
      <Compile Include="Assets\Core\Combat\Scripts\UI\TooltipSidePanel.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Effects\Types\Heal\HealScript.cs" />
      <Compile Include="Assets\Core\Utils\Math\MathExtensions.cs" />
-     <Compile Include="Assets\Core\Save Management\File\Stats\CharacterStats.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\Stats\CharacterStats.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Character\Interfaces\Modules\IModule.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\UI\SkillButton.cs" />
      <Compile Include="Assets\Core\Local Map\Scripts\Events\Rest\DefaultRestEvent.cs" />
@@ -653,7 +653,7 @@
      <Compile Include="Assets\Core\Combat\Scripts\Effects\Types\Riposte\RiposteScript.cs" />
      <Compile Include="Assets\Core\Utils\Patterns\ClampedPercentage.cs" />
      <Compile Include="Assets\Core\Visual Novel\Scripts\DialogueTracker.cs" />
-     <Compile Include="Assets\Core\Save Management\File\Stats\UpgradeHelper.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\Stats\UpgradeHelper.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\YarnSpinner\YarnSpinner.Markup\IAttributeMarkerProcessor.cs" />
      <Compile Include="Assets\Core\Main Characters\Nema\Combat\Perks\Healer\Alarmed.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\Runtime\Views\DialogueAdvanceInput.cs" />
@@ -673,7 +673,7 @@
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\Runtime\YarnProject.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\BackgroundGeneration\LightController.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Character\Enums\CombatStat.cs" />
-     <Compile Include="Assets\Core\Save Management\File\ExhaustionEnum.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\ExhaustionEnum.cs" />
      <Compile Include="Assets\Core\Game Manager\Scripts\LoadingTextAnimator.cs" />
      <Compile Include="Assets\Core\Main Database\World Map\WorldPathDatabase.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Character\Behaviour\AnimationStatus.cs" />
@@ -702,7 +702,7 @@
      <Compile Include="Assets\Core\Character Panel\Scripts\Perks\PerkGroup.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\Runtime\LineProviders\LineProviderBase.cs" />
      <Compile Include="Assets\Core\Misc\ErrorLoguer.cs" />
-     <Compile Include="Assets\Core\Save Management\File\Stats\Corruption.cs" />
+     <Compile Include="Assets\Core\Save Management\SaveObjects\Stats\Corruption.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Character\Behaviour\Rendering\ICharacterAnimatorController.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Skills\SkillUtils.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Effects\Types\Perk\PerkStatusScript.cs" />
@@ -959,7 +959,7 @@
      <None Include="Assets\StreamingAssets\Logs\05-11-2022 13-19-14.txt" />
      <Folder Include="Assets\Core\Main Characters\Nema\Combat\Skills\Pride" />
      <Folder Include="Assets\Core\Character Panel\UI\Skills" />
-     <Folder Include="Assets\Core\Save Management\File" />
+     <Folder Include="Assets\Core\Save Management\SaveObjects" />
      <Folder Include="Assets\Core\Main Menu\Scene_MainMenu" />
      <Folder Include="Assets\Core\Local Map\Data\Paths\Tiles\Sprites\Tiles Ocean Plain Dark" />
      <Folder Include="Assets\Core\Visual Novel\Data\Resources\Ch.1\AMBIENCE" />
@@ -976,7 +976,6 @@
      <Folder Include="Assets\Unused\GUI PRO Kit - Fantasy RPG\ResourcesData\Sprites\Demo\Demo_Background" />
      <Folder Include="Assets\Core\Combat\UI\SkillButton" />
      <Folder Include="Assets\Core\Local Map\Data\Paths\Tiles\Sprites\Tiles Grassland Dense Covered Green" />
-     <Folder Include="Assets\Scripts" />
      <Folder Include="Assets\Core\Local Map\Scripts" />
      <None Include="Assets\StreamingAssets\Logs\06-23-2022 20-30-50.txt" />
      <Folder Include="Assets\Core\Local Map\Data\Paths\Chapel - Grove\Background\20-props\props\Crabdabra remains" />
@@ -1054,7 +1053,7 @@
      <Folder Include="Assets\Core\Combat\Data\Enemies\Bell Plant\Skills\Invigorating Fluids" />
      <None Include="Assets\StreamingAssets\Logs\07-14-2022 16-11-04.txt" />
      <Folder Include="Assets\Core\Main Menu\UI" />
-     <Folder Include="Assets\Core\Save Management\File\SkillSet" />
+     <Folder Include="Assets\Core\Save Management\SaveObjects\SkillSet" />
      <Folder Include="Assets\Core\Local Map\Data\Paths\Chapel - Grove\Background\3-toggleable\4-mutually exclusive" />
      <Folder Include="Assets\Core\Main Menu\Background\02-char" />
      <None Include="Assets\StreamingAssets\Logs\07-22-2022 22-33-30.txt" />
@@ -1086,7 +1085,7 @@
      <Folder Include="Assets\Core\Main Menu\Background\Animations\Light Circle Position" />
      <Folder Include="Assets\Core\Main Characters\Nema\Combat\Skills\Pride\Anim" />
      <Folder Include="Assets\Core\Combat\Data\Enemies\Jelly Crown Mirror Image\Skills\Entrance\Anim" />
-     <Folder Include="Assets\Core\Save Management\File\Stats" />
+     <Folder Include="Assets\Core\Save Management\SaveObjects\Stats" />
      <Folder Include="Assets\Core\Main Characters\Ethel\Combat\Skills\Jolt" />
      <Folder Include="Assets\Unused\Samples\BigSisSwing\SwingSequence-20220507T153718Z-001" />
      <Folder Include="Assets\Core\Local Map\Data\Paths\Forest - Cave\Background\13 - Toggleable\14 - Props\StretchingSlime" />
@@ -1223,7 +1222,7 @@
      <None Include="Assets\StreamingAssets\Logs\05-09-2022 19-02-21.txt" />
      <Folder Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\YarnSpinner\obj" />
      <None Include="Assets\StreamingAssets\Logs\05-10-2022 18-21-23.txt" />
-     <Folder Include="Assets\Core\Save Management\File\Serialization" />
+     <Folder Include="Assets\Core\Save Management\SaveObjects\Serialization" />
      <Folder Include="Assets\Core\Audio\Data\Soundtracks" />
      <None Include="Assets\StreamingAssets\Logs\08-03-2022 22-51-46.txt" />
      <Folder Include="Assets\Core\Utils\Handlers" />

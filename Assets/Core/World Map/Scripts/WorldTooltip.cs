@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
-using Animation;
+using Core.Animation;
+using Core.Utils.Patterns;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;

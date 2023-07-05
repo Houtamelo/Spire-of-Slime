@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Utils.Editor
+namespace Core.Utils.Editor
 {
     [InitializeOnLoad]
     public static class PlayTestManager

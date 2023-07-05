@@ -1,6 +1,6 @@
-﻿using DG.Tweening;
+﻿using Core.Utils.Extensions;
+using DG.Tweening;
 using UnityEngine;
-using Utils.Extensions;
 
 namespace Core.Local_Map.Scripts
 {

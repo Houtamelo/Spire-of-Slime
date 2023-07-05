@@ -4,8 +4,9 @@ using Core.Combat.Scripts.Effects.Interfaces;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Skills.Action;
+using Core.Utils.Collections;
+using Core.Utils.Patterns;
 using UnityEngine;
-using Utils.Collections;
 using Utils.Patterns;
 using static Core.Combat.Scripts.Interfaces.Modules.IStaminaModule;
 

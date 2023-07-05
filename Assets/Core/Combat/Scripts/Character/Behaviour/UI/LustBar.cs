@@ -1,11 +1,12 @@
 ﻿using Core.Combat.Scripts.Interfaces.Modules;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Extensions;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Behaviour.UI

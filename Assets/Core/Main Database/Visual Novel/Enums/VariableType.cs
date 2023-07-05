@@ -1,4 +1,4 @@
-﻿namespace Main_Database.Visual_Novel.Enums
+﻿namespace Core.Main_Database.Visual_Novel.Enums
 {
     public enum VariableType
     {

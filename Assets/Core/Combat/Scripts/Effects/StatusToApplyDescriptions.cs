@@ -15,10 +15,10 @@ using Core.Combat.Scripts.Effects.Types.Riposte;
 using Core.Combat.Scripts.Effects.Types.Stun;
 using Core.Combat.Scripts.Effects.Types.Summon;
 using Core.Combat.Scripts.Effects.Types.Tempt;
+using Core.Utils.Extensions;
+using Core.Utils.Math;
 using KGySoft.CoreLibraries;
 using UnityEngine;
-using Utils.Extensions;
-using Utils.Math;
 using static Core.Combat.Scripts.ColorReferences;
 
 namespace Core.Combat.Scripts.Effects

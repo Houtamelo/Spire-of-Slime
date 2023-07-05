@@ -4,7 +4,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-namespace Main_Database.Editor
+namespace Core.Main_Database.Editor
 {
     public static class Utils
     {

@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using Core.Character_Panel.Scripts.Skills;
-using Save_Management;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Extensions;
 using Utils.Patterns;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Character_Panel.Scripts.Positioning
 {

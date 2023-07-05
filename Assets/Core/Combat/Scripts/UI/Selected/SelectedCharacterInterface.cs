@@ -7,13 +7,13 @@ using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Utils.Extensions;
+using Core.Utils.Math;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Extensions;
-using Utils.Math;
 
 namespace Core.Combat.Scripts.UI.Selected
 {

@@ -5,10 +5,11 @@ using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Effects.Interfaces;
 using Core.Combat.Scripts.Effects.Types.Perk;
 using Core.Combat.Scripts.Interfaces.Modules;
-using Save_Management;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Patterns;
 using UnityEngine;
 using Utils.Patterns;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Combat.Scripts.Effects.Types.NemaExhaustion
 {

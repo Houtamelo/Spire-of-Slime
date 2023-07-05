@@ -3,6 +3,7 @@ using Core.Combat.Scripts.Effects.Types.Guarded;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Utils.Patterns;
 using JetBrains.Annotations;
 using ListPool;
 using UnityEngine;

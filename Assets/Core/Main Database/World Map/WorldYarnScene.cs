@@ -1,9 +1,9 @@
-﻿using Core.World_Map.Scripts;
-using Main_Database.Visual_Novel;
+﻿using Core.Main_Database.Visual_Novel;
+using Core.World_Map.Scripts;
 using UnityEngine;
-using Save = Save_Management.Save;
+using Save = Core.Save_Management.SaveObjects.Save;
 
-namespace Main_Database.World_Map
+namespace Core.Main_Database.World_Map
 {
     [CreateAssetMenu(fileName = "world-scene_", menuName = "Database/WorldMap/Yarn Scene")]
     public class WorldYarnScene : ScriptableObject

@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.IO;
 using System.Text;
+using Core.Utils.Patterns;
 using KGySoft.CoreLibraries;
 using Sirenix.OdinInspector;
 using TMPro;
@@ -10,7 +11,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using Utils.Patterns;
 
-namespace Misc
+namespace Core.Misc
 {
     public sealed class ErrorLoguer : MonoBehaviour
     {

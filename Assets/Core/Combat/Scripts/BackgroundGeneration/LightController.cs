@@ -1,8 +1,8 @@
-﻿using DG.Tweening;
+﻿using Core.Utils.Extensions;
+using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
-using Utils.Extensions;
 
 namespace Core.Combat.Scripts.BackgroundGeneration
 {

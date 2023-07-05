@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Extensions;
 using Utils.Patterns;
 
 namespace Core.Game_Manager.Scripts

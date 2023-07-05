@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using Utils.Extensions;
-using Utils.Patterns;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 
-namespace Utils.Collections
+namespace Core.Utils.Collections
 {
     public class ListStack<T> : List<T>
     {

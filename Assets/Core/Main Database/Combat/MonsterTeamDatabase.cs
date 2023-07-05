@@ -3,14 +3,15 @@ using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Linq;
 using Core.Combat.Scripts;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
 using ListPool;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Extensions;
 using Utils.Patterns;
 
-namespace Main_Database.Combat
+namespace Core.Main_Database.Combat
 {
     public sealed class MonsterTeamDatabase : SerializedScriptableObject
     {

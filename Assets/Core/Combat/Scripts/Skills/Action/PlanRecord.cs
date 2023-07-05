@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Runtime.Serialization;
 using Core.Combat.Scripts.Behaviour;
-using Save_Management;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Patterns;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Skills.Action

@@ -1,7 +1,7 @@
 ﻿using Core.Combat.Scripts.Behaviour.UI;
+using Core.Utils.Extensions;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Extensions;
 
 namespace Core.Combat.Scripts.Managers
 {

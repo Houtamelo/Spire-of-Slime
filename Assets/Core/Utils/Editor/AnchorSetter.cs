@@ -1,7 +1,7 @@
 ﻿using JetBrains.Annotations;
 using UnityEngine;
 
-namespace Utils.Editor
+namespace Core.Utils.Editor
 {
     public class AnchorSetter : MonoBehaviour
     {

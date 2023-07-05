@@ -7,10 +7,11 @@ using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills.Action;
-using Main_Database.Combat;
-using Save_Management;
-using Utils.Collections;
-using Utils.Extensions;
+using Core.Main_Database.Combat;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections;
+using Core.Utils.Extensions;
+using Core.Utils.Patterns;
 using Utils.Patterns;
 
 namespace Core.Combat.Scripts

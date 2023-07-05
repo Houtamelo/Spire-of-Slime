@@ -3,7 +3,7 @@ using UnityEngine;
 
 // ReSharper disable InconsistentNaming
 
-namespace Save_Management
+namespace Core.Save_Management.SaveObjects
 {
     public partial class Save
     {
@@ -25,7 +25,7 @@ namespace Save_Management
             else
                 Booleans[variableName] = boolValue;
             
-            BoolChanged?.Invoke(variableName, oldValue, boolValue);
+            global::Core.Save_Management.SaveObjects.Save.BoolChanged?.Invoke(variableName, oldValue, boolValue);
         }
 
         public void SetVariable(CleanString variableName, CleanString stringValue)
@@ -42,7 +42,7 @@ namespace Save_Management
             else
                 Strings[variableName] = stringValue;
 
-            StringChanged?.Invoke(variableName, oldValue, stringValue);
+            global::Core.Save_Management.SaveObjects.Save.StringChanged?.Invoke(variableName, oldValue, stringValue);
         }
 
         public void SetVariable(CleanString variableName, float floatValue)
@@ -63,7 +63,7 @@ namespace Save_Management
             else
                 Floats[variableName] = floatValue;
 
-            FloatChanged?.Invoke(variableName, oldValue, floatValue);
+            global::Core.Save_Management.SaveObjects.Save.FloatChanged?.Invoke(variableName, oldValue, floatValue);
         }
         
         public T GetVariable<T>(CleanString variableName)
@@ -80,7 +80,7 @@ namespace Save_Management
                 return default;
             }
             
-            if (VariableDatabase.TryGetDefault(variableName, out stringValue))
+            if (global::Core.Save_Management.SaveObjects.Save.VariableDatabase.TryGetDefault(variableName, out stringValue))
             {
                 SetVariable(variableName, stringValue);
                 if (TryGetString(variableName, out stringValue))
@@ -117,7 +117,7 @@ namespace Save_Management
                 return default;
             }
             
-            if (VariableDatabase.TryGetDefault(variableName, out boolValue))
+            if (global::Core.Save_Management.SaveObjects.Save.VariableDatabase.TryGetDefault(variableName, out boolValue))
             {
                 SetVariable(variableName, boolValue);
                 if (TryGetBool(variableName, out boolValue))
@@ -148,7 +148,7 @@ namespace Save_Management
                 return default;
             }
             
-            if (VariableDatabase.TryGetDefault(variableName, out floatValue))
+            if (global::Core.Save_Management.SaveObjects.Save.VariableDatabase.TryGetDefault(variableName, out floatValue))
             {
                 SetVariable(variableName, floatValue);
                 if (TryGetFloat(variableName, out floatValue))

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Utils.Patterns
+namespace Core.Utils.Patterns
 {
     public readonly struct Result<T>
     {

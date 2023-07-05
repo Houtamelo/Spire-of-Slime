@@ -12,7 +12,7 @@ using Core.Combat.Scripts.Effects.Types.Poison;
 using Core.Combat.Scripts.Effects.Types.Riposte;
 using Core.Combat.Scripts.Effects.Types.Stun;
 using Core.Combat.Scripts.Effects.Types.Tempt;
-using Utils.Collections;
+using Core.Utils.Collections;
 
 namespace Core.Combat.Scripts.Interfaces.Modules
 {
