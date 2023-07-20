@@ -8,12 +8,12 @@ using Core.Local_Map.Scripts.Events.Rest;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
+using JetBrains.Annotations;
 using KGySoft.CoreLibraries;
 using ListPool;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
-using Utils.Patterns;
 
 // ReSharper disable Unity.RedundantHideInInspectorAttribute
 
@@ -104,7 +104,7 @@ namespace Core.Main_Database.Local_Map
         }
         
 #if UNITY_EDITOR
-        public void AssignData(ICollection<ScriptableLocalMapEvent> mapEvents)
+        public void AssignData([NotNull] ICollection<ScriptableLocalMapEvent> mapEvents)
         {
             allEvents = mapEvents.ToArray();
             

@@ -3,7 +3,6 @@ using Core.Utils.Patterns;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 // ReSharper disable CompareOfFloatsByEqualityOperator
 

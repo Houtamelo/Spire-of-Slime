@@ -5,7 +5,9 @@ using Core.Local_Map.Scripts.Coordinates;
 using Core.Local_Map.Scripts.Events;
 using Core.Local_Map.Scripts.Events.Combat;
 using Core.Local_Map.Scripts.HexagonObject;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
@@ -34,7 +36,7 @@ namespace Core.Local_Map.Scripts
             return cell;
         }
 
-        public bool TryGetCell(Axial position, out Cell cellObject) => _map.TryGetValue(position, out cellObject);
+        public bool TryGetCell(Axial position, [CanBeNull] out Cell cellObject) => _map.TryGetValue(position, out cellObject);
 
         public float CellSize => _cellPrefab.Size;
 
@@ -59,10 +61,12 @@ namespace Core.Local_Map.Scripts
         {
 #if UNITY_EDITOR
             foreach (Cell cell in GetComponentsInChildren<Cell>())
+            {
                 if (Application.isPlaying)
                     Destroy(obj: cell.gameObject);
                 else
                     DestroyImmediate(obj: cell.gameObject);
+            }
 #endif
             
             foreach ((_, Cell cell) in _map)
@@ -80,7 +84,7 @@ namespace Core.Local_Map.Scripts
             GC.Collect(); // collecting because depending on the number of existing cells the memory allocated could be high
         }
 
-        public void GenerateMap(Cell.Record[] cells)
+        public void GenerateMap([NotNull] Cell.Record[] cells)
         {
             ClearCells();
             foreach (Cell.Record record in cells)
@@ -120,7 +124,7 @@ namespace Core.Local_Map.Scripts
             _map.Values.DoForEach(cell =>
             {
                 if (cell.AssignedEvent.TrySome(out (ILocalMapEvent mapEvent, float multiplier) assignedEvent) && assignedEvent.mapEvent is DefaultCombatEvent)
-                    cell.SetEvent(null, 0f, true);
+                    cell.SetEvent(mapEvent: null, multiplier: 0f, overrideExisting: true);
             });
         }
         #endif

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.World_Map.Scripts;
+using JetBrains.Annotations;
 using KGySoft.CoreLibraries;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -38,7 +40,7 @@ namespace Core.Main_Database.World_Map
                     foreach (WorldPath path in allPaths)
                     {
                         OneWay pathWay = new(path.origin, path.destination);
-                        if (way == pathWay || (path.IsBothWays && (BothWays)way == (BothWays)pathWay))
+                        if (way == pathWay || (path.IsBothWays && way == (BothWays)pathWay))
                             paths.Add(path);
                     }
 
@@ -50,13 +52,18 @@ namespace Core.Main_Database.World_Map
             
 #if UNITY_EDITOR
             foreach (WorldPath[] paths in _mappedPaths.Values)
+            {
                 for (int i = 0; i < paths.Length - 1; i++)
+                {
                     if (paths[i] == paths[i + 1])
                         Debug.LogWarning($"Two paths with same priority and location: {paths[i].name} - {paths[i + 1].name}", context: paths[i]);
+                }
+            }
 #endif
         }
 
         /// <summary> Returns only paths that start in origin. Key is destination. </summary>
+        [NotNull]
         public static Dictionary<LocationEnum, WorldPath> GetAvailablePathsFrom(LocationEnum origin)
         {
             WorldPathDatabase database = Instance.WorldPathDatabase;
@@ -80,15 +87,13 @@ namespace Core.Main_Database.World_Map
             }
 
             if (LOG)
-            {
                 Debug.Log($"Paths found: \n    {paths.ElementsToString()}");
-            }
-            
+
             return paths;
         }
 
 #if UNITY_EDITOR        
-        public void AssignData(IEnumerable<WorldPath> worldPaths)
+        public void AssignData([NotNull] IEnumerable<WorldPath> worldPaths)
         {
             allPaths = worldPaths.ToArray();
             UnityEditor.EditorUtility.SetDirty(this);

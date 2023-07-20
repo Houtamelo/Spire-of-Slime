@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Core.Combat.Scripts.Perks;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using ListPool;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Main_Database.Combat
 {
@@ -20,7 +21,7 @@ namespace Core.Main_Database.Combat
         
         private readonly Dictionary<CleanString, PerkScriptable> _mappedPerks = new();
 
-        public static ReadOnlySpan<IPerk> GetPerks(ref ValueListPool<CleanString> perkKeys)
+        public static ReadOnlySpan<IPerk> GetPerks(ref CustomValuePooledList<CleanString> perkKeys)
         {
             IPerk[] perks = new IPerk[perkKeys.Count];
             for (int index = 0; index < perkKeys.Count; index++)
@@ -47,7 +48,7 @@ namespace Core.Main_Database.Combat
         }
 
 #if UNITY_EDITOR        
-        public void AssignData(IEnumerable<PerkScriptable> perks)
+        public void AssignData([NotNull] IEnumerable<PerkScriptable> perks)
         {
             allPerks = perks.ToArray();
             UnityEditor.EditorUtility.SetDirty(this);

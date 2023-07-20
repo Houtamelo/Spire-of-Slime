@@ -1,14 +1,13 @@
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using Core.Combat.Scripts;
+using Core.Main_Characters.Ethel.Combat;
 using Core.Main_Characters.Nema.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Patterns;
-using Data.Main_Characters.Ethel;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Main_Database.Combat
 {
@@ -29,7 +28,7 @@ namespace Core.Main_Database.Combat
 
         private readonly Dictionary<CleanString, CharacterScriptable> _mappedCharacters = new();
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         public static Option<CharacterScriptable> GetCharacter(CleanString key) 
             => Instance.CharacterDatabase._mappedCharacters.TryGetValue(key, out CharacterScriptable character) ? character : Option<CharacterScriptable>.None;
 
@@ -44,7 +43,7 @@ namespace Core.Main_Database.Combat
         }
 
 #if UNITY_EDITOR  
-        public void AssignData(IEnumerable<CharacterScriptable> characters)
+        public void AssignData([NotNull] IEnumerable<CharacterScriptable> characters)
         {
             allCharacters = characters.ToArray();
             UnityEditor.EditorUtility.SetDirty(this);

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace Core.Utils.Collections
 {
@@ -6,10 +7,9 @@ namespace Core.Utils.Collections
     {
         private readonly IComparer<T> _comparer;
 
-        public SelfSortingList(IComparer<T> comparer)
-        {
-            _comparer = comparer;
-        }
+        public SelfSortingList(IComparer<T> comparer) => _comparer = comparer;
+
+        public SelfSortingList(int capacity, IComparer<T> comparer) : base(capacity) => _comparer = comparer;
 
         public new void Add(T item)
         {
@@ -19,7 +19,7 @@ namespace Core.Utils.Collections
             Insert(index: index, item: item);
         }
         
-        public new void AddRange(IEnumerable<T> collection)
+        public new void AddRange([NotNull] IEnumerable<T> collection)
         {
             foreach (T item in collection)
                 Add(item: item);
@@ -33,7 +33,7 @@ namespace Core.Utils.Collections
             base.Insert(index: newIndex, item: item);
         }
         
-        public new void InsertRange(int index, IEnumerable<T> collection)
+        public new void InsertRange(int index, [NotNull] IEnumerable<T> collection)
         {
             foreach (T item in collection)
                 Insert(index: index, item: item);

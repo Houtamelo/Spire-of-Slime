@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -48,8 +49,8 @@ namespace Core.Local_Map.Scripts.Coordinates
             unchecked
             {
                 int hash = 17;
-                hash = hash * 23 + q.GetHashCode();
-                hash = hash * 23 + r.GetHashCode();
+                hash = (hash * 23) + q.GetHashCode();
+                hash = (hash * 23) + r.GetHashCode();
                 return hash;
             }
         }
@@ -73,7 +74,7 @@ namespace Core.Local_Map.Scripts.Coordinates
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3 ToWorldCoordinates(float size)
         {
-            float x = size * (Sqrt3 * q + Sqrt3Half * r);
+            float x = size * ((Sqrt3 * q) + (Sqrt3Half * r));
             float y = size * (-1.5f * r);
             return new Vector3(x, y, 0f);
         }
@@ -81,7 +82,7 @@ namespace Core.Local_Map.Scripts.Coordinates
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Offset ToOffset()
         {
-            int col = q + (r - (r & 1)) / 2;
+            int col = q + ((r - (r & 1)) / 2);
             int row = r;
             return new Offset(col: col, row: row);
         }
@@ -111,18 +112,18 @@ namespace Core.Local_Map.Scripts.Coordinates
             
             return bestMatch;
         }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NotNull]
         public string GetData() => $"{q.ToString()},{r.ToString()}";
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Axial FromData(string data)
+        public static Axial FromData([NotNull] string data)
         {
             string[] split = data.Split(separator: ',');
             return new Axial(q1: int.Parse(s: split[0]), r1: int.Parse(s: split[1]));
         }
 
-        public static bool TryParseData(string data, out Axial axial)
+        public static bool TryParseData([CanBeNull] string data, out Axial axial)
         {
             if (string.IsNullOrEmpty(data))
             {

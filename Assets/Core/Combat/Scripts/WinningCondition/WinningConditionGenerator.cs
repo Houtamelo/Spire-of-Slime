@@ -1,5 +1,7 @@
 ﻿using System;
+using Core.Utils.Math;
 using Core.Visual_Novel.Data.Chapter_1.Scenes.Midnight_Mayhem;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using CombatManager = Core.Combat.Scripts.Managers.CombatManager;
@@ -15,7 +17,7 @@ namespace Core.Combat.Scripts.WinningCondition
         private ConditionType conditionType = ConditionType.DefeatAll;
 
         [SerializeField, ShowIf(nameof(ShowDuration))]
-        private float duration;
+        private TSpan duration;
 
         [SerializeField, ShowIf(nameof(IsMidnightMayhem))]
         private CharacterScriptable characterToSpawn;
@@ -23,6 +25,7 @@ namespace Core.Combat.Scripts.WinningCondition
         [SerializeField, ShowIf(nameof(IsMidnightMayhem))]
         private int spawnCount;
 
+        [NotNull]
         public IWinningCondition GenerateCondition(CombatManager combatManager)
         {
             return conditionType switch

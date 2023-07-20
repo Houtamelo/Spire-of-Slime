@@ -1,12 +1,14 @@
 ﻿using System;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Save_Management.SaveObjects
 {
     public record SkillSet(CleanString One, CleanString Two, CleanString Three, CleanString Four) : IReadOnlySkillSet, IDeepCloneable<SkillSet>
     {
+        public const int MaxSkills = 4;
+        
         public CleanString One { get; set; } = One;
         public CleanString Two { get; set; } = Two;
         public CleanString Three { get; set; } = Three;
@@ -43,6 +45,7 @@ namespace Core.Save_Management.SaveObjects
         }
 
         public SkillSetEnumerator GetEnumerator() => new(this);
+        [NotNull]
         public SkillSet DeepClone() => new(One, Two, Three, Four);
     }
 }

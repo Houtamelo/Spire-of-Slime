@@ -6,17 +6,18 @@ using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Localization.Scripts;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Interfaces
 {
     public interface ICharacterScript
     {
         CleanString Key { get; }
-        string CharacterName { get; }
+        LocalizedText CharacterName { get; }
         
         GameObject RendererPrefab { get; }
         float IdleGraphicalX { get; }
@@ -25,53 +26,52 @@ namespace Core.Combat.Scripts.Interfaces
         Option<RuntimeAnimatorController> GetPortraitAnimation { get; }
         Option<Color> GetPortraitBackgroundColor { get; }
         Option<Sprite> GetPortrait { get; }
-        Sprite LustPromptPortrait { get; }
 
         byte Size { get; }
         Race Race { get; }
 
-        float Speed { get; }
-        (uint lower, uint upper) Damage { get; }
+        int Speed { get; }
+        (int lower, int upper) Damage { get; }
 
-        uint Stamina { get; }
-        uint StaminaAmplitude { get; }
-        float Resilience { get; }
+        int Stamina { get; }
+        int StaminaAmplitude { get; }
+        int Resilience { get; }
 
-        float PoisonResistance { get; }
-        float PoisonApplyChance { get; }
+        int PoisonResistance { get; }
+        int PoisonApplyChance { get; }
 
-        float DebuffResistance { get; }
-        float DebuffApplyChance { get; }
+        int DebuffResistance { get; }
+        int DebuffApplyChance { get; }
 
-        float MoveResistance { get; }
-        float MoveApplyChance { get; }
+        int MoveResistance { get; }
+        int MoveApplyChance { get; }
         
-        float ArousalApplyChance { get; }
+        int ArousalApplyChance { get; }
 
-        float StunRecoverySpeed { get; }
+        int StunMitigation { get; }
 
-        float Accuracy { get; }
-        float Critical { get; }
-        float Dodge { get; }
+        int Accuracy { get; }
+        int CriticalChance { get; }
+        int Dodge { get; }
 
         bool IsControlledByPlayer { get; }
         bool IsGirl { get; }
         bool CanActAsGirl => IsGirl && CombatManager.Instance.TrySome(out CombatManager combatManager) && combatManager.CombatSetupInfo.AllowLust;
 
-        float ExpMultiplier { get; }
+        double ExpMultiplier { get; }
 
-        IReadOnlyList<ISkill> Skills { get; }
-        IReadOnlyList<ISkill> GetAllPossibleSkills();
+        ReadOnlySpan<ISkill> Skills { get; }
+        ReadOnlySpan<ISkill> GetAllPossibleSkills();
         ReadOnlySpan<IPerk> GetStartingPerks { get; }
 
-        uint Lust { get; }
-        ClampedPercentage Temptation { get; }
-        float Composure { get; }
-        uint OrgasmLimit { get; }
-        uint OrgasmCount { get; }
+        int Lust { get; }
+        int Temptation { get; }
+        int Composure { get; }
+        int OrgasmLimit { get; }
+        int OrgasmCount { get; }
         
-        float OrgasmDuration { get; }
-        float DownedTime { get; }
+        TSpan OrgasmDuration { get; }
+        TSpan DownedTime { get; }
 
         Option<string> GetBark(BarkType barkType, CharacterStateMachine character);
         

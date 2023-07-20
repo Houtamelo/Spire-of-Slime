@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -41,7 +42,7 @@ namespace Core.Combat.Scripts.UI
             optionsBox.SetActive(true);
         }
         
-        public void ShowOptions(Vector3 worldPosition, params (string text, UnityAction onClick)[] options)
+        public void ShowOptions(Vector3 worldPosition, [NotNull] params (string text, UnityAction onClick)[] options)
         {
             for (int i = _buttons.Count; i < options.Length; i++) 
                 CreateButton();

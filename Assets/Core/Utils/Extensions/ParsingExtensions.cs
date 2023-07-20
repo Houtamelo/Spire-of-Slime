@@ -10,6 +10,7 @@ namespace Core.Utils.Extensions
     {
         private static readonly JsonSerializerSettings JsonSettings = new() { TypeNameHandling = TypeNameHandling.All, Formatting = Formatting.Indented };
         
+        [NotNull]
         public static string CompactFormat(this Resolution resolution) 
             => $"{resolution.width.ToString()}x{resolution.height.ToString()}@{resolution.refreshRate.ToString()}";
 
@@ -103,6 +104,7 @@ namespace Core.Utils.Extensions
             }
         }
 
+        [NotNull]
         public static System.Random DeepClone(this System.Random source)
         {
             Option<string> serialized = source.CustomSerialize(logErrors: true);

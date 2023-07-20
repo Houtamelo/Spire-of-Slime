@@ -9,7 +9,6 @@ using Core.Utils.Patterns;
 using DG.Tweening;
 using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
 using Yarn.Unity;
 using Save = Core.Save_Management.SaveObjects.Save;
 
@@ -23,12 +22,12 @@ namespace Core.Visual_Novel.Scripts
     public static class YarnCommandHandler
     {
         [YarnCommand(YarnCommands.VarIncrement)]
-        public static void IncrementVariable(string variableName, float delta)
+        public static void IncrementVariable(string variableName, int delta)
         {
             if (Save.AssertInstance(out Save save) == false)
                 return;
 
-            save.TryGetFloat(variableName, out float current);
+            save.TryGetInt(variableName, out int current);
             save.SetVariable(variableName, current + delta);
         }
         
@@ -46,7 +45,7 @@ namespace Core.Visual_Novel.Scripts
                 cgHandler.End();
         }
 
-        [YarnCommand(YarnCommands.CgAnim)]
+        [YarnCommand(YarnCommands.CgAnim), CanBeNull]
         public static IEnumerator SetCgAnim(string fileName)
         {
             if (CgHandler.AssertInstance(out CgHandler cgHandler))
@@ -62,7 +61,7 @@ namespace Core.Visual_Novel.Scripts
                 cgHandler.SetAnimAsync(fileName);
         }
 
-        [YarnCommand(YarnCommands.FadeIn)]
+        [YarnCommand(YarnCommands.FadeIn), CanBeNull]
         public static IEnumerator FadeIn(float duration)
         {
             if (SceneFader.AssertInstance(out SceneFader sceneFader))
@@ -78,7 +77,7 @@ namespace Core.Visual_Novel.Scripts
                 sceneFader.FadeInAsync(duration);
         }
 
-        [YarnCommand(YarnCommands.FadeOut)]
+        [YarnCommand(YarnCommands.FadeOut), CanBeNull]
         public static IEnumerator FadeOut(float duration)
         {
             if (SceneFader.AssertInstance(out SceneFader sceneFader))
@@ -94,7 +93,7 @@ namespace Core.Visual_Novel.Scripts
                 sceneFader.FadeOutAsync(duration);
         }
 
-        [YarnCommand(YarnCommands.FadeInHard)]
+        [YarnCommand(YarnCommands.FadeInHard), CanBeNull]
         public static IEnumerator FadeInHard() // this one uses the game manager fade which goes above everything.
         {
             if (GameManager.AssertInstance(out GameManager gameManager))
@@ -105,8 +104,8 @@ namespace Core.Visual_Novel.Scripts
 
             return null;
         }
-        
-        [YarnCommand(YarnCommands.FadeOutHard)]
+
+        [YarnCommand(YarnCommands.FadeOutHard), CanBeNull]
         public static IEnumerator FadeOutHard() // this one uses the game manager fade which goes above everything.
         {
             if (GameManager.AssertInstance(out GameManager gameManager))
@@ -132,7 +131,7 @@ namespace Core.Visual_Novel.Scripts
                 sfxManager.PlayMulti(fileName, volume);
         }
 
-        [YarnCommand(YarnCommands.SfxWait)]
+        [YarnCommand(YarnCommands.SfxWait), CanBeNull]
         public static IEnumerator PlaySfxWait(string fileName, float volume = 1f)
         {
             if (SfxManager.AssertInstance(out SfxManager sfxManager))
@@ -211,7 +210,7 @@ namespace Core.Visual_Novel.Scripts
                 gameManager.VisualNovelToLocalMap();
         }
 
-        [YarnCommand(YarnCommands.SetUI), UsedImplicitly]
+        [YarnCommand(YarnCommands.SetUI), UsedImplicitly, CanBeNull]
         public static IEnumerator SetUI(bool active, float duration = DialogueUIManager.FadeUIDefaultDuration)
         {
             if (DialogueUIManager.AssertInstance(out DialogueUIManager dialogueUIManager))
@@ -257,14 +256,14 @@ namespace Core.Visual_Novel.Scripts
         public static void AwardPrimaryUpgradePoint(string characterKey, int points)
         {
             if (Save.AssertInstance(out Save save))
-                save.AwardPrimaryPoint(characterKey, (uint)points);
+                save.AwardPrimaryPoint(characterKey, points);
         }
         
         [YarnCommand(YarnCommands.AwardSecondaryUpgradePoint)]
         public static void AwardSecondaryUpgradePoint(string characterKey, int points)
         {
             if (Save.AssertInstance(out Save save))
-                save.AwardSecondaryPoint(characterKey, (uint)points);
+                save.AwardSecondaryPoint(characterKey, points);
         }
 
         [YarnCommand(YarnCommands.AwardPerk)]

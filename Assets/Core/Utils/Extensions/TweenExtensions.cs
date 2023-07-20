@@ -1,4 +1,5 @@
 ﻿using DG.Tweening;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Core.Utils.Extensions
@@ -7,7 +8,7 @@ namespace Core.Utils.Extensions
     {
         public static Tween DummyTween() => DOVirtual.DelayedCall(0.0001f, () => { });
 
-        public static Tween DOFade(this SpriteRenderer[] renderers, float endValue, float duration)
+        public static Tween DOFade([NotNull] this SpriteRenderer[] renderers, float endValue, float duration)
         {
             Sequence sequence = DOTween.Sequence();
             foreach (SpriteRenderer renderer in renderers)

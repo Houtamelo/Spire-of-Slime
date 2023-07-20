@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 
 namespace Core.Utils.Patterns
 {
@@ -28,6 +29,7 @@ namespace Core.Utils.Patterns
             Resolved?.Invoke(_result);
         }
 
+        [NotNull]
         public Promise<T> OnResolve(Action<T> action)
         {
             if (Done)

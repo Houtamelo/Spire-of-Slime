@@ -3,12 +3,12 @@ using Core.Game_Manager.Scripts;
 using Core.Save_Management;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Main_Menu.Scripts
 {
@@ -54,7 +54,7 @@ namespace Core.Main_Menu.Scripts
             _confirmDeleteAudioSource = confirmDeleteAudioSource;
         }
 
-        public void SetSave(SaveRecord record)
+        public void SetSave([NotNull] SaveRecord record)
         {
             saveName.text = record.Name;
             _saveRecord = record;

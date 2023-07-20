@@ -2,10 +2,10 @@
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Visual_Novel.Scripts
 {
@@ -26,6 +26,7 @@ namespace Core.Visual_Novel.Scripts
             };
         }
 
+        [CanBeNull]
         public IEnumerator FadeIn(float duration)
         {
             _fadeTween?.Complete(withCallbacks: true);
@@ -57,6 +58,7 @@ namespace Core.Visual_Novel.Scripts
                 _fadeTween = fadePanel.DOFade(endValue: 1f, duration).SetUpdate(isIndependentUpdate: false);
         }
 
+        [CanBeNull]
         public IEnumerator FadeOut(float duration)
         {
             _fadeTween?.Complete(withCallbacks: true);

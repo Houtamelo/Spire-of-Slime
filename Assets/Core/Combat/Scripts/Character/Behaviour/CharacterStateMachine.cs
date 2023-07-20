@@ -3,21 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using Core.Combat.Scripts.Animations;
 using Core.Combat.Scripts.Barks;
-using Core.Combat.Scripts.DefaultModules;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects;
 using Core.Combat.Scripts.Effects.Types.Mist;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Interfaces;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills.Action;
+using Core.Combat.Scripts.Timeline;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
 
 // ReSharper disable Unity.NoNullPropagation
 
@@ -25,33 +28,31 @@ namespace Core.Combat.Scripts.Behaviour
 {
     public class CharacterStateMachine : IEquatable<CharacterStateMachine>
     {
-        public CharacterStateMachine(ICharacterScript script, CharacterDisplay display, Guid guid, bool isLeftSide, bool mistExists, CombatSetupInfo.RecoveryInfo recoveryInfo)
+        public CharacterStateMachine([NotNull] ICharacterScript script, DisplayModule display, Guid guid, bool isLeftSide, bool mistExists, CombatSetupInfo.RecoveryInfo recoveryInfo)
         {
             Script = script;
             Guid = guid;
 
-            PositionHandler = DefaultPositionHandler.FromInitialSetup(this, isLeftSide);
+            PositionHandler = DefaultPositionHandler.FromInitialSetup(owner: this, isLeftSide);
             Events = new DefaultEventsHandler();
-            SkillModule = new DefaultSkillModule(this);
-            
+            SkillModule = new DefaultSkillModule(owner: this);
             StaminaModule = DefaultStaminaModule.FromInitialSetup(this);
-
             StatsModule = DefaultStatsModule.FromInitialSetup(this);
             ResistancesModule = DefaultResistancesModule.FromInitialSetup(this);
-            RecoveryModule = DefaultRecoveryModule.FromInitialSetup(this, recoveryInfo);
+            RecoveryModule = DefaultRecoveryModule.FromInitialSetup(owner: this, recoveryInfo);
             ChargeModule = DefaultChargeModule.FromInitialSetup(this);
             StunModule = DefaultStunModule.FromInitialSetup(this);
-            StatusModule = new DefaultStatusModule(this);
+            StatusReceiverModule = new DefaultStatusReceiverModule(owner:this);
             StatusApplierModule = DefaultStatusApplierModule.FromInitialSetup(this);
-            PerksModule = new DefaultPerksModule(this);
-            AIModule = new DefaultAIModule(this);
+            PerksModule = new DefaultPerksModule(owner: this);
+            AIModule = new DefaultAIModule(owner: this);
 
             if (Script.CanActAsGirl)
             {
                 LustModule = DefaultLustModule.FromInitialSetup(this);
                 DownedModule = DefaultDownedModule.FromInitialSetup(this);
                 if (mistExists)
-                    MistStatus.CreateInstance(duration: 999999, isPermanent: true, owner: this);
+                    MistStatus.CreateInstance(duration: TSpan.MaxValue, isPermanent: true, owner: this);
             }
             else
             {
@@ -61,7 +62,7 @@ namespace Core.Combat.Scripts.Behaviour
             
             if (display != null)
             {
-                Display = Option<CharacterDisplay>.Some(display);
+                Display = Option<DisplayModule>.Some(display);
                 display.SetStateMachine(this);
             }
             else
@@ -73,7 +74,7 @@ namespace Core.Combat.Scripts.Behaviour
             foreach (IPerk perk in perkScriptables)
                 perk.CreateInstance(character: this);
 
-            StateEvaluator = new DefaultStateEvaluator(this);
+            StateEvaluator = DefaultStateEvaluator.FromInitialSetup(this);
             if (Display.IsSome)
             {
                 CharacterState state = StateEvaluator.PureEvaluate();
@@ -83,49 +84,37 @@ namespace Core.Combat.Scripts.Behaviour
             ForceUpdateDisplay();
         }
 
-        private CharacterStateMachine(CharacterRecord record, ICharacterScript script, CharacterDisplay display)
+        private CharacterStateMachine([NotNull] CharacterRecord record, ICharacterScript script, DisplayModule display)
         {
             Script = script;
             Guid = record.Guid;
-            AIModule = new DefaultAIModule(this);
-            Events = new DefaultEventsHandler();
-            SkillModule = new DefaultSkillModule(this);
-
-            PositionHandler = DefaultPositionHandler.FromRecord(this, record);
-            StaminaModule = DefaultStaminaModule.FromRecord(this, record);
-            StatsModule = DefaultStatsModule.FromRecord(this, record);
-            ResistancesModule = DefaultResistancesModule.FromRecord(this, record);
-            RecoveryModule = DefaultRecoveryModule.FromRecord(this, record);
-            ChargeModule = DefaultChargeModule.FromRecord(this, record);
-            StunModule = DefaultStunModule.FromRecord(this, record);
+            AIModule = record.AIModule.Deserialize(owner: this);
+            Events = record.EventsModule.Deserialize(owner: this);
+            SkillModule = record.SkillModule.Deserialize(owner: this);
+            PositionHandler = record.PositionModule.Deserialize(owner: this);
+            StaminaModule = StaminaModule != null ? Option<IStaminaModule>.Some(record.StaminaModule.Deserialize(owner: this)) : Option.None;
+            StatsModule = record.StatsModule.Deserialize(owner: this);
+            ResistancesModule = record.ResistancesModule.Deserialize(owner: this);
+            RecoveryModule = record.RecoveryModule.Deserialize(owner: this);
+            ChargeModule = record.ChargeModule.Deserialize(owner: this);
+            StunModule = record.StunModule.Deserialize(owner: this);
 
             if (display != null)
             {
-                Display = Option<CharacterDisplay>.Some(display);
+                Display = Option<DisplayModule>.Some(display);
                 display.SetStateMachine(this);
             }
             else
             {
                 Debug.LogWarning("Character display is null");
             }
-            
-            StatusModule = new DefaultStatusModule(this);
-            StatusApplierModule = DefaultStatusApplierModule.FromRecord(this, record);
-            PerksModule = new DefaultPerksModule(this);
 
-            if (record.IsGirl)
-            {
-                LustModule = DefaultLustModule.FromRecord(this, record);
-                DownedModule = DefaultDownedModule.FromRecord(this, record);
-                DownedModule.Value.SetBoth(record.DownedInitialDuration, record.DownedRemaining);
-            }
-            else
-            {
-                LustModule = Option<ILustModule>.None;
-                DownedModule = Option<IDownedModule>.None;
-            }
-
-            StateEvaluator = new DefaultStateEvaluator(this, record.IsDefeated, record.IsCorpse);
+            StatusReceiverModule = record.StatusReceiverModule.Deserialize(owner: this);
+            StatusApplierModule = record.StatusApplierModule.Deserialize(owner: this);
+            PerksModule = record.PerksModule.Deserialize(owner: this);
+            LustModule = record.LustModule != null ? Option<ILustModule>.Some(record.LustModule.Deserialize(owner: this)) : Option.None;
+            DownedModule = record.DownedModule != null ? Option<IDownedModule>.Some(record.DownedModule.Deserialize(owner: this)) : Option.None;
+            StateEvaluator = record.StateEvaluatorModule.Deserialize(owner: this);
 
             if (Display.IsSome)
             {
@@ -136,7 +125,7 @@ namespace Core.Combat.Scripts.Behaviour
             ForceUpdateDisplay();
         }
 
-        public static Option<CharacterStateMachine> FromSave(CharacterRecord record, CharacterDisplay characterDisplay)
+        public static Option<CharacterStateMachine> FromRecord([NotNull] CharacterRecord record, DisplayModule characterDisplay)
         {
             Option<CharacterScriptable> script = CharacterDatabase.GetCharacter(record.ScriptKey);
             if (script.IsNone)
@@ -145,7 +134,7 @@ namespace Core.Combat.Scripts.Behaviour
             return new CharacterStateMachine(record, script.Value, characterDisplay);
         }
 
-        public Option<CharacterDisplay> Display { get; private set; }
+        public Option<DisplayModule> Display { get; private set; }
         public Guid Guid { get; }
         public ICharacterScript Script { get; }
         public IStateEvaluator StateEvaluator { get; }
@@ -166,7 +155,7 @@ namespace Core.Combat.Scripts.Behaviour
         public IStunModule StunModule { get; }
 
         public IPerksModule PerksModule { get; }
-        public IStatusModule StatusModule { get; }
+        public IStatusReceiverModule StatusReceiverModule { get; }
         public IStatusApplierModule StatusApplierModule { get; }
 
         public IAIModule AIModule { get; }
@@ -182,7 +171,7 @@ namespace Core.Combat.Scripts.Behaviour
                 lustModule.SetLust(source.Lust);
         }
 
-        public void PrimaryTick(float timeStep)
+        public void PrimaryTick(TSpan timeStep)
         {
             CharacterState characterState = StateEvaluator.PureEvaluate();
             if (characterState is CharacterState.Defeated)
@@ -194,59 +183,28 @@ namespace Core.Combat.Scripts.Behaviour
             if (characterState is CharacterState.Corpse or CharacterState.Grappled or CharacterState.Grappling)
                 return;
             
-            if (Display.AssertSome(out CharacterDisplay display) == false)
+            if (Display.AssertSome(out DisplayModule display) == false)
                 return;
             
             if (DownedModule.TrySome(out IDownedModule downedModule) && downedModule.Tick(ref timeStep))
-            {
-                display.AllowTimelineIcon(true);
-                display.SetTimelineCuePosition(downedModule.GetEstimatedRealRemaining(), "Gets up", ColorReferences.Heal);
                 return;
-            }
 
             if (StunModule.Tick(ref timeStep))
-            {
-                display.AllowTimelineIcon(true);
-                display.SetTimelineCuePosition(StunModule.GetEstimatedRealRemaining(), "Stun ends", ColorReferences.Stun);
                 return;
-            }
-            
+
             if (LustModule.IsSome)
-            {
-                LustModule.Value.Tick(timeStep); // lust module does not consume timeStep
-            }
+                LustModule.Value.Tick(timeStep); // NOT Ref lust module does not consume timeStep
 
-            if (RecoveryModule.Tick(timeStep: ref timeStep))
-            {
-                display.AllowTimelineIcon(true);
-                display.SetTimelineCuePosition(RecoveryModule.GetEstimatedRealRemaining(), "Recovery ends", ColorReferences.Recovery);
+            if (RecoveryModule.Tick(ref timeStep))
                 return;
-            }
 
-            if (ChargeModule.Tick(timeStep: ref timeStep))
-            {
-                string label;
-                Color color;
-                if ((CombatManager.DEBUGMODE || PositionHandler.IsLeftSide) && SkillModule.PlannedSkill.TrySome(out PlannedSkill plan))
-                {
-                    color = plan.Skill.AllowAllies ? ColorReferences.Buff : ColorReferences.Debuff;
-                    label = $"{plan.Skill.DisplayName}=>{plan.Target.Script.CharacterName}";
-                }
-                else
-                {
-                    color = ColorReferences.Damage;
-                    label = "Action";
-                }
-
-                display.AllowTimelineIcon(true);
-                display.SetTimelineCuePosition(ChargeModule.GetEstimatedRealRemaining(), label, color);
+            if (ChargeModule.Tick(ref timeStep))
                 return;
-            }
-
-            display.AllowTimelineIcon(false);
 
             if (SkillModule.PlannedSkill.TrySome(out PlannedSkill plannedSkill) && plannedSkill is { Enqueued: false })
+            {
                 plannedSkill.Enqueue();
+            }
             else if ((SkillModule.PlannedSkill.IsNone || SkillModule.PlannedSkill.Value.IsDoneOrCancelled) && Display.IsSome)
             {
                 if (CombatManager.DEBUGMODE || Script.IsControlledByPlayer)
@@ -256,14 +214,14 @@ namespace Core.Combat.Scripts.Behaviour
             }
         }
 
-        public void SecondaryTick(in float timeStep)
+        public void SecondaryTick(in TSpan timeStep)
         {
-            StatusModule.Tick(timeStep);
+            StatusReceiverModule.Tick(timeStep);
             foreach (ITick tick in SubscribedTickers.FixedEnumerate())
                 tick.Tick(timeStep);
         }
 
-        public void AfterTickUpdate(in float timeStep)
+        public void AfterTickUpdate(in TSpan timeStep)
         {
             (CharacterState previous, CharacterState current) = StateEvaluator.OncePerTickStateEvaluation();
             foreach (IModule module in new ModulesEnumerator(this))
@@ -272,7 +230,7 @@ namespace Core.Combat.Scripts.Behaviour
 
         public void ForceUpdateDisplay()
         {
-            if (Display.AssertSome(out CharacterDisplay display) == false)
+            if (Display.AssertSome(out DisplayModule display) == false)
                 return;
 
             if (StaminaModule.IsSome)
@@ -294,7 +252,7 @@ namespace Core.Combat.Scripts.Behaviour
 
         public void AfterSkillDisplayUpdate()
         {
-            if (Display.TrySome(out CharacterDisplay display) == false)
+            if (Display.TrySome(out DisplayModule display) == false)
                 return;
             
             if (StaminaModule.IsSome)
@@ -313,19 +271,50 @@ namespace Core.Combat.Scripts.Behaviour
             display.CheckIndicators();
         }
 
+        public void FillTimelineEvents(in SelfSortingList<CombatEvent> events)
+        {
+            TSpan currentTime = TSpan.FromTicks(0);
+            
+            if (DownedModule.TrySome(out IDownedModule downedModule) && downedModule.GetRemaining().Ticks > 0)
+            {
+                currentTime += downedModule.GetEstimatedRemaining();
+                events.Add(CombatEvent.FromDownedEnd(owner: this, currentTime));
+            }
+            
+            if (StunModule.GetRemaining().Ticks > 0)
+            {
+                currentTime += StunModule.GetEstimatedRemaining();
+                events.Add(CombatEvent.FromStunEnd(owner: this, currentTime));
+            }
+            
+            if (RecoveryModule.GetRemaining().Ticks > 0)
+            {
+                currentTime += RecoveryModule.GetEstimatedRemaining();
+                events.Add(CombatEvent.FromTurn(owner: this, currentTime));
+            }
+            
+            if (ChargeModule.GetRemaining().Ticks > 0 && SkillModule.PlannedSkill.AssertSome(out PlannedSkill plannedSkill))
+            {
+                currentTime += ChargeModule.GetEstimatedRemaining();
+                events.Add(CombatEvent.FromAction(owner: this, currentTime, plannedSkill));
+            }
+
+            StatusReceiverModule.FillTimelineEvents(events);
+        }
+
         public void ForceUpdateTimelineCue()
         {
-            if (Display.IsNone)
+            //!todo fix this mess
+            /*if (Display.IsNone)
                 return;
 
             CharacterDisplay display = Display.Value;
-            display.AllowTimelineIcon(true);
             if (DownedModule.TrySome(out IDownedModule downedModule) && downedModule.GetRemaining() > 0)
-                display.SetTimelineCuePosition(downedModule.GetEstimatedRealRemaining(), "Gets up", ColorReferences.Heal);
+                display.SetTimelineCuePosition(downedModule.GetEstimatedRemaining(), "Gets up", ColorReferences.Heal);
             else if (StunModule.GetRemaining() > 0)
-                display.SetTimelineCuePosition(StunModule.GetEstimatedRealRemaining(), "Stun ends", ColorReferences.Stun);
+                display.SetTimelineCuePosition(StunModule.GetEstimatedRemaining(), "Stun ends", ColorReferences.Stun);
             else if (RecoveryModule.GetRemaining() > 0)
-                display.SetTimelineCuePosition(RecoveryModule.GetEstimatedRealRemaining(), "Recovery ends", ColorReferences.Recovery);
+                display.SetTimelineCuePosition(RecoveryModule.GetEstimatedRemaining(), "Recovery ends", ColorReferences.Recovery);
             else if (ChargeModule.GetRemaining() > 0)
             {
                 string label;
@@ -341,12 +330,12 @@ namespace Core.Combat.Scripts.Behaviour
                     color = ColorReferences.Damage;
                 }
                 
-                display.SetTimelineCuePosition(ChargeModule.GetEstimatedRealRemaining(), label, color);
+                display.SetTimelineCuePosition(ChargeModule.GetEstimatedRemaining(), label, color);
             }
             else
             {
                 display.AllowTimelineIcon(false);
-            }
+            }*/
         }
 
         public void OnZeroStamina()
@@ -356,20 +345,18 @@ namespace Core.Combat.Scripts.Behaviour
 
             StateEvaluator.OutOfForces();
         }
-        
+
         public void WasTargetedDuringSkillAnimation(ActionResult result, bool eligibleForHitAnimation, CharacterState stateBeforeAction)
         {
 #if UNITY_EDITOR
-            if (Display.TrySome(out CharacterDisplay self) && self.hasWire)
-            {
+            if (Display.TrySome(out DisplayModule self) && self.hasWire)
                 Debug.Log("Wired!");
-            }
 #endif
             
             if (Display.IsNone)
                 return;
 
-            CharacterDisplay display = Display.Value;
+            DisplayModule display = Display.Value;
             if (display.AnimationStatus is not AnimationStatus.Common) // something else is controlling the animation so we don't want to override it
                 return;
 
@@ -382,7 +369,7 @@ namespace Core.Combat.Scripts.Behaviour
                 return;
             }
 
-            display.CombatManager.Animations.CancelActionsOfCharacter(character: this, compensateChargeLost: false);
+            display.CombatManager.Animations.CancelActionsOfCharacter(character: this);
             CombatAnimation corpseAnimation = default;
             AnimationStatus desiredStatus;
             if (DownedModule.IsSome && DownedModule.Value.CanHandleNextZeroStamina())
@@ -393,7 +380,7 @@ namespace Core.Combat.Scripts.Behaviour
                 desiredStatus = AnimationStatus.Defeated;
             
             IActionSequence currentAction = display.CombatManager.Animations.CurrentAction;
-            bool willRiposteActivate = currentAction is { IsPlaying: true } && currentAction.Caster != this && currentAction.Targets != null && currentAction.Targets.Contains(this) && StatusModule.HasActiveStatusOfType(EffectType.Riposte);
+            bool willRiposteActivate = currentAction is { IsPlaying: true } && currentAction.Caster != this && currentAction.Targets != null && currentAction.Targets.Contains(this) && StatusReceiverModule.HasActiveStatusOfType(EffectType.Riposte);
 
             switch (desiredStatus)
             {
@@ -450,18 +437,19 @@ namespace Core.Combat.Scripts.Behaviour
         {
             PlayBark(barkType, otherCharacter: this, calculateProbability: true);
         }
-        
+
         public void Unsubscribe()
         {
-            StatusModule.RemoveAll();
+            StatusReceiverModule.RemoveAll();
             PerksModule.RemoveAll();
         }
-        
+
         public bool Equals(CharacterStateMachine other) => EqualityComparer<CharacterStateMachine>.Default.Equals(this, other);
+
 
         public void DisplayDestroyed()
         {
-            Display = Option<CharacterDisplay>.None;
+            Display = Option<DisplayModule>.None;
         }
     }
 }

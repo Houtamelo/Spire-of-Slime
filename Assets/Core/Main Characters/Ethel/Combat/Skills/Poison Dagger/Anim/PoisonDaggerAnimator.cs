@@ -3,13 +3,14 @@ using CartoonFX;
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills.Action;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.Utils.Objects;
 using Core.Utils.Patterns;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Main_Characters.Ethel.Combat.Skills.Poison_Dagger.Anim
 {
@@ -103,7 +104,9 @@ namespace Core.Main_Characters.Ethel.Combat.Skills.Poison_Dagger.Anim
                 }
 
                 if (target.IsSome)
+                {
                     duration = CharacterAsDestination(target.Value);
+                }
                 else
                 {
                     float worldX = outsideScreenWorldX;
@@ -150,9 +153,9 @@ namespace Core.Main_Characters.Ethel.Combat.Skills.Poison_Dagger.Anim
             _sequence.AppendCallback(_deactivateDagger);
         }
 
-        private float CharacterAsDestination(CharacterStateMachine target)
+        private float CharacterAsDestination([NotNull] CharacterStateMachine target)
         {
-            if (target.Display.AssertSome(out CharacterDisplay targetDisplay) == false || targetDisplay.GetBounds().AssertSome(out Bounds bounds) == false)
+            if (target.Display.AssertSome(out DisplayModule targetDisplay) == false || targetDisplay.GetBounds().AssertSome(out Bounds bounds) == false)
             {
                 float worldX = outsideScreenWorldX;
                 if (transform.position.x > 0f)
@@ -171,7 +174,7 @@ namespace Core.Main_Characters.Ethel.Combat.Skills.Poison_Dagger.Anim
             return duration;
         }
 
-        private static float PositionAsDestination(Sequence sequence, float speed, Vector3 localStartPosition, Transform daggerTransform, float worldX)
+        private static float PositionAsDestination(Sequence sequence, float speed, Vector3 localStartPosition, [NotNull] Transform daggerTransform, float worldX)
         {
             daggerTransform.localPosition = localStartPosition;
             Vector3 daggerWorldPosition = daggerTransform.position;

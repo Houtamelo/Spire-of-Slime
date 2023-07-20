@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Core.Character_Panel.Scripts.Skills
@@ -26,7 +27,7 @@ namespace Core.Character_Panel.Scripts.Skills
             this.upperRight = upperRight;
         }
 
-        public SerializableBounds(Vector3[] bounds)
+        public SerializableBounds([NotNull] Vector3[] bounds)
         {
             lowerLeft = bounds[0];
             lowerRight = bounds[1];

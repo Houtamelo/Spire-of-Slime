@@ -5,12 +5,14 @@ using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using ListPool;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Character_Panel.Scripts.Skills
@@ -84,7 +86,7 @@ namespace Core.Character_Panel.Scripts.Skills
             CheckAssignedSkills();
         }
 
-        public void OnSkillDragEnd(SkillDragable dragged)
+        public void OnSkillDragEnd([NotNull] SkillDragable dragged)
         {
             Option<ISkill> skillOption = dragged.Skill;
             if (skillOption.IsNone)
@@ -205,8 +207,8 @@ namespace Core.Character_Panel.Scripts.Skills
             IReadonlyCharacterStats stats = selectedCharacter.Value;
             Array.Fill(_setDragables, null);
             ICharacterScript characterScript = stats.GetScript();
-            IReadOnlyList<ISkill> allSkills = characterScript.GetAllPossibleSkills();
-            for (int i = _spawnedDragables.Count; i < allSkills.Count || i < 4; i++)
+            ReadOnlySpan<ISkill> allSkills = characterScript.GetAllPossibleSkills();
+            for (int i = _spawnedDragables.Count; i < allSkills.Length || i < 4; i++)
                 CreateDragable(availableSkillsGridLayout);
 
             IReadOnlySkillSet skillSet = stats.GetSkillSet();
@@ -256,8 +258,9 @@ namespace Core.Character_Panel.Scripts.Skills
                 dragableIndex++;
             }
 
-            using ValueListPool<int> indexesToSkip = new(allSkills.Count);
-            for (int index = 0; index < allSkills.Count; index++)
+            using CustomValuePooledList<int> indexesToSkip = new(allSkills.Length);
+            
+            for (int index = 0; index < allSkills.Length; index++)
             {
                 ISkill skill = allSkills[index];
                 bool unlocked = save.GetVariable<bool>(skill.Key);
@@ -330,6 +333,7 @@ namespace Core.Character_Panel.Scripts.Skills
             _currentSkillSetHash = skillSet.GetHashCode();
         }
 
+        [NotNull]
         private SkillDragable CreateDragable(Transform parent)
         {
             SkillDragable dragable = skillDragablePrefab.InstantiateWithFixedLocalScale(parent);
@@ -339,11 +343,8 @@ namespace Core.Character_Panel.Scripts.Skills
             return dragable;
         }
         
-        private static bool IsWithinBounds(SerializableBounds bounds, Vector3 position)
-        {
-            return position.x >= bounds[0].x && position.x <= bounds[2].x && position.y >= bounds[0].y && position.y <= bounds[2].y;
-        }
-        
+        private static bool IsWithinBounds(SerializableBounds bounds, Vector3 position) => position.x >= bounds[0].x && position.x <= bounds[2].x && position.y >= bounds[0].y && position.y <= bounds[2].y;
+
         public void SetOpen(bool open)
         {
             canvasGroup.alpha = open ? 1 : 0;
@@ -353,7 +354,7 @@ namespace Core.Character_Panel.Scripts.Skills
                 CheckAssignedSkills();
         }
 
-        public void OnSkillDragStart(SkillDragable skillDragable)
+        public void OnSkillDragStart([NotNull] SkillDragable skillDragable)
         {
             skillDragable.transform.SetParent(looseSkillsParent);
             skillDragable.transform.SetAsLastSibling();

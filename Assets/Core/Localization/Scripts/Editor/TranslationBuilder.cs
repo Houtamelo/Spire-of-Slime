@@ -4,12 +4,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using Core.Combat.Scripts.Barks;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using CsvHelper;
 using DeepL;
 using DeepL.Model;
 using JetBrains.Annotations;
 using KGySoft.CoreLibraries;
+using NJsonSchema;
 using UnityEditor;
 using UnityEngine;
 using static Core.Localization.Scripts.TranslationUtils;
@@ -143,6 +145,7 @@ namespace Core.Localization.Scripts.Editor
             }
         }
         
+        [NotNull]
         private static Dictionary<CleanString, string> GetEnglishDescriptions()
         {
             List<DescriptionData> descriptionsData;
@@ -229,6 +232,7 @@ namespace Core.Localization.Scripts.Editor
             }
         }
 
+        [NotNull]
         private static Dictionary<CleanString, string> GetEnglishBarks()
         {
             Dictionary<BarkType, List<BarkData>> barksData = Enum<BarkType>.GetValues().ToDictionary(bark => bark, _ => new List<BarkData>());
@@ -263,7 +267,8 @@ namespace Core.Localization.Scripts.Editor
             return allBarks;
         }
 
-        private static async Task<Dictionary<CleanString, string>> TranslateFromDeepL(HashSet<CleanString> keysToTranslate, Dictionary<CleanString, string> source, Language language, Translator translator)
+        [ItemNotNull]
+        private static async Task<Dictionary<CleanString, string>> TranslateFromDeepL([NotNull] HashSet<CleanString> keysToTranslate, Dictionary<CleanString, string> source, Language language, [NotNull] Translator translator)
         {
             TextTranslateOptions options = new() { PreserveFormatting = true };
             CleanString[] indexableKeys = keysToTranslate.ToArray();

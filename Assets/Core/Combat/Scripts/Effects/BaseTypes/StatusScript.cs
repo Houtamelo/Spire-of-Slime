@@ -4,24 +4,19 @@ using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Utils.Patterns;
-using Utils.Patterns;
+using JetBrains.Annotations;
 
 namespace Core.Combat.Scripts.Effects.BaseTypes
 {
     public abstract record StatusScript : IActualStatusScript
     {
-        protected const float BonusApplyChanceOnCrit = 0.5f;
-        public abstract EffectType EffectType { get; }
-        public abstract bool PlaysBarkAppliedOnCaster { get; }
-        public abstract bool PlaysBarkAppliedOnEnemy { get; }
-        public abstract bool PlaysBarkAppliedOnAlly { get; }
-        public abstract bool IsPositive { get; }
-        public abstract StatusResult ApplyEffect(CharacterStateMachine caster, CharacterStateMachine target, bool crit, ISkill skill = null);
-        public abstract string Description { get; }
-        public abstract float ComputePoints(ref SkillStruct skillStruct, CharacterStateMachine target);
-        public abstract StatusToApply GetStatusToApply(CharacterStateMachine caster, CharacterStateMachine target, bool crit, ISkill skill = null);
+        protected const int BonusApplyChanceOnCrit = 50;
+
+        [NotNull]
         public IActualStatusScript GetActual => this;
-        public virtual Option<PredictionIconsDisplay.IconType> GetPredictionIconType() => EffectType.GetPredictionIcon();
+
+        public abstract StatusToApply GetStatusToApply(CharacterStateMachine caster, CharacterStateMachine target, bool crit, ISkill skill = null);
+        public abstract StatusResult ApplyEffect(CharacterStateMachine caster, CharacterStateMachine target, bool crit, ISkill skill = null);
 
         public virtual bool Equals(IActualStatusScript other)
         {
@@ -39,5 +34,18 @@ namespace Core.Combat.Scripts.Effects.BaseTypes
             
             return false;
         }
+
+
+        public abstract float ComputePoints(ref SkillStruct skillStruct, CharacterStateMachine target);
+
+        public abstract EffectType EffectType { get; }
+        public abstract string Description { get; }
+        public virtual Option<PredictionIconsDisplay.IconType> GetPredictionIconType() => EffectType.GetPredictionIcon();
+
+        public abstract bool PlaysBarkAppliedOnCaster { get; }
+        public abstract bool PlaysBarkAppliedOnEnemy { get; }
+        public abstract bool PlaysBarkAppliedOnAlly { get; }
+
+        public abstract bool IsPositive { get; }
     }
 }

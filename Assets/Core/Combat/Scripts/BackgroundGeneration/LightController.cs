@@ -45,13 +45,13 @@ namespace Core.Combat.Scripts.BackgroundGeneration
         private void OnValidate()
         {
             if (light2d != null)
-            {
                 return;
-            }
-            
+
             light2d = GetComponent<Light2D>();
             if (light2d == null)
+            {
                 Debug.LogWarning(message: $"Light2D is null on {name}", context: this);
+            }
             else
             {
                 normalIntensity = light2d.intensity;

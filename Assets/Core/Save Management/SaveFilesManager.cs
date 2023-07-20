@@ -7,10 +7,10 @@ using Core.Game_Manager.Scripts;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using NetFabric.Hyperlinq;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Save_Management
@@ -95,7 +95,7 @@ namespace Core.Save_Management
             }
         }
 
-        public void AddRecord(SaveRecord record)
+        public void AddRecord([NotNull] SaveRecord record)
         {
             using Lease<SaveRecord> lease = _records.AsValueEnumerable().ToArray(ArrayPool<SaveRecord>.Shared);
             foreach (SaveRecord element in lease)
@@ -143,7 +143,7 @@ namespace Core.Save_Management
             }
         }
 
-        public void DeleteSave(SaveRecord record)
+        public void DeleteSave([NotNull] SaveRecord record)
         {
             string filePath = $"{_saveDirectoryName}/{record.Name}{SaveFileExtension}";
             try
@@ -195,10 +195,8 @@ namespace Core.Save_Management
                 string filePath = $"{_saveDirectoryName}/{record.Name}{SaveFileExtension}";
                 Utils.Patterns.Option<string> json = record.CustomSerialize(logErrors: true);
                 if (json.IsNone)
-                {
                     Debug.LogWarning($"Failed to serialize save file, this should not happen. Save file not written to disk.\n Save: {(record != null ? record.ToString() : "null") }");
-                }
-                
+
                 try
                 {
                     File.WriteAllText(filePath, json.Value);
@@ -276,18 +274,21 @@ namespace Core.Save_Management
             }
         }
 
-        private DirectoryInfo CreateBackupFolder(DirectoryInfo[] folders)
+        [NotNull]
+        private DirectoryInfo CreateBackupFolder([NotNull] DirectoryInfo[] folders)
         {
             for (int i = 0; i < 10; i++)
             {
                 string folderName = i.ToString();
                 bool found = false;
                 foreach (DirectoryInfo folder in folders)
+                {
                     if (folder.Name == folderName)
                     {
                         found = true;
                         break;
                     }
+                }
 
                 if (!found)
                     return Directory.CreateDirectory($"{_backupDirectoryName}/{folderName}");
@@ -296,7 +297,7 @@ namespace Core.Save_Management
             throw new Exception(message: "Impossible");
         }
 
-        private DirectoryInfo FindOldestBackupFolder(DirectoryInfo[] folders)
+        private DirectoryInfo FindOldestBackupFolder([NotNull] DirectoryInfo[] folders)
         {
             using PooledObject<List<(DirectoryInfo, FileInfo)>> pool = ListPool<(DirectoryInfo, FileInfo)>.Get(out List<(DirectoryInfo, FileInfo)> saves);
 
@@ -312,8 +313,10 @@ namespace Core.Save_Management
                 
             (DirectoryInfo, FileInfo) best = saves[index: 0];
             foreach ((DirectoryInfo, FileInfo) tuple in saves)
+            {
                 if (tuple.Item2.LastWriteTime > best.Item2.LastWriteTime)
                     best = tuple;
+            }
 
             return best.Item1;
         }

@@ -2,6 +2,7 @@
 using System.Linq;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UI;
 using UnityEngine;
@@ -68,17 +69,13 @@ namespace Core.Character_Panel.Scripts.Perks
 
             PerkGroup[] allPerkGroups = FindAssetsByType<PerkGroup>();
             foreach (PerkGroup perkGroup in allPerkGroups.Where(p => p.BelongsToEthel))
-            {
                 CreatePerkGroup(perkGroup);
-            }
-            
+
             foreach (PerkGroup perkGroup in allPerkGroups.Where(p => !p.BelongsToEthel))
-            {
                 CreatePerkGroup(perkGroup);
-            }
         }
 
-        private void CreatePerkGroup(PerkGroup group)
+        private void CreatePerkGroup([NotNull] PerkGroup group)
         {
             const float radius = 150f;
             int count = group.Perks.Length + group.Skills.Length;
@@ -140,6 +137,7 @@ namespace Core.Character_Panel.Scripts.Perks
                     continue;
 
                 foreach (PerkScriptable perkScript in perk.PerkPrerequisites)
+                {
                     foreach (PerkButton otherButton in cachedEthelPerkButtons)
                     {
                         if (otherButton.Perk == perkScript)
@@ -149,8 +147,10 @@ namespace Core.Character_Panel.Scripts.Perks
                             cachedArrows.Add(arrow);
                         }
                     }
+                }
 
                 foreach (SkillScriptable skillScript in perk.SkillPrerequisites)
+                {
                     foreach (SkillUnlockerButton otherButton in cachedEthelSkillUnlockerButtons)
                     {
                         if (otherButton.Skill == skillScript)
@@ -160,6 +160,7 @@ namespace Core.Character_Panel.Scripts.Perks
                             cachedArrows.Add(arrow);
                         }
                     }
+                }
             }
 
             foreach (SkillUnlockerButton button in cachedEthelSkillUnlockerButtons)
@@ -169,6 +170,7 @@ namespace Core.Character_Panel.Scripts.Perks
                     continue;
 
                 foreach (PerkScriptable perkScript in skill.PerkPrerequisites)
+                {
                     foreach (PerkButton otherButton in cachedEthelPerkButtons)
                     {
                         if (otherButton.Perk == perkScript)
@@ -178,8 +180,10 @@ namespace Core.Character_Panel.Scripts.Perks
                             cachedArrows.Add(arrow);
                         }
                     }
+                }
 
                 foreach (SkillScriptable skillScript in skill.SkillPrerequisites)
+                {
                     foreach (SkillUnlockerButton otherButton in cachedEthelSkillUnlockerButtons)
                     {
                         if (otherButton.Skill == skillScript)
@@ -189,6 +193,7 @@ namespace Core.Character_Panel.Scripts.Perks
                             cachedArrows.Add(arrow);
                         }
                     }
+                }
             }
             
             foreach (PerkButton button in cachedNemaPerkButtons)
@@ -198,6 +203,7 @@ namespace Core.Character_Panel.Scripts.Perks
                     continue;
 
                 foreach (PerkScriptable perkScript in perk.PerkPrerequisites)
+                {
                     foreach (PerkButton otherButton in cachedNemaPerkButtons)
                     {
                         if (otherButton.Perk == perkScript)
@@ -206,8 +212,10 @@ namespace Core.Character_Panel.Scripts.Perks
                             arrow.SetPoints(otherButton.transform.position, button.transform.position);
                         }
                     }
+                }
 
                 foreach (SkillScriptable skillScript in perk.SkillPrerequisites)
+                {
                     foreach (SkillUnlockerButton otherButton in cachedNemaSkillUnlockerButtons)
                     {
                         if (otherButton.Skill == skillScript)
@@ -216,6 +224,7 @@ namespace Core.Character_Panel.Scripts.Perks
                             arrow.SetPoints(otherButton.transform.position, button.transform.position);
                         }
                     }
+                }
             }
             
             foreach (SkillUnlockerButton button in cachedNemaSkillUnlockerButtons)
@@ -225,6 +234,7 @@ namespace Core.Character_Panel.Scripts.Perks
                     continue;
 
                 foreach (PerkScriptable perkScript in skill.PerkPrerequisites)
+                {
                     foreach (PerkButton otherButton in cachedNemaPerkButtons)
                     {
                         if (otherButton.Perk == perkScript)
@@ -233,8 +243,10 @@ namespace Core.Character_Panel.Scripts.Perks
                             arrow.SetPoints(otherButton.transform.position, button.transform.position);
                         }
                     }
+                }
 
                 foreach (SkillScriptable skillScript in skill.SkillPrerequisites)
+                {
                     foreach (SkillUnlockerButton otherButton in cachedNemaSkillUnlockerButtons)
                     {
                         if (otherButton.Skill == skillScript)
@@ -243,9 +255,11 @@ namespace Core.Character_Panel.Scripts.Perks
                             arrow.SetPoints(otherButton.transform.position, button.transform.position);
                         }
                     }
+                }
             }
         }
 
+        [NotNull]
         private static T[] FindAssetsByType<T>() where T : Object
         {
             List<T> assets = new();

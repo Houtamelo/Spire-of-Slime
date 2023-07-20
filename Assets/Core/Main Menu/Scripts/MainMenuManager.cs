@@ -13,7 +13,6 @@ using Sirenix.Serialization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Main_Menu.Scripts
 {
@@ -115,7 +114,7 @@ namespace Core.Main_Menu.Scripts
             _areYouSurePanel.SetActive(false);
         }
 
-        private void OnSaveNameInputFieldChanged(string text)
+        private void OnSaveNameInputFieldChanged([NotNull] string text)
         {
             Span<char> easterEggReadable = stackalloc char[text.Length];
             int easterEggLength = 0;
@@ -215,7 +214,8 @@ namespace Core.Main_Menu.Scripts
             PlayerPrefs.SetInt(key: IronGauntletEasterPlayerPref, value: count);
         }
 
-        private static string GetSaveNameFormatted(string text)
+        [NotNull]
+        private static string GetSaveNameFormatted([NotNull] string text)
         {
             Span<char> saveName = stackalloc char[text.Length];
             int saveNameLength = 0;

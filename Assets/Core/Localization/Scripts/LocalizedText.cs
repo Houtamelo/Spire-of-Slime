@@ -18,6 +18,14 @@ namespace Core.Localization.Scripts
         public LocalizedText(CleanString key) => this.key = key;
 
         [Pure]
-        public TranslationResult Translate() => TranslationDatabase.Get(key);
+        public TranslationResult Translate() => key.IsSome() ? TranslationDatabase.Get(key) : TranslationResult.Empty;
+
+        public override string ToString()
+        {
+            Debug.LogWarning("Do not call ToString() directly on LocalizedText. Use Translate().GetText() instead.");
+            return Translate().GetText();
+        }
+        
+        public static readonly LocalizedText Empty = new(string.Empty);
     }
 }

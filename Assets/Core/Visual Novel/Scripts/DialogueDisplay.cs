@@ -4,6 +4,7 @@ using Core.Pause_Menu.Scripts;
 using Core.Utils.Extensions;
 using Core.Utils.Handlers;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
@@ -141,7 +142,7 @@ namespace Core.Visual_Novel.Scripts
             dialogueBoxOnlyCanvasGroup.DOFade(endValue: 1, duration: 0.5f).SetUpdate(isIndependentUpdate: true);
         }
 
-        public override void DismissLine(Action onDismissalComplete)
+        public override void DismissLine([CanBeNull] Action onDismissalComplete)
         {
             _textTween.CompleteIfActive();
             
@@ -166,7 +167,7 @@ namespace Core.Visual_Novel.Scripts
             ResetAutoPlayTimer();
         }
 
-        public override void RunLine(LocalizedLine dialogueLine, Action onDialogueLineFinished)
+        public override void RunLine([NotNull] LocalizedLine dialogueLine, Action onDialogueLineFinished)
         {
             _textTween.KillIfActive();
             
@@ -198,7 +199,7 @@ namespace Core.Visual_Novel.Scripts
             ResetAutoPlayTimer();
         }
 
-        public override void RunOptions(DialogueOption[] dialogueOptions, Action<int> onOptionSelected)
+        public override void RunOptions([NotNull] DialogueOption[] dialogueOptions, Action<int> onOptionSelected)
         {
             _textTween.CompleteIfActive();
             
@@ -252,7 +253,7 @@ namespace Core.Visual_Novel.Scripts
             rightSpeakerUI.SetActive(false);
         }
 
-        private void SetUpSpeakers(LocalizedLine dialogueLine)
+        private void SetUpSpeakers([NotNull] LocalizedLine dialogueLine)
         {
             string speakerName = dialogueLine.CharacterName;
             string leftData = null;
@@ -260,7 +261,6 @@ namespace Core.Visual_Novel.Scripts
             bool leftDataExists = false;
             bool rightDataExists = false;
             if (dialogueLine.Metadata.IsNullOrEmpty() == false)
-            {
                 foreach (string data in dialogueLine.Metadata)
                 {
                     if (data.Contains(YarnTags.LeftPortrait))
@@ -279,8 +279,7 @@ namespace Core.Visual_Novel.Scripts
                             break;
                     }
                 }
-            }
-            
+
             if (speakerName.IsSome())
             {
                 bool isSpeakerLeft = false;

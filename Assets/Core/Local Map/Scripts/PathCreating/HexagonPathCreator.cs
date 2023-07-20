@@ -1,21 +1,25 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Core.Local_Map.Scripts.Coordinates;
+using Core.Local_Map.Scripts.HexagonObject;
+using Core.Utils.Collections;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Pool;
 using static Core.Local_Map.Scripts.Coordinates.PathUtils;
+using Core.Utils.Collections.Extensions;
 
 namespace Core.Local_Map.Scripts.PathCreating
 {
     public static class PathCreator
     {
-        public static bool CreatePath(IReadOnlyDictionary<Axial, (HexagonObject.Cell cell, float weight)> map, HexagonObject.Cell start, HexagonObject.Cell end, int maxLength, out List<HexagonObject.Cell> result, params HexagonObject.Cell[] intermediary)
+        public static bool CreatePath(Dictionary<Axial, (Cell cell, float weight)> map, Cell start, [NotNull] Cell end, int maxLength, [CanBeNull] out List<Cell> result, [NotNull] params Cell[] intermediary)
         {
             int manhattanDistance = 0;
             {
-                HexagonObject.Cell first = start;
-                foreach (HexagonObject.Cell inter in intermediary)
+                Cell first = start;
+                foreach (Cell inter in intermediary)
                 {
                     manhattanDistance += ManhattanDistance(first, inter);
                     first = inter;
@@ -25,16 +29,17 @@ namespace Core.Local_Map.Scripts.PathCreating
             }
 
             maxLength = Mathf.Max(maxLength, (int)(manhattanDistance * 1.5f));
-            using PooledObject<List<HexagonObject.Cell>> interPool = ListPool<HexagonObject.Cell>.Get(out List<HexagonObject.Cell> inters);
+            
+            using CustomValuePooledList<Cell> inters = new(capacity: 32);
+            
+            using (CustomValuePooledList<Cell> pivot = new(intermediary, CustomValuePooledList<Cell>.SourceType.Copy))
             {
-                using PooledObject<List<HexagonObject.Cell>> pivotPool = ListPool<HexagonObject.Cell>.Get(out List<HexagonObject.Cell> pivot);
-                pivot.Add(intermediary);
-                HexagonObject.Cell current = start;
+                Cell current = start;
                 while (pivot.Count > 0)
                 {
-                    HexagonObject.Cell best = pivot[0];
+                    Cell best = pivot[0];
                     int bestDistance = int.MaxValue;
-                    foreach (HexagonObject.Cell tile in pivot)
+                    foreach (Cell tile in pivot)
                     {
                         int distance = ManhattanDistance(tile, current);
                         if (distance < bestDistance)
@@ -50,14 +55,14 @@ namespace Core.Local_Map.Scripts.PathCreating
                 }
             }
 
-            List<HexagonObject.Cell> finalPath = new() { start };
+            List<Cell> finalPath = new() { start };
 
             int retries = 0;
-            HexagonObject.Cell currentStart = start;
+            Cell currentStart = start;
             for (int i = 0; i <= inters.Count; i++)
             {
-                HexagonObject.Cell currentEnd = i == inters.Count ? end : inters[index: i];
-                if (AStarPathFinding.TryFindPath(start: currentStart, goal: currentEnd, map, finalPath: out List<HexagonObject.Cell> path) == false || path.Count > maxLength)
+                Cell currentEnd = i == inters.Count ? end : inters[i];
+                if (AStarPathFinding.TryFindPath(start: currentStart, goal: currentEnd, map, finalPath: out List<Cell> path) == false || path.Count > maxLength)
                 {
                     using PooledObject<List<Axial>> pool = GetDirectPathBetween(left: currentStart.position, right: currentEnd.position, path: out List<Axial> directPath);
                     Debug.Assert(condition: directPath.All(predicate: map.ContainsKey));
@@ -78,13 +83,13 @@ namespace Core.Local_Map.Scripts.PathCreating
             }
 
             {
-                HexagonObject.Cell current = finalPath.TakeFirst();
-                List<HexagonObject.Cell> pivotPath = new() { current };
+                Cell current = finalPath.TakeFirst();
+                List<Cell> pivotPath = new() { current };
                 while (finalPath.Count > 0)
                 {
                     for (int j = finalPath.Count - 1; j >= 0; j--)
                     {
-                        HexagonObject.Cell iterated = finalPath[index: j];
+                        Cell iterated = finalPath[index: j];
                         if (iterated.IsNeighbor(current) == false)
                             continue;
                         

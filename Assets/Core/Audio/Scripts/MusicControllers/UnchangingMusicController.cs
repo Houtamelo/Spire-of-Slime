@@ -19,11 +19,11 @@ namespace Core.Audio.Scripts.MusicControllers
             _tween.KillIfActive();
             if (source.volume <= 0f)
             {
-                Destroy(this.gameObject);
+                Destroy(gameObject);
                 return;
             }
 
-            GameObject self = this.gameObject;
+            GameObject self = gameObject;
             _tween = source.DOFade(endValue: 0f, duration).SetUpdate(isIndependentUpdate: true).OnComplete(() =>
             {
                 if (self != null)

@@ -8,9 +8,12 @@ using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills.Action.Overlay;
 using Core.Pause_Menu.Scripts;
+using Core.Utils.Collections;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
 using DG.Tweening;
+using JetBrains.Annotations;
 using ListPool;
 using UnityEngine;
 using Utils.Patterns;
@@ -39,7 +42,7 @@ namespace Core.Combat.Scripts.Skills.Action
 
         public CharacterStateMachine Caster => Plan.Caster;
 
-        private float _cachedRecovery; // set in ResolveSkill()
+        private TSpan _cachedRecovery; // set in ResolveSkill()
         
         private bool _isPlaying;
         public bool IsPlaying => _isPlaying && IsDone == false;
@@ -75,11 +78,13 @@ namespace Core.Combat.Scripts.Skills.Action
         {
             Debug.Assert(_isPlaying);
             foreach ((CharacterStateMachine character, Vector3 position) in _combatManager.PositionManager.ComputeAllDefaultPositions())
-                if (Outsiders.Contains(character) && character.Display.TrySome(out CharacterDisplay display))
+            {
+                if (Outsiders.Contains(character) && character.Display.TrySome(out DisplayModule display))
                     display.MoveToPosition(position, baseDuration: Option.None);
+            }
         }
         
-        public void AddOutsider(CharacterStateMachine outsider) => _outsiders.Add(outsider);
+        public void AddOutsider([NotNull] CharacterStateMachine outsider) => _outsiders.Add(outsider);
 
         public void Play()
         {
@@ -157,17 +162,16 @@ namespace Core.Combat.Scripts.Skills.Action
 
             if (Caster.StateEvaluator.PureEvaluate() is not CharacterState.Defeated and not CharacterState.Corpse and not CharacterState.Grappled and not CharacterState.Downed)
             {
-                ActionResult result = SkillUtils.DoToCaster(ref skillStruct);
+                ActionResult result = SkillCalculator.DoToCaster(ref skillStruct);
                 _results.Add(result);
             }
             
             _combatManager.ActionAnimator.AnimateSpeedLines(Plan, AnimationDuration);
 
-            ref ValueListPool<TargetProperties> targetProperties = ref skillStruct.TargetProperties;
+            ref CustomValuePooledList<TargetProperties> targetProperties = ref skillStruct.TargetProperties;
             int count = targetProperties.Count;
             
-            if (Plan.Skill.AllowAllies)
-            {
+            if (Plan.Skill.IsPositive)
                 for (int index = 0; index < count; index++)
                 {
                     ReadOnlyProperties properties = targetProperties[index].ToReadOnly();
@@ -178,14 +182,12 @@ namespace Core.Combat.Scripts.Skills.Action
                     ActionResult result = target.SkillModule.TakeSkillAsTarget(ref skillStruct, properties, isRiposte: false);
                     _results.Add(result);
 
-                    if (target.Display.AssertSome(out CharacterDisplay targetDisplay) == false)
+                    if (target.Display.AssertSome(out DisplayModule targetDisplay) == false)
                         continue;
                     
                     targetDisplay.SetBaseSpeed(SpeedMultiplier);
                 }
-            }
             else
-            {
                 for (int index = 0; index < count; index++)
                 {
                     ReadOnlyProperties properties = targetProperties[index].ToReadOnly();
@@ -199,12 +201,11 @@ namespace Core.Combat.Scripts.Skills.Action
                     target.Events.OnSelfAttacked(ref result);
                     Caster.Events.OnTargetAttacked(ref result);
                     
-                    if (target.Display.AssertSome(out CharacterDisplay targetDisplay) == false)
+                    if (target.Display.AssertSome(out DisplayModule targetDisplay) == false)
                         continue;
                     
                     targetDisplay.SetBaseSpeed(SpeedMultiplier);
                 }
-            }
 
             // if (Caster.Display.AssertSome(out CharacterDisplay display))
             // {
@@ -218,7 +219,7 @@ namespace Core.Combat.Scripts.Skills.Action
             skillStruct.Dispose();
         }
 
-        private IEnumerator WaitForInputOrTime(Reference<OverlayAnimator> overlayAnimator, float maximumTime)
+        private IEnumerator WaitForInputOrTime([NotNull] Reference<OverlayAnimator> overlayAnimator, float maximumTime)
         {
             float endTime = Time.time + maximumTime;
             while (Time.time < endTime && (InputManager.AssertInstance(out InputManager inputManager) == false || inputManager.AnyAdvanceInputThisFrame() == false))
@@ -227,7 +228,7 @@ namespace Core.Combat.Scripts.Skills.Action
             OnProceed(overlayAnimator);
         }
 
-        private IEnumerator WaitForInput(Reference<OverlayAnimator> overlayAnimator)
+        private IEnumerator WaitForInput([NotNull] Reference<OverlayAnimator> overlayAnimator)
         {
             while (InputManager.AssertInstance(out InputManager inputManager) == false || inputManager.AnyAdvanceInputThisFrame() == false)
                 yield return null;
@@ -235,7 +236,7 @@ namespace Core.Combat.Scripts.Skills.Action
             OnProceed(overlayAnimator);
         }
 
-        private void OnProceed(Reference<OverlayAnimator> animatorInstance)
+        private void OnProceed([NotNull] Reference<OverlayAnimator> animatorInstance)
         {
             if (animatorInstance.Value != null)
                 animatorInstance.Value.FadeDown(PopDuration);

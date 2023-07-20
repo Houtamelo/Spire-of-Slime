@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using JetBrains.Annotations;
+using UnityEngine;
 
 namespace UI
 {
@@ -6,6 +7,7 @@ namespace UI
     public class UIArrow : MonoBehaviour
     {
         [SerializeField, HideInInspector] private RectTransform rectTransform;
+        [NotNull]
         private RectTransform RectTransform
         {
             get

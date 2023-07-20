@@ -1,95 +1,173 @@
-﻿using System.Collections.Generic;
-using System.Text;
-using Core.Combat.Scripts.Behaviour;
+﻿using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects.BaseTypes;
-using Core.Utils.Extensions;
+using Core.Combat.Scripts.Timeline;
+using Core.Utils.Collections;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Effects.Types.Arousal
 {
-    public record ArousalRecord(float Duration, bool IsPermanent, uint LustPerTime, float AccumulatedTime) : StatusRecord(Duration, IsPermanent)
-    {
-        public override bool IsDataValid(StringBuilder errors, ICollection<CharacterRecord> allCharacters)
-        {
-            if (LustPerTime == 0)
-            {
-                errors.AppendLine("Invalid ", nameof(ArousalRecord), " data. ", nameof(LustPerTime), " cannot be 0.");
-                return false;
-            }
-
-            return true;
-        }
-    }
-    
     public class Arousal : StatusInstance
     {
         public override bool IsPositive => false;
 
-        public uint LustPerTime { get; }
-        private float _accumulatedTime;
+        public int LustPerSecond { get; }
+        private TSpan _accumulatedTime;
 
-        private Arousal(ArousalToApply s) : base(duration: s.Duration, isPermanent: s.IsPermanent, owner: s.Target)
-        {
-            LustPerTime = s.LustPerTime;
-        }
+        private Arousal([NotNull] ArousalToApply s) : base(s.Duration, s.Permanent, s.Target) => LustPerSecond = s.LustPerSecond;
 
-        public static Option<StatusInstance> CreateInstance(ref ArousalToApply effectStruct)
+        public static Option<StatusInstance> CreateInstance([NotNull] ref ArousalToApply effectStruct)
         {
-            if ((effectStruct.Duration <= 0 && !effectStruct.IsPermanent) || effectStruct.LustPerTime <= 0)
+            if ((effectStruct.Duration.Ticks <= 0 && effectStruct.Permanent == false) || effectStruct.LustPerSecond <= 0)
             {
-                Debug.LogWarning($"Invalid parameters for {nameof(Arousal)} effect. Duration: {effectStruct.Duration.ToString()}, IsPermanent: {effectStruct.IsPermanent.ToString()}, LustPerTime: {effectStruct.LustPerTime.ToString()}");
-                return Option<StatusInstance>.None;
+                Debug.LogWarning($"Invalid parameters for {nameof(Arousal)} effect. Duration: {effectStruct.Duration.Seconds.ToString()}, Permanent: {effectStruct.Permanent.ToString()}, LustPerTime: {effectStruct.LustPerSecond.ToString()}");
+                return Option.None;
             }
-
+            
             Arousal instance = new(effectStruct);
-            effectStruct.Target.StatusModule.AddStatus(instance, effectStruct.Caster);
-            return Option<StatusInstance>.Some(instance);
+            effectStruct.Target.StatusReceiverModule.AddStatus(instance, effectStruct.Caster);
+            return instance;
         }
 
-        private Arousal(ArousalRecord record, CharacterStateMachine owner) : base(record, owner)
+        public Arousal([NotNull] ArousalRecord record, CharacterStateMachine owner) : base(record, owner)
         {
-            LustPerTime = record.LustPerTime;
+            LustPerSecond = record.LustPerTime;
             _accumulatedTime = record.AccumulatedTime;
         }
 
-        public static Option<StatusInstance> CreateInstance(ArousalRecord record, CharacterStateMachine owner)
+        public override void Tick(TSpan timeStep)
         {
-            Arousal instance = new(record, owner);
-            owner.StatusModule.AddStatus(instance, owner);
-            return Option<StatusInstance>.Some(instance);
-        }
+            _accumulatedTime += TSpan.ChoseMin(timeStep, Duration);
+            if (Duration <= timeStep)
+            {
+                int lust = (int)(_accumulatedTime.Seconds * LustPerSecond);
+                _accumulatedTime.Ticks = 0;
 
-        public override void Tick(float timeStep)
-        {
-            if (Duration > timeStep)
-            {
-                _accumulatedTime += timeStep;
-                if (_accumulatedTime >= 1f)
-                {
-                    int roundTime = Mathf.FloorToInt(_accumulatedTime);
-                    _accumulatedTime -= roundTime;
-                    if (Owner.LustModule.IsSome)
-                        Owner.LustModule.Value.ChangeLust((int)(roundTime * LustPerTime));
-                }
+                if (lust != 0 && Owner.LustModule.TrySome(out ILustModule lustModule))
+                    lustModule.ChangeLust(lust);
             }
-            else
+            else  if (_accumulatedTime.Seconds >= 1)
             {
-                _accumulatedTime += Duration;
-                int roundLust = Mathf.CeilToInt(_accumulatedTime * LustPerTime);
-                if (Owner.LustModule.IsSome)
-                    Owner.LustModule.Value.ChangeLust(roundLust);
-                
-                _accumulatedTime = 0f;
+                int roundSeconds = (int)_accumulatedTime.Seconds;
+                _accumulatedTime.Ticks -= roundSeconds * TSpan.TicksPerSecond;
+
+                if (Owner.LustModule.TrySome(out ILustModule lustModule))
+                    lustModule.ChangeLust(roundSeconds * LustPerSecond);
             }
 
             base.Tick(timeStep);
         }
-        
-        public override StatusRecord GetRecord() => new ArousalRecord(Duration, IsPermanent, LustPerTime, _accumulatedTime);
 
-        public override Option<string> GetDescription() => StatusInstanceDescriptions.Get(this);
+        public override void FillTimelineEvents([NotNull] SelfSortingList<CombatEvent> events)
+        {
+            Debug.Assert(IsActive);
+
+            switch (Permanent)
+            {
+                case true when LustPerSecond > 0:
+                {
+                    AddEventsAsPermanent();
+
+                    break;
+                }
+                case false:
+                {
+                    events.Add(CombatEvent.FromStatusEnd(Owner, Duration, status: this));
+
+                    if (LustPerSecond > 0)
+                        AddEventsUntilEnd();
+
+                    break;
+                }
+            }
+
+            return;
+
+            void AddEventsAsPermanent()
+            {
+                TSpan current;
+
+                if (_accumulatedTime >= TSpan.OneSecond)
+                {
+                    int roundSeconds = (int)_accumulatedTime.Seconds;
+                    int lust = roundSeconds * LustPerSecond;
+
+                    if (lust > 0)
+                        events.Add(CombatEvent.FromLustTick(Owner, TSpan.Zero, source: this, lust));
+
+                    current = -(_accumulatedTime - TSpan.FromSeconds(roundSeconds));
+                }
+                else
+                {
+                    current = -_accumulatedTime;
+                }
+
+                for (int i = 0; i < 10; i++)
+                {
+                    current += TSpan.OneSecond;
+                    events.Add(CombatEvent.FromLustTick(Owner, current, source: this, LustPerSecond));
+                }
+            }
+
+            void AddEventsUntilEnd()
+            {
+                TSpan totalTime = Duration + _accumulatedTime;
+                int roundTotalSecondsLeft = (int)(totalTime.Seconds);
+
+                if (roundTotalSecondsLeft < 1)
+                {
+                    int lust = (int)(totalTime.Seconds * LustPerSecond);
+
+                    if (lust > 0)
+                        events.Add(CombatEvent.FromLustTick(Owner, Duration, source: this, lust));
+
+                    return;
+                }
+
+                TSpan current;
+
+                if (_accumulatedTime >= TSpan.OneSecond)
+                {
+                    int roundSeconds = (int)_accumulatedTime.Seconds;
+                    int lust = roundSeconds * LustPerSecond;
+
+                    if (lust > 0)
+                        events.Add(CombatEvent.FromLustTick(Owner, TSpan.Zero, source: this, lust));
+
+                    current = -(_accumulatedTime - TSpan.FromSeconds(roundSeconds));
+                    roundTotalSecondsLeft -= roundSeconds;
+                }
+                else
+                {
+                    current = -_accumulatedTime;
+                }
+
+                for (int i = 0; i < roundTotalSecondsLeft; i++)
+                {
+                    current += TSpan.OneSecond;
+                    events.Add(CombatEvent.FromLustTick(Owner, current, source: this, LustPerSecond));
+                }
+
+                TSpan remainingTime = totalTime - TSpan.FromSeconds(roundTotalSecondsLeft);
+
+                if (remainingTime.Ticks > 0)
+                {
+                    current += remainingTime;
+                    int lust = (int)(remainingTime.Seconds * LustPerSecond);
+
+                    if (lust > 0)
+                        events.Add(CombatEvent.FromLustTick(Owner, current, source: this, lust));
+                }
+            }
+        }
+
+        [NotNull]
+        public override StatusRecord GetRecord() => new ArousalRecord(Duration, Permanent, LustPerSecond, _accumulatedTime);
+
+        public override Option<string> GetDescription() => StatusInstanceDescriptions.Get(instance: this);
         public override EffectType EffectType => EffectType.Arousal;
         public const int GlobalId = 1;
     }

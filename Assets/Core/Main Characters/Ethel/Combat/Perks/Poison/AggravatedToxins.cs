@@ -8,12 +8,15 @@ using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Poison
 {
     public class AggravatedToxins : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             AggravatedToxinsInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -34,7 +37,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Poison
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             AggravatedToxinsInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -44,14 +48,13 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Poison
     
     public class AggravatedToxinsInstance : PerkInstance, IPoisonModifier
     {
-        public string SharedId => nameof(AggravatedToxinsInstance);
-        public int Priority => 0;
-
+        private static readonly TSpan ExtraPoisonDuration = TSpan.FromSeconds(1.0);
+        
         public AggravatedToxinsInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public AggravatedToxinsInstance(CharacterStateMachine owner, AggravatedToxinsRecord record) : base(owner, record)
+
+        public AggravatedToxinsInstance(CharacterStateMachine owner, [NotNull] AggravatedToxinsRecord record) : base(owner, record)
         {
         }
 
@@ -65,11 +68,16 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Poison
             Owner.StatusApplierModule.PoisonApplyModifiers.Remove(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new AggravatedToxinsRecord(Key);
 
-        public void Modify(ref PoisonToApply effectStruct)
+        public void Modify([NotNull] ref PoisonToApply effectStruct)
         {
-            effectStruct.Duration += 1;
+            effectStruct.Duration += ExtraPoisonDuration;
         }
+
+        [NotNull]
+        public string SharedId => nameof(AggravatedToxinsInstance);
+        public int Priority => 0;
     }
 }

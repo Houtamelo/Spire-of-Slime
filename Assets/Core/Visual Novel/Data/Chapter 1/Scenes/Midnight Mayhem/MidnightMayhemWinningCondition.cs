@@ -5,16 +5,17 @@ using Core.Combat.Scripts.WinningCondition;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
-using static Core.Utils.Patterns.Result<Core.Combat.Scripts.WinningCondition.IWinningCondition>;
 
 namespace Core.Visual_Novel.Data.Chapter_1.Scenes.Midnight_Mayhem
 {
-    public record MidnightMayhemRecord(float Duration, CleanString CrabdraKey, int CrabdrasToSpawn, bool SpawnTimerStarted, bool WaitingSpawn, float TimeUntilNextSpawn, float LastUpdate)
+    public record MidnightMayhemRecord(TSpan Duration, CleanString CrabdraKey, int CrabdrasToSpawn, bool SpawnTimerStarted, bool WaitingSpawn, TSpan TimeUntilNextSpawn, TSpan LastUpdate)
         : WinningConditionRecord(ConditionType.MidnightMayhemSurvive)
     {
+        [NotNull]
         public override IWinningCondition Deserialize(CombatManager combatManager)
         {
             Option<CharacterScriptable> crabdraScript = CharacterDatabase.GetCharacter(CrabdraKey);
@@ -29,7 +30,7 @@ namespace Core.Visual_Novel.Data.Chapter_1.Scenes.Midnight_Mayhem
 
         public override bool IsDataValid(StringBuilder errors)
         {
-            if (Duration <= 0f)
+            if (Duration.Ticks <= 0)
             {
                 errors.AppendLine("Invalid ", nameof(MidnightMayhemRecord), ". Duration must be greater than 0.");
                 return false;
@@ -47,19 +48,19 @@ namespace Core.Visual_Novel.Data.Chapter_1.Scenes.Midnight_Mayhem
     
     public class MidnightMayhemWinningCondition : ISurviveDuration
     {
-        private const float SpawnDelay = 5f;
+        private static readonly TSpan SpawnDelay = TSpan.FromSeconds(5.0);
 
         private readonly CombatManager _combatManager;
-        private readonly float _duration;
+        private readonly TSpan _duration;
         private readonly CharacterScriptable _crabdraScript;
         
         private int _crabdrasToSpawn;
         private bool _spawnTimerStarted;
         private bool _waitingSpawn;
-        private float _timeUntilNextSpawn;
-        private float _lastUpdate;
+        private TSpan _timeUntilNextSpawn;
+        private TSpan _lastUpdate;
 
-        public MidnightMayhemWinningCondition(CombatManager combatManager, float duration, CharacterScriptable crabdraScript, int crabdrasToSpawn)
+        public MidnightMayhemWinningCondition(CombatManager combatManager, TSpan duration, CharacterScriptable crabdraScript, int crabdrasToSpawn)
         {
             _crabdrasToSpawn = crabdrasToSpawn;
             _combatManager = combatManager;
@@ -67,7 +68,7 @@ namespace Core.Visual_Novel.Data.Chapter_1.Scenes.Midnight_Mayhem
             _crabdraScript = crabdraScript;
         }
 
-        public MidnightMayhemWinningCondition(CombatManager combatManager, float duration, CharacterScriptable crabdraScript, int crabdrasToSpawn, bool spawnTimerStarted, bool waitingSpawn, float timeUntilNextSpawn, float lastUpdate)
+        public MidnightMayhemWinningCondition(CombatManager combatManager, TSpan duration, CharacterScriptable crabdraScript, int crabdrasToSpawn, bool spawnTimerStarted, bool waitingSpawn, TSpan timeUntilNextSpawn, TSpan lastUpdate)
         {
             _crabdrasToSpawn = crabdrasToSpawn;
             _combatManager = combatManager;
@@ -82,7 +83,7 @@ namespace Core.Visual_Novel.Data.Chapter_1.Scenes.Midnight_Mayhem
         public CombatStatus Tick()
         {
             CombatStatus status = this.DefaultTick(_combatManager, _duration);
-            float deltaTime = _combatManager.ElapsedTime - _lastUpdate;
+            TSpan deltaTime = _combatManager.ElapsedTime - _lastUpdate;
             _lastUpdate = _combatManager.ElapsedTime;
             if (status is CombatStatus.RightSideWon || (status is CombatStatus.LeftSideWon && _crabdrasToSpawn <= 0))
                 return status;
@@ -94,9 +95,9 @@ namespace Core.Visual_Novel.Data.Chapter_1.Scenes.Midnight_Mayhem
                     _timeUntilNextSpawn = SpawnDelay;
                     _spawnTimerStarted = true;
                     break;
-                case State.WaitingTimer when deltaTime > 0:
+                case State.WaitingTimer when deltaTime.Ticks > 0:
                     _timeUntilNextSpawn -= deltaTime;
-                    if (_timeUntilNextSpawn > 0 || _crabdrasToSpawn <= 0 || _combatManager.Characters.RightSideCount >= 4)
+                    if (_timeUntilNextSpawn.Ticks > 0 || _crabdrasToSpawn <= 0 || _combatManager.Characters.RightSideCount >= 4)
                         break;
 
                     Option<Promise<int>> createdCount = _combatManager.Characters.CreateOutsideSkill(_crabdraScript, isLeftSide: false, position: Option<int>.None, Option<int>.Some(_crabdrasToSpawn));
@@ -117,48 +118,12 @@ namespace Core.Visual_Novel.Data.Chapter_1.Scenes.Midnight_Mayhem
             return CombatStatus.InProgress;
         }
 
+        [NotNull]
         public WinningConditionRecord Serialize() => new MidnightMayhemRecord(_duration, _crabdraScript.Key, _crabdrasToSpawn, _spawnTimerStarted, _waitingSpawn, _timeUntilNextSpawn, _lastUpdate);
 
-        public static Result<IWinningCondition> Parse(string data, CombatManager combatManager)
-        {
-            string[] split = data.Split(',');
-            if (split.Length != 7)
-                return Error($"Invalid split length: {split.Length}, data: {data}");
-            
-            if (split[0].ParseFloat().TrySome(out float duration) == false)
-                return Error($"Failed to parse duration: {split[0]}, data: {data}");
-
-            if (CharacterDatabase.GetCharacter(split[1]).TrySome(out CharacterScriptable script) == false)
-                return Error($"Character script: {split[1]} not found in database, data: {data}");
-            
-            if (split[2].ParseInt().TrySome(out int crabdrasToSpawn) == false)
-                return Error($"Failed to parse crabdras to spawn: {split[2]}, data: {data}");
-            
-            if (split[3].ParseBool().TrySome(out bool spawnTimerStarted) == false)
-                return Error($"Failed to parse spawn timer started: {split[3]}, data: {data}");
-            
-            if (split[4].ParseBool().TrySome(out bool waitingSpawn) == false)
-                return Error($"Failed to parse waiting spawn: {split[4]}, data: {data}");
-            
-            if (split[5].ParseFloat().TrySome(out float timeUntilNextSpawn) == false)
-                return Error($"Failed to parse time until next spawn: {split[5]}, data: {data}");
-            
-            if (split[6].ParseFloat().TrySome(out float lastUpdate) == false)
-                return Error($"Failed to parse last update: {split[6]}, data: {data}");
-
-            MidnightMayhemWinningCondition condition = new(combatManager, duration, script, crabdrasToSpawn) 
-            {
-                _spawnTimerStarted = spawnTimerStarted,
-                _waitingSpawn = waitingSpawn,
-                _timeUntilNextSpawn = timeUntilNextSpawn,
-                _lastUpdate = lastUpdate
-            };
-            
-            return Ok(condition);
-        }
-        
+        [NotNull]
         public string DisplayName => this.DefaultDisplayName(_duration);
-        public float GetTimeToDisplay() => this.DefaultTimeToDisplay(_combatManager, _duration);
+        public TSpan GetTimeToDisplay() => this.DefaultTimeToDisplay(_combatManager, _duration);
         
         private State EvaluateState()
         {

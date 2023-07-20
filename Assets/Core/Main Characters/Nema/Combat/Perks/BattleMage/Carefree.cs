@@ -2,21 +2,23 @@
 using System.Text;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Effects.Interfaces;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Nema.Combat.Perks.BattleMage
 {
     public class Carefree : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             CarefreeInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -37,7 +39,8 @@ namespace Core.Main_Characters.Nema.Combat.Perks.BattleMage
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             CarefreeInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -47,8 +50,8 @@ namespace Core.Main_Characters.Nema.Combat.Perks.BattleMage
 
     public class CarefreeInstance : PerkInstance
     {
-        private const float AccuracyModifier = 0.15f;
-        private const float DodgeModifier = 0.1f;
+        private const int AccuracyModifier = 15;
+        private const int DodgeModifier = 10;
         
         private static readonly AccuracyModifierEffect AccuracyModifierInstance = new();
         private static readonly DodgeModifierEffect DodgeModifierInstance = new();
@@ -57,7 +60,7 @@ namespace Core.Main_Characters.Nema.Combat.Perks.BattleMage
         {
         }
         
-        public CarefreeInstance(CharacterStateMachine owner, CarefreeRecord record) : base(owner, record)
+        public CarefreeInstance(CharacterStateMachine owner, [NotNull] CarefreeRecord record) : base(owner, record)
         {
         }
 
@@ -75,32 +78,39 @@ namespace Core.Main_Characters.Nema.Combat.Perks.BattleMage
             statsModule.UnsubscribeDodge(DodgeModifierInstance);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new CarefreeRecord(Key);
 
-        private class AccuracyModifierEffect : IBaseFloatAttributeModifier
+        private class AccuracyModifierEffect : IBaseAttributeModifier
         {
+            [NotNull]
             public string SharedId => nameof(CarefreeInstance);
             public int Priority => 0;
-            public void Modify(ref float value, CharacterStateMachine self)
+            public void Modify(ref int value, [NotNull] CharacterStateMachine self)
             {
-                foreach (StatusInstance status in self.StatusModule.GetAll)
+                foreach (StatusInstance status in self.StatusReceiverModule.GetAll)
+                {
                     if (status.EffectType == EffectType.Poison && status.IsActive)
                         return;
+                }
 
                 value += AccuracyModifier;
             }
         }
         
-        private class DodgeModifierEffect : IBaseFloatAttributeModifier
+        private class DodgeModifierEffect : IBaseAttributeModifier
         {
+            [NotNull]
             public string SharedId => nameof(CarefreeInstance);
             public int Priority => 0;
-            public void Modify(ref float value, CharacterStateMachine self)
+            public void Modify(ref int value, [NotNull] CharacterStateMachine self)
             {
-                foreach (StatusInstance status in self.StatusModule.GetAll)
+                foreach (StatusInstance status in self.StatusReceiverModule.GetAll)
+                {
                     if (status.EffectType == EffectType.Poison && status.IsActive)
                         return;
-                
+                }
+
                 value += DodgeModifier;
             }
         }

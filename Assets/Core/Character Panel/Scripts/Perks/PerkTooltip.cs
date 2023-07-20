@@ -1,10 +1,10 @@
 ﻿using Core.Combat.Scripts.Perks;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Utils.Patterns;
 
 namespace Core.Character_Panel.Scripts.Perks
 {
@@ -36,7 +36,7 @@ namespace Core.Character_Panel.Scripts.Perks
             Hide();
         }
 
-        public void Show(PerkScriptable perk)
+        public void Show([NotNull] PerkScriptable perk)
         {
             title.text = perk.DisplayName;
             description.text = perk.DescriptionWithRichText;

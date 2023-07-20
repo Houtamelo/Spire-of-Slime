@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Effects.Types.Arousal;
@@ -16,9 +17,9 @@ using Core.Combat.Scripts.Effects.Types.Perk;
 using Core.Combat.Scripts.Effects.Types.Poison;
 using Core.Combat.Scripts.Effects.Types.Riposte;
 using Core.Combat.Scripts.Enums;
-using Core.Combat.Scripts.Interfaces.Modules;
-using Core.Combat.Scripts.Managers.Enumerators;
-using Core.Combat.Scripts.Perks;
+using Core.Localization.Scripts;
+using Core.Utils.Extensions;
+using JetBrains.Annotations;
 using KGySoft.CoreLibraries;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -29,86 +30,26 @@ namespace Core.Combat.Scripts
     {
         private static readonly CombatStat[] CombatStats = Enum<CombatStat>.GetValues();
         private static readonly HashSet<CombatStat> CombatStatsSet = new(CombatStats);
-        public static string LowerCaseName(this CombatStat stat)
-        {
-            return stat switch
-            {
-                CombatStat.DebuffResistance   => "debuff resistance",
-                CombatStat.PoisonResistance   => "poison resistance",
-                CombatStat.MoveResistance     => "move resistance",
-                CombatStat.Accuracy           => "accuracy",
-                CombatStat.CriticalChance     => "critical chance",
-                CombatStat.Dodge              => "dodge",
-                CombatStat.Resilience         => "resilience",
-                CombatStat.Composure          => "composure",
-                CombatStat.StunSpeed          => "stun recovery speed",
-                CombatStat.DamageMultiplier   => "damage multiplier",
-                CombatStat.Speed              => "speed",
-                CombatStat.DebuffApplyChance  => "debuff apply chance",
-                CombatStat.PoisonApplyChance  => "poison apply chance",
-                CombatStat.MoveApplyChance    => "move apply chance",
-                CombatStat.ArousalApplyChance => "arousal apply chance",
-                _                             => throw new ArgumentOutOfRangeException(nameof(stat), stat, null)
-            };
-        }
-        
-        public static string CompactLowerCaseName(this CombatStat stat)
-        {
-            return stat switch
-            {
-                CombatStat.DebuffResistance   => "debufR",
-                CombatStat.PoisonResistance   => "poisR",
-                CombatStat.MoveResistance     => "moveR",
-                CombatStat.Accuracy           => "acc",
-                CombatStat.CriticalChance     => "crit",
-                CombatStat.Dodge              => "dodge",
-                CombatStat.Resilience         => "resil",
-                CombatStat.Composure          => "compo",
-                CombatStat.StunSpeed          => "stunR",
-                CombatStat.DamageMultiplier   => "dmg",
-                CombatStat.Speed              => "speed",
-                CombatStat.DebuffApplyChance  => "debufAp",
-                CombatStat.PoisonApplyChance  => "poisAp",
-                CombatStat.MoveApplyChance    => "moveAp",
-                CombatStat.ArousalApplyChance => "arousAp",
-                _                             => throw new ArgumentOutOfRangeException(nameof(stat), stat, null)
-            };
-        }
-        
-        public static string UpperCaseName(this CombatStat stat)
-        {
-            return stat switch
-            {
-                CombatStat.DebuffResistance   => "Debuff Resistance",
-                CombatStat.PoisonResistance   => "Poison Resistance",
-                CombatStat.MoveResistance     => "Move Resistance",
-                CombatStat.Accuracy           => "Accuracy",
-                CombatStat.CriticalChance     => "Critical Chance",
-                CombatStat.Dodge              => "Dodge",
-                CombatStat.Resilience         => "Resilience",
-                CombatStat.Composure          => "Composure",
-                CombatStat.StunSpeed          => "Stun Recovery Speed",
-                CombatStat.DamageMultiplier   => "Damage Multiplier",
-                CombatStat.Speed              => "Speed",
-                CombatStat.DebuffApplyChance  => "Debuff Apply Chance",
-                CombatStat.PoisonApplyChance  => "Poison Apply Chance",
-                CombatStat.MoveApplyChance    => "Move Apply Chance",
-                CombatStat.ArousalApplyChance => "Arousal Apply Chance",
-                _                             => throw new ArgumentOutOfRangeException(nameof(stat), stat, null)
-            };
-        }
 
-        public static string UpperCaseName(this Race race)
-        {
-            return race switch
-            {
-                Race.Beast    => "Beast",
-                Race.Human    => "Humanoid",
-                Race.Mutation => "Mutation",
-                Race.Plant    => "Plant",
-                _             => "Unknown"
-            };
-        }
+        private static readonly Dictionary<CombatStat, LocalizedText> CombatStat_LowerCaseNames =
+            Enum<CombatStat>.GetValues().ToDictionary(keySelector: stat => stat, elementSelector: stat => new LocalizedText("combatstat_lowercase_" + stat.ToStringNonAlloc().ToLowerInvariant().Trim()));
+
+        public static LocalizedText LowerCaseName(this CombatStat stat) => CombatStat_LowerCaseNames[stat];
+
+        private static readonly Dictionary<CombatStat, LocalizedText> CombatStat_CompactLowerCaseNames =
+            Enum<CombatStat>.GetValues().ToDictionary(keySelector: stat => stat, elementSelector: stat => new LocalizedText("combatstat_lowercase_compact_" + stat.ToStringNonAlloc().ToLowerInvariant().Trim()));
+
+        public static LocalizedText CompactLowerCaseName(this CombatStat stat) => CombatStat_CompactLowerCaseNames[stat];
+        
+        private static readonly Dictionary<CombatStat, LocalizedText> CombatStat_UpperCaseNames =
+            Enum<CombatStat>.GetValues().ToDictionary(keySelector: stat => stat, elementSelector: stat => new LocalizedText("combatstat_uppercase_" + stat.ToStringNonAlloc().ToLowerInvariant().Trim()));
+        
+        public static LocalizedText UpperCaseName(this CombatStat stat) => CombatStat_UpperCaseNames[stat];
+        
+        private static readonly Dictionary<Race, LocalizedText> Race_UpperCaseNames =
+            Enum<Race>.GetValues().ToDictionary(keySelector: stat => stat, elementSelector: stat => new LocalizedText("race_uppercase_" + stat.ToStringNonAlloc().ToLowerInvariant().Trim()));
+
+        public static LocalizedText UpperCaseName(this Race race) => Race_UpperCaseNames[race];
 
         public static bool HasIcon(this EffectType effectType)
         {
@@ -137,11 +78,8 @@ namespace Core.Combat.Scripts
             };
         }
 
-        public static CombatStat GetRandomCombatStat()
-        {
-            return CombatStats[Random.Range(0, CombatStats.Length)];
-        }
-        
+        public static CombatStat GetRandomCombatStat() => CombatStats[Random.Range(0, CombatStats.Length)];
+
         public static CombatStat GetRandomCombatStatExcept(CombatStat combatStat)
         {
             CombatStatsSet.Remove(combatStat);
@@ -160,7 +98,7 @@ namespace Core.Combat.Scripts
             return result;
         }
 
-        public static int GetEffectId(StatusInstance effect)
+        public static int GetEffectId([NotNull] StatusInstance effect)
         {
             switch (effect)
             {
@@ -194,39 +132,7 @@ namespace Core.Combat.Scripts
                 _ => false
             };
         }
-		
-		public static void CreateStatusInstanceFromRecord(StatusRecord record, CharacterStateMachine owner, CharacterEnumerator allCharacters)
-        {
-            switch (record)
-            {
-                case ArousalRecord arousalRecord:           Arousal.CreateInstance(arousalRecord, owner); break;
-                case BuffOrDebuffRecord buffOrDebuffRecord: BuffOrDebuff.CreateInstance(buffOrDebuffRecord, owner); break;
-                case LustGrappledRecord lustGrappledRecord: LustGrappled.CreateInstance(lustGrappledRecord, owner, ref allCharacters); break;
-                case GuardedRecord guardedRecord:           Guarded.CreateInstance(guardedRecord, owner, ref allCharacters); break;
-                case MarkedRecord markedRecord:             Marked.CreateInstance(markedRecord, owner); break;
-                case MistStatusRecord mistStatusRecord:     MistStatus.CreateInstance(mistStatusRecord, owner); break;
-                case NemaExhaustionStatusRecord exhaustion: NemaExhaustion.CreateInstance(exhaustion, owner); break;
-                case OvertimeHealRecord overtimeHealRecord: OvertimeHeal.CreateInstance(overtimeHealRecord, owner); break;
-                case PerkStatusRecord perkStatusRecord:
-                {
-                    foreach (PerkInstance perkInstance in owner.PerksModule.GetAll)
-                        if (perkInstance.Key == perkStatusRecord.PerkKey)
-                        {
-                            PerkStatus.CreateInstance(perkStatusRecord, owner, perkInstance);
-                            break;
-                        }
-
-                    break;
-                }
-                case PoisonRecord poisonRecord:   Poison.CreateInstance(poisonRecord, owner, ref allCharacters); break;
-                case RiposteRecord riposteRecord: Riposte.CreateInstance(riposteRecord, owner); break;
-                default:                          throw new ArgumentOutOfRangeException(nameof(record));
-            }
-        }
-
-        public static float Percentage(this IStaminaModule staminaModule)
-        {
-            return (float) staminaModule.GetCurrent() / staminaModule.ActualMax;
-        }
+        
+        public static float Percentage([NotNull] this IStaminaModule staminaModule) => (float) staminaModule.GetCurrent() / staminaModule.ActualMax;
     }
 }

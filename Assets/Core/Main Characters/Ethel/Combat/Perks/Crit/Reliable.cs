@@ -2,18 +2,20 @@
 using System.Text;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Behaviour;
-using Core.Combat.Scripts.Interfaces.Modules;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Crit
 {
     public class Reliable : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             ReliableInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -21,7 +23,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Crit
         }
     }
     
-    public record ReliableRecord(CleanString Key, float ConvertedCritChance) : PerkRecord(Key)
+    public record ReliableRecord(CleanString Key, int ConvertedCritChance) : PerkRecord(Key)
     {
         public override bool IsDataValid(StringBuilder errors, ICollection<CharacterRecord> allCharacters)
         {
@@ -34,7 +36,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Crit
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             ReliableInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -44,16 +47,13 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Crit
     
     public class ReliableInstance : PerkInstance
     {
-        private float _convertedCritChance;
+        private int _convertedCritChance;
 
         public ReliableInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
         
-        public ReliableInstance(CharacterStateMachine owner, ReliableRecord record) : base(owner, record)
-        {
-            _convertedCritChance = record.ConvertedCritChance;
-        }
+        public ReliableInstance(CharacterStateMachine owner, [NotNull] ReliableRecord record) : base(owner, record) => _convertedCritChance = record.ConvertedCritChance;
 
         protected override void OnSubscribe()
         {
@@ -62,7 +62,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Crit
             
             IStatsModule statsModule = Owner.StatsModule;
             _convertedCritChance = statsModule.BaseCriticalChance;
-            statsModule.BaseCriticalChance = 0f;
+            statsModule.BaseCriticalChance = 0;
             statsModule.BasePower += _convertedCritChance;
         }
 
@@ -73,6 +73,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Crit
             statsModule.BasePower -= _convertedCritChance;
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new ReliableRecord(Key, _convertedCritChance);
     }
 }

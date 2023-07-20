@@ -7,9 +7,9 @@ using Core.Utils.Handlers;
 using Core.Utils.Patterns;
 using Core.Visual_Novel.Scripts.Animations;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 // ReSharper disable StringLiteralTypo
 
@@ -112,7 +112,9 @@ namespace Core.Visual_Novel.Scripts
         {
             ClearSpawnedAnimations();
             if (CgDatabase.GetCg(fileName).TrySome(out Sprite cg))
+            {
                 _spriteHandler.SetValue(cg);
+            }
             else
             {
                 Debug.LogWarning($"CG {fileName} not found.");
@@ -126,7 +128,8 @@ namespace Core.Visual_Novel.Scripts
             _spriteHandler.SetValue(null);
         }
 
-        public IEnumerator SetAnim(string fileName)
+        [CanBeNull]
+        public IEnumerator SetAnim([NotNull] string fileName)
         {
             _spriteHandler.SetValue(null);
             ClearSpawnedAnimations();
@@ -147,7 +150,7 @@ namespace Core.Visual_Novel.Scripts
             return null;
         }
 
-        public void SetAnimAsync(string fileName)
+        public void SetAnimAsync([NotNull] string fileName)
         {
             _spriteHandler.SetValue(null);
             ClearSpawnedAnimations();

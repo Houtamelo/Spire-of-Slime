@@ -1,7 +1,6 @@
 ﻿using Core.Utils.Patterns;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Visual_Novel.Scripts
 {

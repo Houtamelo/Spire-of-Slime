@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using JetBrains.Annotations;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace UI
@@ -17,7 +18,7 @@ namespace UI
         }
 
         /// Probably not necessary since the chain of calls `Rebuild()`->`UpdateGeometry()`->`DoMeshGeneration()`->`OnPopulateMesh()` won't happen; so here really just as a fail-safe.
-        protected override void OnPopulateMesh(VertexHelper vh)
+        protected override void OnPopulateMesh([NotNull] VertexHelper vh)
         {
             vh.Clear();
         }

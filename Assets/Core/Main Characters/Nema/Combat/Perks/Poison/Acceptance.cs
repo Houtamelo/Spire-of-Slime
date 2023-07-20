@@ -10,12 +10,15 @@ using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Nema.Combat.Perks.Poison
 {
     public class Acceptance : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             AcceptanceInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -23,7 +26,7 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Poison
         }
     }
     
-    public record AcceptanceRecord(CleanString Key, float AccumulatedTime) : PerkRecord(Key)
+    public record AcceptanceRecord(CleanString Key, TSpan AccumulatedTime) : PerkRecord(Key)
     {
         public override bool IsDataValid(StringBuilder errors, ICollection<CharacterRecord> allCharacters)
         {
@@ -36,7 +39,8 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Poison
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             AcceptanceInstance instance = new(owner, this);
             owner.PerksModule.Add(instance);
@@ -48,16 +52,13 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Poison
     {
         private const int LustModifierPerTime = -3;
 
-        private float _accumulatedTime;
+        private TSpan _accumulatedTime;
         
         public AcceptanceInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
 
-        public AcceptanceInstance(CharacterStateMachine owner, AcceptanceRecord record) : base(owner, record)
-        {
-            _accumulatedTime = record.AccumulatedTime;
-        }
+        public AcceptanceInstance(CharacterStateMachine owner, [NotNull] AcceptanceRecord record) : base(owner, record) => _accumulatedTime = record.AccumulatedTime;
 
         protected override void OnSubscribe()
         {
@@ -69,19 +70,20 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Poison
             Owner.SubscribedTickers.Remove(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new AcceptanceRecord(Key, _accumulatedTime);
 
-        public void Tick(float timeStep)
+        public void Tick(TSpan timeStep)
         {
-            foreach (StatusInstance status in Owner.StatusModule.GetAll)
+            foreach (StatusInstance status in Owner.StatusReceiverModule.GetAll)
             {
                 if (status.EffectType != EffectType.Poison || status.IsDeactivated)
                     continue;
                 
                 _accumulatedTime += timeStep;
-                if (_accumulatedTime >= 1f)
+                if (_accumulatedTime.Seconds >= 1.0)
                 {
-                    _accumulatedTime -= 1f;
+                    _accumulatedTime.SubtractSeconds(1.0);
                     if (Owner.LustModule.IsSome)
                         Owner.LustModule.Value.ChangeLust(LustModifierPerTime);
                 }

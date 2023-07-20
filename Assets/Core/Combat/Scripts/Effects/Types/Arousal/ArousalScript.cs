@@ -1,58 +1,59 @@
 ﻿using Core.Combat.Scripts.Animations;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Cues;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Enums;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
 using Random = UnityEngine.Random;
 
 namespace Core.Combat.Scripts.Effects.Types.Arousal
 {
-    public record ArousalScript(bool Permanent, float BaseDuration, float BaseApplyChance = 1, uint BaseLustPerTime = 1) : StatusScriptDurationBased(Permanent, BaseDuration)
+    public record ArousalScript(bool Permanent, TSpan BaseDuration, int BaseApplyChance, int BaseLustPerSecond = 1) : StatusScriptDurationBased(Permanent, BaseDuration)
     {
-        public float BaseApplyChance { get; protected set; } = BaseApplyChance;
-        public uint BaseLustPerTime { get; protected set; } = BaseLustPerTime;
+        public int BaseApplyChance { get; protected set; } = BaseApplyChance;
+        public int BaseLustPerSecond { get; protected set; } = BaseLustPerSecond;
 
-        public override bool IsPositive => false;
-        
-        public override bool PlaysBarkAppliedOnCaster => false;
-        public override bool PlaysBarkAppliedOnEnemy => true;
-        public override bool PlaysBarkAppliedOnAlly => false;
+        [NotNull]
+        public override StatusToApply GetStatusToApply(CharacterStateMachine caster, CharacterStateMachine target, bool crit, [CanBeNull] ISkill skill = null) 
+            => new ArousalToApply(caster, target, crit, skill, ScriptOrigin: this, BaseDuration, Permanent, BaseApplyChance, BaseLustPerSecond);
 
-        public override StatusToApply GetStatusToApply(CharacterStateMachine caster, CharacterStateMachine target, bool crit, ISkill skill = null) 
-            => new ArousalToApply(caster, target, crit, skill, this, BaseDuration, Permanent, BaseApplyChance, BaseLustPerTime);
-
-        public override StatusResult ApplyEffect(CharacterStateMachine caster, CharacterStateMachine target, bool crit, ISkill skill = null)
+        public override StatusResult ApplyEffect(CharacterStateMachine caster, CharacterStateMachine target, bool crit, [CanBeNull] ISkill skill = null)
         {
-            ArousalToApply arousalStruct = new(caster, target, crit, skill, this, BaseDuration, Permanent, BaseApplyChance, BaseLustPerTime);
+            ArousalToApply arousalStruct = new(caster, target, crit, skill, ScriptOrigin: this, BaseDuration, Permanent, BaseApplyChance, BaseLustPerSecond);
             return ProcessModifiersAndTryApply(arousalStruct);
         }
 
         public static void ProcessModifiers(ArousalToApply effectStruct)
         {
             IStatusApplierModule applierModule = effectStruct.Caster.StatusApplierModule;
+
             if (effectStruct.Caster == effectStruct.Target)
-                effectStruct.ApplyChance = 1;
+                effectStruct.ApplyChance = 100;
             else
-            {
                 effectStruct.ApplyChance += applierModule.GetArousalApplyChance();
-                if (effectStruct.FromCrit)
-                    effectStruct.ApplyChance += BonusApplyChanceOnCrit;
-            }
-            
+
+            if (effectStruct.FromCrit)
+                effectStruct.ApplyChance += BonusApplyChanceOnCrit;
+
             applierModule.ModifyEffectApplying(ref effectStruct);
             
-            IStatusModule receiverModule = effectStruct.Target.StatusModule;
+            IStatusReceiverModule receiverModule = effectStruct.Target.StatusReceiverModule;
             receiverModule.ModifyEffectReceiving(ref effectStruct);
             
             if (effectStruct.FromCrit)
-                effectStruct.Duration *= DurationMultiplierOnCrit;
+            {
+                TSpan duration = effectStruct.Duration;
+                duration.Multiply(DurationMultiplierOnCrit);
+                effectStruct.Duration = duration;
+            }
         }
 
         public static StatusResult ProcessModifiersAndTryApply(ArousalToApply effectStruct)
@@ -61,7 +62,7 @@ namespace Core.Combat.Scripts.Effects.Types.Arousal
             return TryApply(ref effectStruct);
         }
 
-        private static StatusResult TryApply(ref ArousalToApply effectStruct)
+        private static StatusResult TryApply([NotNull] ref ArousalToApply effectStruct)
         {
             FullCharacterState targetState = effectStruct.Target.StateEvaluator.FullPureEvaluate();
             if (targetState.Defeated || targetState.Corpse || targetState.Grappled)
@@ -75,7 +76,7 @@ namespace Core.Combat.Scripts.Effects.Types.Arousal
                 return StatusResult.Failure(effectStruct.Caster, effectStruct.Target, generatesInstance: true);
             }
             
-            bool success = Random.value < effectStruct.ApplyChance;
+            bool success = Save.Random.Next(100) < effectStruct.ApplyChance;
             Option<StatusInstance> option = success ? Arousal.CreateInstance(ref effectStruct) : Option<StatusInstance>.None;
 
             if (StatusVFXManager.AssertInstance(out StatusVFXManager statusEffectVFXManager))
@@ -84,29 +85,33 @@ namespace Core.Combat.Scripts.Effects.Types.Arousal
             return new StatusResult(effectStruct.Caster, effectStruct.Target, success: option.IsSome, statusInstance: option.SomeOrDefault(), generatesInstance: true, EffectType.Arousal);
         }
 
-
-        public float GetEstimatedTotalLustWithoutComposure() => BaseLustPerTime * BaseDuration;
-
-        public override float ComputePoints(ref SkillStruct skillStruct, CharacterStateMachine target)
+        public override float ComputePoints(ref SkillStruct skillStruct, [NotNull] CharacterStateMachine target)
         {
             if (target.LustModule.IsNone || target.StateEvaluator.PureEvaluate() is CharacterState.Defeated or CharacterState.Corpse)
                 return 0f;
-            
-            ArousalToApply effectStruct = new(skillStruct.Caster, target, false, skillStruct.Skill, this, BaseDuration,
-                                             Permanent, BaseApplyChance, BaseLustPerTime);
+
+            ArousalToApply effectStruct = new(skillStruct.Caster, target, FromCrit: false, skillStruct.Skill, ScriptOrigin: this, BaseDuration,
+                                              Permanent, BaseApplyChance, BaseLustPerSecond);
             ProcessModifiers(effectStruct);
 
-            float applyChance = Mathf.Clamp(effectStruct.ApplyChance, 0f, 1f);
+            float applyChancePercentage = Mathf.Clamp01(effectStruct.ApplyChance / 100f);
 
-            float totalLust = effectStruct.Duration * effectStruct.LustPerTime;
+            int totalLust = Mathd.CeilToInt(effectStruct.Duration.Seconds * effectStruct.LustPerSecond);
 
-            float durationMultiplier = Permanent ? HeuristicConstants.PermanentMultiplier : Mathf.Pow(HeuristicConstants.PenaltyForOvertime, effectStruct.Duration + 1);
+            float durationMultiplier = Permanent ? HeuristicConstants.PermanentMultiplier : Mathf.Pow(HeuristicConstants.PenaltyForOvertime, effectStruct.Duration.FloatSeconds + 1.0f);
 
-            float points = totalLust * durationMultiplier * HeuristicConstants.LustMultiplier * applyChance;
+            float points = totalLust * durationMultiplier * HeuristicConstants.LustMultiplier * applyChancePercentage;
             return -1f * points;
         }
 
+        [NotNull]
         public override string Description => StatusScriptDescriptions.Get(this);
         public override EffectType EffectType => EffectType.Arousal;
+        
+        public override bool IsPositive => false;
+        
+        public override bool PlaysBarkAppliedOnCaster => false;
+        public override bool PlaysBarkAppliedOnEnemy => true;
+        public override bool PlaysBarkAppliedOnAlly => false;
     }
 }

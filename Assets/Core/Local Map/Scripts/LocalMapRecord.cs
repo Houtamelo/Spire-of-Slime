@@ -4,6 +4,7 @@ using Core.Local_Map.Scripts.Coordinates;
 using Core.Local_Map.Scripts.HexagonObject;
 using Core.Utils.Extensions;
 using Core.World_Map.Scripts;
+using JetBrains.Annotations;
 
 namespace Core.Local_Map.Scripts
 {
@@ -11,7 +12,8 @@ namespace Core.Local_Map.Scripts
     {
         private static readonly List<Cell.Record> ReusableList = new();
 
-        public static LocalMapRecord FromLocalMap(LocalMapManager localMapManager)
+        [NotNull]
+        public static LocalMapRecord FromLocalMap([NotNull] LocalMapManager localMapManager)
         {
             ReusableList.Clear();
             IReadOnlyDictionary<Axial, Cell> allCells = localMapManager.GameObjectMap.AllCells;

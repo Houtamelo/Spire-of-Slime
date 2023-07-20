@@ -1,8 +1,8 @@
 ﻿using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.World_Map.Scripts
 {
@@ -21,7 +21,7 @@ namespace Core.World_Map.Scripts
             EndLocationButton = end;
         }
 
-        public void OnPointerEnter(PointerEventData _ = null)
+        public void OnPointerEnter([CanBeNull] PointerEventData _ = null)
         {
             HighLight();
             Option<WorldMapManager> worldMap = WorldMapManager.Instance;
@@ -31,7 +31,7 @@ namespace Core.World_Map.Scripts
                 Debug.LogError("WorldMapManager.Instance is null");
         }
 
-        public void OnPointerExit(PointerEventData _ = null)
+        public void OnPointerExit([CanBeNull] PointerEventData _ = null)
         {
             LowLight();
             Option<WorldMapManager> worldMap = WorldMapManager.Instance;
@@ -41,7 +41,7 @@ namespace Core.World_Map.Scripts
                 Debug.LogError("WorldMapManager.Instance is null");
         }
 
-        public void OnPointerClick(PointerEventData eventData)
+        public void OnPointerClick([NotNull] PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left)
                 return;
@@ -75,13 +75,9 @@ namespace Core.World_Map.Scripts
             {
                 image = GetComponent<Image>();
                 if (image == null)
-                {
                     Debug.Log(message: "DottedLine: Image not found", context: this);
-                }
                 else
-                {
                     UnityEditor.EditorUtility.SetDirty(target: this);
-                }
             }
         }
 #endif

@@ -1,4 +1,5 @@
-﻿using KGySoft.CoreLibraries;
+﻿using JetBrains.Annotations;
+using KGySoft.CoreLibraries;
 using UnityEditor;
 using UnityEngine;
 
@@ -7,7 +8,7 @@ namespace Core.World_Map.Scripts.Editor
     [CustomPropertyDrawer(typeof(BothWays))]
     public class BothWaysPropertyDrawer : PropertyDrawer
     {
-        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        public override void OnGUI(Rect position, [NotNull] SerializedProperty property, GUIContent label)
         {
             // Bothways is a struct that has two fields of the enum type "LocationEnum", one field is called "One" and the other "Two", both fields should be drawn in the same line as the label and should have different values
             

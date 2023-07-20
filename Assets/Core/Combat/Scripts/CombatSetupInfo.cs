@@ -4,22 +4,23 @@ using Core.Combat.Scripts.Interfaces;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts
 {
     public readonly struct CombatSetupInfo
     {
-        public readonly (ICharacterScript script, RecoveryInfo recoveryInfo, float expAtStart, bool bindToSave)[] Allies;
+        public readonly (ICharacterScript script, RecoveryInfo recoveryInfo, int expAtStart, bool bindToSave)[] Allies;
         public readonly (ICharacterScript script, RecoveryInfo recoveryInfo)[] Enemies;
         public readonly bool MistExists;
         public readonly bool AllowLust;
         public readonly GeneralPaddingSettings PaddingSettings;
 
-        public CombatSetupInfo((ICharacterScript, RecoveryInfo, float expAtStart, bool bindToSave)[] allies, (ICharacterScript, RecoveryInfo)[] enemies, bool mistExists, bool allowLust, GeneralPaddingSettings paddingSettings)
+        public CombatSetupInfo((ICharacterScript, RecoveryInfo, int expAtStart, bool bindToSave)[] allies, (ICharacterScript, RecoveryInfo)[] enemies, bool mistExists, bool allowLust, GeneralPaddingSettings paddingSettings)
         {
             Allies = allies;
             Enemies = enemies;
@@ -28,9 +29,10 @@ namespace Core.Combat.Scripts
             PaddingSettings = paddingSettings;
         }
 
+        [NotNull]
         public Record GetRecord()
         {
-            (CleanString key, RecoveryInfo recoveryInfo, float expAtStart, bool bindToSave)[] allies = new (CleanString, RecoveryInfo, float expAtStart, bool bindToSave)[Allies.Length];
+            (CleanString key, RecoveryInfo recoveryInfo, int expAtStart, bool bindToSave)[] allies = new (CleanString, RecoveryInfo, int expAtStart, bool bindToSave)[Allies.Length];
             for (int i = 0; i < Allies.Length; i++)
                 allies[i] = (Allies[i].script.Key, Allies[i].recoveryInfo, Allies[i].expAtStart, Allies[i].bindToSave);
             
@@ -41,12 +43,12 @@ namespace Core.Combat.Scripts
             return new Record(allies, enemies, MistExists, AllowLust, PaddingSettings);
         }
 
-        public static Option<CombatSetupInfo> FromRecord(Record record)
+        public static Option<CombatSetupInfo> FromRecord([NotNull] Record record)
         {
-            (ICharacterScript script, RecoveryInfo recoveryInfo, float expAtStart, bool bindToSave)[] allies = new (ICharacterScript, RecoveryInfo, float expAtStart, bool bindToSave)[record.Allies.Length];
+            (ICharacterScript script, RecoveryInfo recoveryInfo, int expAtStart, bool bindToSave)[] allies = new (ICharacterScript, RecoveryInfo, int expAtStart, bool bindToSave)[record.Allies.Length];
             for (int i = 0; i < allies.Length; i++)
             {
-                (CleanString key, RecoveryInfo recoveryInfo, float expAtStart, bool bindToSave) = record.Allies[i];
+                (CleanString key, RecoveryInfo recoveryInfo, int expAtStart, bool bindToSave) = record.Allies[i];
                 Option<CharacterScriptable> characterScript = CharacterDatabase.GetCharacter(key);
                 if (characterScript.IsNone)
                     return Option.None;
@@ -71,33 +73,36 @@ namespace Core.Combat.Scripts
         [Serializable]
         public struct RecoveryInfo
         {
-            [SerializeField] 
-            private float baseValue;
+            private static readonly TSpan DefaultBaseDuration = TSpan.FromSeconds(1);
+            private static readonly TSpan DefaultAmplitude = TSpan.FromSeconds(0.5);
+            
+            [SerializeField]
+            private TSpan baseValue;
             
             [SerializeField] 
             private bool randomize;
             
             [SerializeField, ShowIf(nameof(randomize))]
-            private float amplitude;
+            private TSpan amplitude;
 
-            public RecoveryInfo(float baseValue, float amplitude, bool randomize)
+            public RecoveryInfo(TSpan baseValue, TSpan amplitude, bool randomize)
             {
                 this.baseValue = baseValue;
                 this.amplitude = amplitude;
                 this.randomize = randomize;
             }
             
-            public float GenerateValue() => randomize ? baseValue + UnityEngine.Random.Range(-amplitude, amplitude) : baseValue;
-            public static RecoveryInfo Default => new(1, 0.5f, true);
+            public TSpan GenerateValue() => TSpan.FromSeconds(randomize ? baseValue.Seconds + UnityEngine.Random.Range(-amplitude.FloatSeconds, amplitude.FloatSeconds) : baseValue.Seconds);
+            public static readonly RecoveryInfo Default = new(baseValue: DefaultBaseDuration, amplitude: DefaultAmplitude, randomize: true);
         }
 
-        public record Record((CleanString key, RecoveryInfo recoveryInfo, float expAtStart, bool bindToSave)[] Allies, (CleanString key, RecoveryInfo recoveryInfo)[] Enemies, bool MistExists, bool AllowLust, GeneralPaddingSettings PaddingSettings)
+        public record Record((CleanString key, RecoveryInfo recoveryInfo, int expAtStart, bool bindToSave)[] Allies, (CleanString key, RecoveryInfo recoveryInfo)[] Enemies, bool MistExists, bool AllowLust, GeneralPaddingSettings PaddingSettings)
         {
             public bool IsDataValid(StringBuilder errors)
             {
                 if (Allies == null)
                 {
-                    errors.AppendLine("Invalid ", nameof(CombatSetupInfo.Record), " data. ", nameof(Allies), " is null.");
+                    errors.AppendLine("Invalid ", nameof(Record), " data. ", nameof(Allies), " is null.");
                     return false;
                 }
 
@@ -106,14 +111,14 @@ namespace Core.Combat.Scripts
                     CleanString key = Allies[i].key;
                     if (CharacterDatabase.GetCharacter(key).IsNone)
                     {
-                        errors.AppendLine("Invalid ", nameof(CombatSetupInfo.Record), " data. Ally at index: ", i.ToString() ," with key: ", key.ToString(), " does not exist in database.");
+                        errors.AppendLine("Invalid ", nameof(Record), " data. Ally at index: ", i.ToString() ," with key: ", key.ToString(), " does not exist in database.");
                         return false;
                     }
                 }
                 
                 if (Enemies == null)
                 {
-                    errors.AppendLine("Invalid ", nameof(CombatSetupInfo.Record), " data. ", nameof(Enemies), " is null.");
+                    errors.AppendLine("Invalid ", nameof(Record), " data. ", nameof(Enemies), " is null.");
                     return false;
                 }
 
@@ -122,7 +127,7 @@ namespace Core.Combat.Scripts
                     CleanString key = Enemies[i].key;
                     if (CharacterDatabase.GetCharacter(key).IsNone)
                     {
-                        errors.AppendLine("Invalid ", nameof(CombatSetupInfo.Record), " data. Enemy at index: ", i.ToString() , " with key: ", key.ToString(), " does not exist in database.");
+                        errors.AppendLine("Invalid ", nameof(Record), " data. Enemy at index: ", i.ToString() , " with key: ", key.ToString(), " does not exist in database.");
                         return false;
                     }
                 }

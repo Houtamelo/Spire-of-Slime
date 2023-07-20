@@ -31,7 +31,9 @@ namespace Core.Utils.Patterns
                 _instance = (T) serialized;
             }
             else if (Instance.Value != this)
+            {
                 throw new Exception(message: $"Duplicate Singleton: {gameObject.name}");
+            }
         }
         
         protected virtual void OnDestroy()

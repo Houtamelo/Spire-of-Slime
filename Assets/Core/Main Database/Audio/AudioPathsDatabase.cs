@@ -5,7 +5,6 @@ using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Main_Database.Audio
 {
@@ -20,12 +19,12 @@ namespace Core.Main_Database.Audio
             _audioPaths = audioPaths;
         }
 
-        public Option<string> GetAudioPathInternal(string fileName) => _audioPaths.TryGetValue(fileName.ToLowerInvariant(), out string path) ? path : Option<string>.None;
-        public static Option<string> GetAudioPath(string fileName) => Instance.AudioPathsDatabase.GetAudioPathInternal(fileName);
+        public Option<string> GetAudioPathInternal([NotNull] string fileName) => _audioPaths.TryGetValue(fileName.ToLowerInvariant(), out string path) ? path : Option<string>.None;
+        public static Option<string> GetAudioPath([NotNull] string fileName) => Instance.AudioPathsDatabase.GetAudioPathInternal(fileName);
 
 
         [MustUseReturnValue]
-        public static Result<ResourceHandle<AudioClip>> LoadClip(string fileName)
+        public static Result<ResourceHandle<AudioClip>> LoadClip([NotNull] string fileName)
         {
             Option<string> audioPath = GetAudioPath(fileName);
             if (audioPath.IsNone)

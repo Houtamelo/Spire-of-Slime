@@ -2,21 +2,23 @@
 using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Text;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects;
 using Core.Combat.Scripts.Effects.BaseTypes;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Combat.Scripts.UI;
+using Core.Localization.Scripts;
 using Core.Pause_Menu.Scripts;
 using Core.Utils.Async;
+using Core.Utils.Collections;
 using Core.Utils.Extensions;
 using Core.Utils.Math;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using ListPool;
 using NetFabric.Hyperlinq;
 using Sirenix.OdinInspector;
@@ -24,8 +26,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using Utils.Patterns;
 using CombatManager = Core.Combat.Scripts.Managers.CombatManager;
+using IBaseStatusScript = Core.Combat.Scripts.Effects.BaseTypes.IBaseStatusScript;
 
 namespace Core.Character_Panel.Scripts.Skills
 {
@@ -33,7 +35,8 @@ namespace Core.Character_Panel.Scripts.Skills
     {
         private static readonly StringBuilder SingleUseBuilder = new();
         
-        private static readonly StringBuilder[] StringBuilders = { new(), new(), new(), new() };
+        private static readonly StringBuilder[] TargetStringBuilders = { new(), new(), new(), new() };
+        
         private static readonly StringBuilder EffectsStringBuilder = new();
         private static readonly List<StatusToApply> ReusableStatusList = new();
         private static readonly (CharacterStateMachine target, List<StatusToApply> effects)[] ReusableStatusRecordArray =
@@ -45,6 +48,15 @@ namespace Core.Character_Panel.Scripts.Skills
         };
         
         private static readonly Vector3[] ReusableCornersArray = new Vector3[4];
+
+        private static readonly LocalizedText MaxUsesPerCombatTrans = new("skill_tooltip_maxusespercombat"),
+                                              ResilienceReductionTrans = new("skill_tooltip_resiliencereduction"),
+                                              CriticalChanceTrans = new("skill_tooltip_criticalchance"),
+                                              AccuracyTrans = new("skill_tooltip_accuracy"),
+                                              RecoveryTrans = new("skill_tooltip_recovery"),
+                                              PowerTrans = new("skill_tooltip_power"),
+                                              ChargeTrans = new("skill_tooltip_charge");
+            
 
         private readonly List<TooltipSidePanel> _sidePanels = new();
 
@@ -108,9 +120,7 @@ namespace Core.Character_Panel.Scripts.Skills
             }
             
             for (int i = 0; i < 4; i++)
-            {
                 CreateSidePanel();
-            }
 
             canvasGroup.alpha = 1f;
             Hide();
@@ -126,8 +136,8 @@ namespace Core.Character_Panel.Scripts.Skills
 
         // atrocious, but I'm stubborn, skill struct shall not enter the heap!
 
-        [Pure]
-        private static void GenerateStructs(ISkill skill, int targetCount, CharacterStateMachine selectedCharacter, 
+        [System.Diagnostics.Contracts.Pure]
+        private static void GenerateStructs([NotNull] ISkill skill, int targetCount, [NotNull] CharacterStateMachine selectedCharacter, 
                                             CharacterStateMachine targetOne, CharacterStateMachine targetTwo, CharacterStateMachine targetThree, CharacterStateMachine targetFour,
                                             out SkillStruct skillOne, out SkillStruct skillTwo, out SkillStruct skillThree, out SkillStruct skillFour, 
                                             out ChargeStruct chargeOne, out ChargeStruct chargeTwo, out ChargeStruct chargeThree, out ChargeStruct chargeFour)
@@ -267,6 +277,7 @@ namespace Core.Character_Panel.Scripts.Skills
             gameObject.SetActive(false);
         }
 
+        [NotNull]
         private TooltipSidePanel CreateSidePanel()
         {
             TooltipSidePanel sidePanel = Instantiate(sidePanelPrefab, sidePanelParent);
@@ -283,7 +294,7 @@ namespace Core.Character_Panel.Scripts.Skills
             return _sidePanels[index];
         }
 
-        public void Show(ISkill skill)
+        public void Show([NotNull] ISkill skill)
         {
         #region Sanity Checks
             Utils.Patterns.Option<CombatManager> combatManagerOption = CombatManager.Instance;
@@ -305,7 +316,7 @@ namespace Core.Character_Panel.Scripts.Skills
             using Lease<CharacterStateMachine> targets = ArrayPool<CharacterStateMachine>.Shared.Lease(4);
 
             bool isCasterLeft = caster.PositionHandler.IsLeftSide;
-            bool isTargetLeft = skill.AllowAllies ? isCasterLeft : !isCasterLeft;
+            bool isTargetLeft = skill.IsPositive ? isCasterLeft : !isCasterLeft;
 
             foreach (CharacterStateMachine target in combatManager.Characters.GetOnSide(isTargetLeft))
             {
@@ -325,408 +336,31 @@ namespace Core.Character_Panel.Scripts.Skills
             }
         #endregion
             
-        #region Setup
-            for (int i = 0; i < StringBuilders.Length; i++) 
-                StringBuilders[i].Clear();
+            for (int i = 0; i < TargetStringBuilders.Length; i++) 
+                TargetStringBuilders[i].Clear();
 
-            skillNameText.text = skill.DisplayName;
+            skillNameText.text = skill.DisplayName.Translate().GetText();
             
             GenerateStructs(skill,                      targetCount,                caster,
                             targets.Rented[0],          targets.Rented[1],          targets.Rented[2],            targets.Rented[3],
                             out SkillStruct skillOne,   out SkillStruct skillTwo,   out SkillStruct skillThree,   out SkillStruct skillFour,
                             out ChargeStruct chargeOne, out ChargeStruct chargeTwo, out ChargeStruct chargeThree, out ChargeStruct chargeFour);
             
-        #endregion
-
-        #region Charge
-            bool chargeChanged = false;
-            for (int i = 0; i < targetCount; i++)
-            {
-                ref ChargeStruct desiredStruct = ref GetChargeStruct(i, ref chargeOne, ref chargeTwo, ref chargeThree, ref chargeFour);
-                if (Math.Abs(desiredStruct.Charge - skill.BaseCharge) > 0.0001f)
-                {
-                    chargeChanged = true;
-                    break;
-                }
-            }
-
-            if (chargeChanged)
-            {
-                for (int i = 0; i < targetCount; i++)
-                {
-                    StringBuilder stringBuilder = StringBuilders[i];
-                    ref ChargeStruct desiredStruct = ref GetChargeStruct(i, ref chargeOne, ref chargeTwo, ref chargeThree, ref chargeFour);
-                    
-                    SingleUseBuilder.Override("Charge: ", desiredStruct.Charge.ToString("0.00"), "s");
-                    if (desiredStruct.Charge < skill.BaseCharge) // less charge = better
-                        SingleUseBuilder.Surround(ColorReferences.BuffedRichText.start, ColorReferences.BuffedRichText.end);
-                    else if (desiredStruct.Charge > skill.BaseCharge)
-                        SingleUseBuilder.Surround(ColorReferences.DebuffedRichText.start, ColorReferences.DebuffedRichText.end);
-
-                    stringBuilder.AppendLine(SingleUseBuilder.ToString());
-                }
-            }
-            else
-            {
-                SetChargeText(skill.BaseCharge);
-            }
-        #endregion
-
-        #region Recovery
-            bool recoveryComparison = false;
-            for (int i = 0; i < targetCount; i++)
-            {
-                ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
-                if (Math.Abs(desiredStruct.Recovery - skill.BaseRecovery) > 0.0001f)
-                {
-                    recoveryComparison = true;
-                    break;
-                }
-            }
-            
-            if (recoveryComparison)
-            {
-                for (int i = 0; i < targetCount; i++)
-                {
-                    StringBuilder stringBuilder = StringBuilders[i];
-                    ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
-                    SingleUseBuilder.Override("Recovery: ", desiredStruct.Recovery.ToString("0.00"), "s");
-                    if (desiredStruct.Recovery < skill.BaseRecovery) // less recovery = better
-                        SingleUseBuilder.Surround(ColorReferences.BuffedRichText.start, ColorReferences.BuffedRichText.end);
-                    else if (desiredStruct.Recovery > skill.BaseRecovery)
-                        SingleUseBuilder.Surround(ColorReferences.DebuffedRichText.start, ColorReferences.DebuffedRichText.end);
-                    
-                    stringBuilder.AppendLine(SingleUseBuilder.ToString());
-                }
-            }
-            else
-            {
-                SetRecoveryText(skill.BaseRecovery);
-            }
-        #endregion
-            
-        #region Power
-            if (skill.BaseDamageMultiplier.IsNone)
-            {
-                damageMultiplierObject.SetActive(false);
-                goto AfterPower;
-            }
-            
-            float baseDamageMultiplier = skill.BaseDamageMultiplier.Value;
-            bool powerChanged = false;
-            for (int i = 0; i < targetCount; i++)
-            {
-                ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
-                ref ValueListPool<TargetProperties> targetsProperties = ref desiredStruct.TargetProperties;
-                for (int j = 0; j < targetsProperties.Count; j++)
-                {
-                    ref TargetProperties property = ref targetsProperties[j];
-                    if (property.DamageModifier.TrySome(out float damageModifier) == false || Math.Abs(damageModifier - baseDamageMultiplier) > 0.0001f)
-                    {
-                        powerChanged = true;
-                        break;
-                    }
-                }
-            }
-            
-            if (powerChanged)
-            {
-                for (int i = 0; i < targetCount; i++)
-                {
-                    StringBuilder stringBuilder = StringBuilders[i];
-                    ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
-                    ref ValueListPool<TargetProperties> targetsProperties = ref desiredStruct.TargetProperties;
-                    float skillBaseDamageModifier = skill.BaseDamageMultiplier.TrySome(out skillBaseDamageModifier) ? skillBaseDamageModifier : 0f;
-                    if (targetsProperties.Count == 1)
-                    {
-                        float damageModifier = targetsProperties[0].DamageModifier.TrySome(out damageModifier) ? damageModifier : 0f;
-                        SingleUseBuilder.Override("Damage Multiplier: ", damageModifier.ToPercentageString());
-                        if (damageModifier > skillBaseDamageModifier)
-                            SingleUseBuilder.Surround(ColorReferences.BuffedRichText.start, ColorReferences.BuffedRichText.end);
-                        else if (damageModifier < skillBaseDamageModifier)
-                            SingleUseBuilder.Surround(ColorReferences.DebuffedRichText.start, ColorReferences.DebuffedRichText.end);
-                        
-                        stringBuilder.AppendLine(SingleUseBuilder.ToString());
-                    }
-                    else
-                    {
-                        stringBuilder.AppendLine("Damage Multipliers:<indent=15%>");
-                        for (int j = 0; j < targetsProperties.Count; j++)
-                        {
-                            float damageModifier = targetsProperties[j].DamageModifier.TrySome(out damageModifier) ? damageModifier : 0f;
-                            SingleUseBuilder.Override(damageModifier.ToPercentageString(), " > ", targets.Rented[i].Script.CharacterName);
-                            if (damageModifier > skillBaseDamageModifier)
-                                SingleUseBuilder.Surround(ColorReferences.BuffedRichText.start, ColorReferences.BuffedRichText.end);
-                            else if (damageModifier < skillBaseDamageModifier)
-                                SingleUseBuilder.Surround(ColorReferences.DebuffedRichText.start, ColorReferences.DebuffedRichText.end);
-                            
-                            stringBuilder.AppendLine(SingleUseBuilder.ToString());
-                        }
-                        
-                        stringBuilder.Append("</indent>");
-                    }
-                }
-            }
-            else
-            {
-                SetDamageMultiplierText(baseDamageMultiplier);
-            }
-        AfterPower:
-        #endregion
-            
-        #region Accuracy
-            if (skill.BaseAccuracy.IsNone)
-            {
-                accuracyObject.SetActive(false);
-                goto AfterAccuracy;
-            }
-            
-            bool accuracyChanged = false;
-            float baseAccuracy = skill.BaseAccuracy.Value;
-            for (int i = 0; i < targetCount; i++)
-            {
-                ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
-                ref ValueListPool<TargetProperties> targetsProperties = ref desiredStruct.TargetProperties;
-                
-                for (int j = 0; j < targetsProperties.Count; j++)
-                {
-                    ref TargetProperties property = ref targetsProperties[j];
-                    if (property.AccuracyModifier.TrySome(out float accuracyModifier) == false || Math.Abs(accuracyModifier - baseAccuracy) > 0.0001f)
-                    {
-                        accuracyChanged = true;
-                        break;
-                    }
-                }
-            }
-            
-            if (accuracyChanged)
-            {
-                for (int i = 0; i < targetCount; i++)
-                {
-                    StringBuilder stringBuilder = StringBuilders[i];
-                    ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
-                    ref ValueListPool<TargetProperties> targetsProperties = ref desiredStruct.TargetProperties;
-                    float skillBaseAccuracy = skill.BaseAccuracy.TrySome(out skillBaseAccuracy) ? skillBaseAccuracy : 0f;
-                    if (targetsProperties.Count == 1)
-                    {
-                        float accuracyModifier = targetsProperties[0].AccuracyModifier.TrySome(out accuracyModifier) ? accuracyModifier : 0f;
-                        SingleUseBuilder.Override("Accuracy: ", accuracyModifier.ToPercentageString());
-                        if (accuracyModifier > skillBaseAccuracy)
-                            SingleUseBuilder.Surround(ColorReferences.BuffedRichText.start, ColorReferences.BuffedRichText.end);
-                        else if (accuracyModifier < skillBaseAccuracy)
-                            SingleUseBuilder.Surround(ColorReferences.DebuffedRichText.start, ColorReferences.DebuffedRichText.end);
-                        
-                        stringBuilder.AppendLine(SingleUseBuilder.ToString());
-                    }
-                    else
-                    {
-                        stringBuilder.AppendLine("Accuracies:<indent=15%>");
-                        for (int j = 0; j < targetsProperties.Count; j++)
-                        {
-                            float accuracyModifier = targetsProperties[j].AccuracyModifier.TrySome(out accuracyModifier) ? accuracyModifier : 0f;
-                            SingleUseBuilder.Override(accuracyModifier.ToPercentageString(), " > ", targets.Rented[i].Script.CharacterName);
-                            if (accuracyModifier > skillBaseAccuracy)
-                                SingleUseBuilder.Surround(ColorReferences.BuffedRichText.start, ColorReferences.BuffedRichText.end);
-                            else if (accuracyModifier < skillBaseAccuracy)
-                                SingleUseBuilder.Surround(ColorReferences.DebuffedRichText.start, ColorReferences.DebuffedRichText.end);
-                            
-                            stringBuilder.AppendLine(SingleUseBuilder.ToString());
-                        }
-                        
-                        stringBuilder.Append("</indent>");
-                    }
-                }
-            }
-            else
-            {
-                SetAccuracyText(baseAccuracy);
-            }
-            
-        AfterAccuracy:
-        #endregion
-            
-        #region Critical Chance
-            if (skill.BaseCriticalChance.IsNone)
-            {
-                criticalChanceObject.SetActive(false);
-                goto AfterCriticalChance;
-            }
-            
-            bool critChanceChanged = false;
-            float baseCritChance = skill.BaseCriticalChance.Value;
-            for (int i = 0; i < targetCount; i++)
-            {
-                ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
-                ref ValueListPool<TargetProperties> targetsProperties = ref desiredStruct.TargetProperties;
-                
-                for (int j = 0; j < targetsProperties.Count; j++)
-                {
-                    ref TargetProperties property = ref targetsProperties[j];
-                    if (property.CriticalChanceModifier.TrySome(out float criticalChance) == false || Math.Abs(criticalChance - baseCritChance) > 0.0001f)
-                    {
-                        critChanceChanged = true;
-                        break;
-                    }
-                }
-            }
-            
-            if (critChanceChanged)
-            {
-                for (int i = 0; i < targetCount; i++)
-                {
-                    StringBuilder stringBuilder = StringBuilders[i];
-                    ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
-                    ref ValueListPool<TargetProperties> targetsProperties = ref desiredStruct.TargetProperties;
-                    float skillBaseCritChance = skill.BaseCriticalChance.TrySome(out skillBaseCritChance) ? skillBaseCritChance : 0f;
-                    if (targetsProperties.Count == 1)
-                    {
-                        float criticalChance = targetsProperties[0].CriticalChanceModifier.TrySome(out criticalChance) ? criticalChance : 0f;
-                        SingleUseBuilder.Override("Critical Chance: ", criticalChance.ToPercentageString());
-                        if (criticalChance > skillBaseCritChance)
-                            SingleUseBuilder.Surround(ColorReferences.BuffedRichText.start, ColorReferences.BuffedRichText.end);
-                        else if (criticalChance < skillBaseCritChance)
-                            SingleUseBuilder.Surround(ColorReferences.DebuffedRichText.start, ColorReferences.DebuffedRichText.end);
-                        
-                        stringBuilder.AppendLine(SingleUseBuilder.ToString());
-                    }
-                    else
-                    {
-                        stringBuilder.AppendLine("Critical Chances:<indent=15%>");
-                        for (int j = 0; j < targetsProperties.Count; j++)
-                        {
-                            float criticalChance = targetsProperties[j].CriticalChanceModifier.TrySome(out criticalChance) ? criticalChance : 0f;
-                            SingleUseBuilder.Override(criticalChance.ToPercentageString(), " > ", targets.Rented[i].Script.CharacterName);
-                            if (criticalChance > skillBaseCritChance)
-                                SingleUseBuilder.Surround(ColorReferences.BuffedRichText.start, ColorReferences.BuffedRichText.end);
-                            else if (criticalChance < skillBaseCritChance)
-                                SingleUseBuilder.Surround(ColorReferences.DebuffedRichText.start, ColorReferences.DebuffedRichText.end);
-
-                            stringBuilder.AppendLine(SingleUseBuilder.ToString());
-                        }
-                        
-                        stringBuilder.Append("</indent>");
-                    }
-                }
-            }
-            else
-            {
-                SetCriticalChanceText(baseCritChance);
-            }
-        AfterCriticalChance:
-        #endregion
+            DoCharge(skill, targetCount, ref chargeOne, ref chargeTwo, ref chargeThree, ref chargeFour);
+            DoRecovery(skill, targetCount, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
+            DoPower(skill, targetCount, ref skillOne, targets, ref skillTwo, ref skillThree, ref skillFour);
+            DoAccuracy(skill, targetCount, ref skillOne, targets, ref skillTwo, ref skillThree, ref skillFour);
+            DoCriticalChance(skill, targetCount, ref skillOne, targets, ref skillTwo, ref skillThree, ref skillFour);
             
             EffectsStringBuilder.Clear();
+            DoResiliencePiercing(skill, targetCount, ref skillOne, targets, ref skillTwo, ref skillThree, ref skillFour);
+            DoEffects(skill, ref skillOne, targetCount, caster, targets, ref skillTwo, ref skillThree, ref skillFour);
             
-        #region ResiliencePiercing
-            if (skill.BaseResiliencePiercing.IsNone)
-            {
-                goto AfterResiliencePiercing;
-            }
-            
-            bool resiliencePiercingChanged = false;
-            float baseResiliencePiercing = skill.BaseResiliencePiercing.Value;
-            for (int i = 0; i < targetCount; i++)
-            {
-                ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
-                ref ValueListPool<TargetProperties> targetsProperties = ref desiredStruct.TargetProperties;
-                
-                for (int j = 0; j < targetsProperties.Count; j++)
-                {
-                    ref TargetProperties property = ref targetsProperties[j];
-                    if (property.ResiliencePiercingModifier.TrySome(out float resiliencePiercing) == false || Math.Abs(resiliencePiercing - baseResiliencePiercing) > 0.0001f)
-                    {
-                        resiliencePiercingChanged = true;
-                        break;
-                    }
-                }
-            }
-            
-            if (resiliencePiercingChanged)
-            {
-                for (int i = 0; i < targetCount; i++)
-                {
-                    StringBuilder stringBuilder = StringBuilders[i];
-                    ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
-                    ref ValueListPool<TargetProperties> targetsProperties = ref desiredStruct.TargetProperties;
-                    float skillBaseResiliencePiercing = skill.BaseResiliencePiercing.TrySome(out skillBaseResiliencePiercing) ? skillBaseResiliencePiercing : 0f;
-                    if (targetsProperties.Count == 1)
-                    {
-                        float resiliencePiercing = targetsProperties[0].ResiliencePiercingModifier.TrySome(out resiliencePiercing) ? resiliencePiercing : 0f;
-                        SingleUseBuilder.Override("Resilience Ignored (flat): ", resiliencePiercing.ToPercentageString());
-                        if (resiliencePiercing > skillBaseResiliencePiercing)
-                            SingleUseBuilder.Surround(ColorReferences.BuffedRichText.start, ColorReferences.BuffedRichText.end);
-                        else if (resiliencePiercing < skillBaseResiliencePiercing)
-                            SingleUseBuilder.Surround(ColorReferences.DebuffedRichText.start, ColorReferences.DebuffedRichText.end);
-                        
-                        stringBuilder.AppendLine(SingleUseBuilder.ToString());
-                    }
-                    else
-                    {
-                        stringBuilder.AppendLine("Resilience Ignored (flat):<indent=15%>");
-                        for (int j = 0; j < targetsProperties.Count; j++)
-                        {
-                            float resiliencePiercing = targetsProperties[j].ResiliencePiercingModifier.TrySome(out resiliencePiercing) ? resiliencePiercing : 0f;
-                            SingleUseBuilder.Override(resiliencePiercing.ToPercentageString(), " > ", targets.Rented[i].Script.CharacterName);
-                            if (resiliencePiercing > skillBaseResiliencePiercing)
-                                SingleUseBuilder.Surround(ColorReferences.BuffedRichText.start, ColorReferences.BuffedRichText.end);
-                            else if (resiliencePiercing < skillBaseResiliencePiercing)
-                                SingleUseBuilder.Surround(ColorReferences.DebuffedRichText.start, ColorReferences.DebuffedRichText.end);
-                            
-                            stringBuilder.AppendLine(SingleUseBuilder.ToString());
-                        }
-                        
-                        stringBuilder.Append("</indent>");
-                    }
-                }
-            }
-            else if (Mathf.Abs(baseResiliencePiercing) > 0.0001f)
-            {
-                AppendResiliencePiercingText(baseResiliencePiercing);
-            }
-        AfterResiliencePiercing:
-        #endregion
-
-        #region Effects
-            
-            ReusableStatusList.Clear();
-            ref ValueListPool<IActualStatusScript> targetEffectsOne = ref skillOne.TargetEffects;
-            bool targetEffectsChanged = TargetEffectsChanged(skill, ref targetEffectsOne, targetCount, caster, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
-
-            if (targetEffectsChanged)
-            {
-                DoDividedEffectsText(skill, ref targetEffectsOne, targetCount);
-            }
-            else
-            {
-                DoUnifiedEffectsText(skill, targets.Rented[0], caster);
-            }
-
-            Utils.Patterns.Option<uint> currentSkillGetMaxUseCount = skill.GetMaxUseCount;
-            if (currentSkillGetMaxUseCount.IsSome)
-            {
-                EffectsStringBuilder.Append("\n");
-                EffectsStringBuilder.Append("<color=red> Max uses per combat: ", currentSkillGetMaxUseCount.Value.ToString("0"), "</color>");
-            }
-            
-            SetEffectsText(EffectsStringBuilder.ToString());
-        #endregion
-            
-            SetFlavorText(skill.FlavorText);
+            SetFlavorText(skill.FlavorText.Translate().GetText());
             for (int i = 0; i < castingPositionCircles.Length; i++) 
                 castingPositionCircles[i].sprite = skill.CastingPositions[i] ? friendlyCircle : emptyCircle;
 
-            Sprite dotSprite, connectorSprite;
-
-            if (skill.AllowAllies)
-            {
-                dotSprite = friendlyCircle;
-                connectorSprite = friendlyConnector;
-            }
-            else
-            {
-                dotSprite = enemyCircle;
-                connectorSprite = enemyConnector;
-            }
+            (Sprite dotSprite, Sprite connectorSprite) = skill.IsPositive ? (friendlyCircle, friendlyConnector) : (enemyCircle, enemyConnector);
             
             for (int i = 0; i < 4; i++)
                 targetingPositionCircles[i].sprite = skill.TargetPositions[i] ? dotSprite : emptyCircle;
@@ -741,7 +375,7 @@ namespace Core.Character_Panel.Scripts.Skills
 
             for (int i = 0; i < targetCount; i++)
             {
-                StringBuilder stringBuilder = StringBuilders[i];
+                StringBuilder stringBuilder = TargetStringBuilders[i];
                 TooltipSidePanel sidePanel = GetSidePanelAtIndex(i);
                 if (stringBuilder.Length == 0)
                 {
@@ -767,7 +401,7 @@ namespace Core.Character_Panel.Scripts.Skills
             
             for (int i = 0; i < targetCount && i < ReusableStatusRecordArray.Length; i++)
             {
-                StringBuilders[i].Clear();
+                TargetStringBuilders[i].Clear();
                 ReusableStatusRecordArray[i].effects.Clear();
                 ReusableStatusRecordArray[i].target = null;
             }
@@ -784,30 +418,437 @@ namespace Core.Character_Panel.Scripts.Skills
             chargeFour.Dispose();
         }
 
-        private static void DoUnifiedEffectsText(ISkill skill, CharacterStateMachine target, CharacterStateMachine caster)
+        private void DoEffects([NotNull] ISkill skill, ref SkillStruct skillOne, int targetCount, CharacterStateMachine caster, Lease<CharacterStateMachine> targets,
+                               ref SkillStruct skillTwo, ref SkillStruct skillThree, ref SkillStruct skillFour)
         {
-            using Lease<StatusToApply> casterEffects = ArrayPool<StatusToApply>.Shared.Lease(skill.CasterEffects.Count);
-            using (Lease<StatusToApply> targetEffects = ArrayPool<StatusToApply>.Shared.Lease(skill.TargetEffects.Count))
+            ReusableStatusList.Clear();
+            ref CustomValuePooledList<IActualStatusScript> targetEffectsOne = ref skillOne.TargetEffects;
+            bool targetEffectsChanged = TargetEffectsChanged(skill, ref targetEffectsOne, targetCount, caster, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
+
+            if (targetEffectsChanged)
+                DoDividedEffectsText(skill, ref targetEffectsOne, targetCount);
+            else
+                DoUnifiedEffectsText(skill, targets.Rented[0], caster);
+
+            Utils.Patterns.Option<int> currentSkillGetMaxUseCount = skill.GetMaxUseCount;
+
+            if (currentSkillGetMaxUseCount.IsSome)
+                EffectsStringBuilder.Append("\n<color=red> ", MaxUsesPerCombatTrans.Translate().GetText(), currentSkillGetMaxUseCount.Value.ToString("0"), "</color>");
+
+            SetEffectsText(EffectsStringBuilder.ToString());
+        }
+
+        private void DoResiliencePiercing([NotNull] ISkill skill, int targetCount, ref SkillStruct skillOne, Lease<CharacterStateMachine> targets, ref SkillStruct skillTwo, ref SkillStruct skillThree, ref SkillStruct skillFour)
+        {
+            if (skill.ResilienceReduction.IsNone)
+                return;
+
+            bool resiliencePiercingChanged = false;
+            int baseResiliencePiercing = skill.ResilienceReduction.Value;
+
+            for (int i = 0; i < targetCount; i++)
             {
-                for (int i = 0; i < skill.CasterEffects.Count; i++)
-                {
-                    StatusToApply record = skill.CasterEffects[i].GetActual.GetStatusToApply(caster, caster, crit: false, skill: skill);
-                    record.ProcessModifiers();
-                    casterEffects.Rented[i] = record;
-                }
+                ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
+                ref CustomValuePooledList<TargetProperties> targetsProperties = ref desiredStruct.TargetProperties;
 
-                for (int i = 0; i < skill.TargetEffects.Count; i++)
+                for (int j = 0; j < targetsProperties.Count; j++)
                 {
-                    StatusToApply record = skill.TargetEffects[i].GetActual.GetStatusToApply(caster, target, crit: false, skill: skill);
-                    record.ProcessModifiers();
-                    targetEffects.Rented[i] = record;
-                }
+                    ref TargetProperties property = ref targetsProperties[j];
 
-                EffectsStringBuilder.Append(skill.GetCustomStatsAndEffectsText(casterEffects, targetEffects));
+                    if (property.ResilienceReductionModifier.TrySome(out int resiliencePiercing) == false || resiliencePiercing != baseResiliencePiercing)
+                    {
+                        resiliencePiercingChanged = true;
+                        break;
+                    }
+                }
+            }
+
+            if (resiliencePiercingChanged == false && baseResiliencePiercing > 0)
+            {
+                AppendResiliencePiercingText(baseResiliencePiercing);
+                return;
+            }
+
+            for (int i = 0; i < targetCount; i++)
+            {
+                StringBuilder stringBuilder = TargetStringBuilders[i];
+                ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
+                ref CustomValuePooledList<TargetProperties> targetsProperties = ref desiredStruct.TargetProperties;
+
+                skill.ResilienceReduction.TrySome(out int skillBaseResilienceReduction);
+
+                string resilienceReductionTrans = ResilienceReductionTrans.Translate().GetText();
+
+                if (targetsProperties.Count == 1)
+                {
+                    targetsProperties[0].ResilienceReductionModifier.TrySome(out int resiliencePiercing);
+
+                    SingleUseBuilder.Override(resilienceReductionTrans, ' ', resiliencePiercing.ToString("0"));
+
+                    if (resiliencePiercing > skillBaseResilienceReduction)
+                        SingleUseBuilder.Surround(ColorReferences.BuffedRichText);
+                    else if (resiliencePiercing < skillBaseResilienceReduction)
+                        SingleUseBuilder.Surround(ColorReferences.DebuffedRichText);
+
+                    stringBuilder.AppendLine(SingleUseBuilder.ToString());
+                }
+                else
+                {
+                    stringBuilder.AppendLine(resilienceReductionTrans, "<indent=15%>");
+
+                    for (int j = 0; j < targetsProperties.Count; j++)
+                    {
+                        targetsProperties[j].ResilienceReductionModifier.TrySome(out int resilienceReduction);
+
+                        SingleUseBuilder.Override(resilienceReduction.ToString("0"), " > ", targets.Rented[i].Script.CharacterName.Translate().GetText());
+
+                        if (resilienceReduction > skillBaseResilienceReduction)
+                            SingleUseBuilder.Surround(ColorReferences.BuffedRichText);
+                        else if (resilienceReduction < skillBaseResilienceReduction)
+                            SingleUseBuilder.Surround(ColorReferences.DebuffedRichText);
+
+                        stringBuilder.AppendLine(SingleUseBuilder.ToString());
+                    }
+
+                    stringBuilder.Append("</indent>");
+                }
             }
         }
 
-        private static void DoDividedEffectsText(ISkill skill, ref ValueListPool<IActualStatusScript> scriptsOne, int targetCount)
+        private void DoCriticalChance([NotNull] ISkill skill, int targetCount, ref SkillStruct skillOne, Lease<CharacterStateMachine> targets, ref SkillStruct skillTwo, ref SkillStruct skillThree, ref SkillStruct skillFour)
+        {
+            if (skill.CriticalChance.IsNone)
+            {
+                criticalChanceObject.SetActive(false);
+                return;
+            }
+
+            bool critChanceChanged = false;
+            int baseCritChance = skill.CriticalChance.Value;
+            
+            for (int i = 0; i < targetCount; i++)
+            {
+                ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
+                ref CustomValuePooledList<TargetProperties> targetsProperties = ref desiredStruct.TargetProperties;
+
+                for (int j = 0; j < targetsProperties.Count; j++)
+                {
+                    ref TargetProperties property = ref targetsProperties[j];
+
+                    if (property.CriticalChanceModifier.TrySome(out int criticalChance) == false || criticalChance != baseCritChance)
+                    {
+                        critChanceChanged = true;
+                        break;
+                    }
+                }
+            }
+
+            if (critChanceChanged == false)
+            {
+                SetCriticalChanceText(baseCritChance);
+                return;
+            }
+
+            for (int i = 0; i < targetCount; i++)
+            {
+                StringBuilder stringBuilder = TargetStringBuilders[i];
+                ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
+                ref CustomValuePooledList<TargetProperties> targetsProperties = ref desiredStruct.TargetProperties;
+
+                skill.CriticalChance.TrySome(out int skillBaseCritChance);
+
+                string criticalChanceTrans = CriticalChanceTrans.Translate().GetText();
+
+                if (targetsProperties.Count == 1)
+                {
+                    targetsProperties[0].CriticalChanceModifier.TrySome(out int criticalChance);
+                    SingleUseBuilder.Override(criticalChanceTrans, ' ', criticalChance.ToString("0"));
+
+                    if (criticalChance > skillBaseCritChance)
+                        SingleUseBuilder.Surround(ColorReferences.BuffedRichText);
+                    else if (criticalChance < skillBaseCritChance)
+                        SingleUseBuilder.Surround(ColorReferences.DebuffedRichText);
+
+                    stringBuilder.AppendLine(SingleUseBuilder.ToString());
+                }
+                else
+                {
+                    stringBuilder.AppendLine(criticalChanceTrans, "<indent=15%>");
+
+                    for (int j = 0; j < targetsProperties.Count; j++)
+                    {
+                        targetsProperties[j].CriticalChanceModifier.TrySome(out int criticalChance);
+
+                        SingleUseBuilder.Override(criticalChance.ToString("0"), " > ", targets.Rented[i].Script.CharacterName.Translate().GetText());
+
+                        if (criticalChance > skillBaseCritChance)
+                            SingleUseBuilder.Surround(ColorReferences.BuffedRichText);
+                        else if (criticalChance < skillBaseCritChance)
+                            SingleUseBuilder.Surround(ColorReferences.DebuffedRichText);
+
+                        stringBuilder.AppendLine(SingleUseBuilder.ToString());
+                    }
+
+                    stringBuilder.Append("</indent>");
+                }
+            }
+        }
+
+        private void DoAccuracy([NotNull] ISkill skill, int targetCount, ref SkillStruct skillOne, Lease<CharacterStateMachine> targets, ref SkillStruct skillTwo, ref SkillStruct skillThree, ref SkillStruct skillFour)
+        {
+            if (skill.Accuracy.IsNone)
+            {
+                accuracyObject.SetActive(false);
+                return;
+            }
+
+            bool accuracyChanged = false;
+            int baseAccuracy = skill.Accuracy.Value;
+
+            for (int i = 0; i < targetCount; i++)
+            {
+                ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
+                ref CustomValuePooledList<TargetProperties> targetsProperties = ref desiredStruct.TargetProperties;
+
+                for (int j = 0; j < targetsProperties.Count; j++)
+                {
+                    ref TargetProperties property = ref targetsProperties[j];
+
+                    if (property.AccuracyModifier.TrySome(out int accuracyModifier) == false || accuracyModifier != baseAccuracy)
+                    {
+                        accuracyChanged = true;
+                        break;
+                    }
+                }
+            }
+
+            if (accuracyChanged == false)
+            {
+                SetAccuracyText(baseAccuracy);
+                return;
+            }
+
+            for (int i = 0; i < targetCount; i++)
+            {
+                StringBuilder stringBuilder = TargetStringBuilders[i];
+                ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
+                ref CustomValuePooledList<TargetProperties> targetsProperties = ref desiredStruct.TargetProperties;
+                skill.Accuracy.TrySome(out int skillBaseAccuracy);
+
+                string accuracyTrans = AccuracyTrans.Translate().GetText();
+
+                if (targetsProperties.Count == 1)
+                {
+                    targetsProperties[0].AccuracyModifier.TrySome(out int accuracyModifier);
+                    SingleUseBuilder.Override(accuracyTrans, ' ', accuracyModifier.ToString("0"));
+
+                    if (accuracyModifier > skillBaseAccuracy)
+                        SingleUseBuilder.Surround(ColorReferences.BuffedRichText);
+                    else if (accuracyModifier < skillBaseAccuracy)
+                        SingleUseBuilder.Surround(ColorReferences.DebuffedRichText);
+
+                    stringBuilder.AppendLine(SingleUseBuilder.ToString());
+                }
+                else
+                {
+                    stringBuilder.AppendLine(accuracyTrans, "<indent=15%>");
+
+                    for (int j = 0; j < targetsProperties.Count; j++)
+                    {
+                        targetsProperties[j].AccuracyModifier.TrySome(out int accuracyModifier);
+                        
+                        SingleUseBuilder.Override(accuracyModifier.ToString("0"), " > ", targets.Rented[i].Script.CharacterName.Translate().GetText());
+
+                        if (accuracyModifier > skillBaseAccuracy)
+                            SingleUseBuilder.Surround(ColorReferences.BuffedRichText);
+                        else if (accuracyModifier < skillBaseAccuracy)
+                            SingleUseBuilder.Surround(ColorReferences.DebuffedRichText);
+
+                        stringBuilder.AppendLine(SingleUseBuilder.ToString());
+                    }
+
+                    stringBuilder.Append("</indent>");
+                }
+            }
+        }
+
+        private void DoRecovery([NotNull] ISkill skill, int targetCount, ref SkillStruct skillOne, ref SkillStruct skillTwo, ref SkillStruct skillThree, ref SkillStruct skillFour)
+        {
+            bool recoveryChanged = false;
+
+            for (int i = 0; i < targetCount; i++)
+            {
+                ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
+
+                if (desiredStruct.Recovery != skill.Recovery)
+                {
+                    recoveryChanged = true;
+                    break;
+                }
+            }
+
+            if (recoveryChanged == false)
+            {
+                SetRecoveryText(skill.Recovery);
+                return;
+            }
+
+            for (int i = 0; i < targetCount; i++)
+            {
+                StringBuilder stringBuilder = TargetStringBuilders[i];
+                ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
+                SingleUseBuilder.Override(RecoveryTrans.Translate().GetText(), ' ', desiredStruct.Recovery.Seconds.ToString("0.0"), 's');
+
+                if (desiredStruct.Recovery < skill.Recovery) // less recovery = better
+                    SingleUseBuilder.Surround(ColorReferences.BuffedRichText);
+                else if (desiredStruct.Recovery > skill.Recovery)
+                    SingleUseBuilder.Surround(ColorReferences.DebuffedRichText);
+
+                stringBuilder.AppendLine(SingleUseBuilder.ToString());
+            }
+        }
+
+        private void DoPower([NotNull] ISkill skill, int targetCount, ref SkillStruct skillOne, Lease<CharacterStateMachine> targets, ref SkillStruct skillTwo, ref SkillStruct skillThree, ref SkillStruct skillFour)
+        {
+            if (skill.Power.IsNone)
+            {
+                damageMultiplierObject.SetActive(false);
+                return;
+            }
+
+            int basePower = skill.Power.Value;
+            bool powerChanged = false;
+
+            for (int i = 0; i < targetCount; i++)
+            {
+                ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
+                ref CustomValuePooledList<TargetProperties> targetsProperties = ref desiredStruct.TargetProperties;
+
+                for (int j = 0; j < targetsProperties.Count; j++)
+                {
+                    ref TargetProperties property = ref targetsProperties[j];
+                    
+                    if (property.Power.TrySome(out int power) == false || power != basePower)
+                    {
+                        powerChanged = true;
+                        break;
+                    }
+                }
+            }
+
+            if (powerChanged == false)
+            {
+                SetPowerText(basePower);
+                return;
+            }
+
+            for (int i = 0; i < targetCount; i++)
+            {
+                StringBuilder stringBuilder = TargetStringBuilders[i];
+                ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
+                ref CustomValuePooledList<TargetProperties> targetsProperties = ref desiredStruct.TargetProperties;
+                skill.Power.TrySome(out int skillBasePower);
+                
+                string powerTrans = PowerTrans.Translate().GetText();
+                
+                if (targetsProperties.Count == 1)
+                {
+                    targetsProperties[0].Power.TrySome(out int damageModifier);
+                    SingleUseBuilder.Override(powerTrans, ' ', damageModifier.ToString("0"));
+                    
+                    if (damageModifier > skillBasePower)
+                        SingleUseBuilder.Surround(ColorReferences.BuffedRichText);
+                    else if (damageModifier < skillBasePower)
+                        SingleUseBuilder.Surround(ColorReferences.DebuffedRichText);
+                    
+                    stringBuilder.AppendLine(SingleUseBuilder.ToString());
+                }
+                else
+                {
+                    stringBuilder.AppendLine(powerTrans, "<indent=15%>");
+
+                    for (int j = 0; j < targetsProperties.Count; j++)
+                    {
+                        targetsProperties[j].Power.TrySome(out int power);
+                        SingleUseBuilder.Override(power.ToString("0"), " > ", targets.Rented[i].Script.CharacterName.Translate().GetText());
+
+                        if (power > skillBasePower)
+                            SingleUseBuilder.Surround(ColorReferences.BuffedRichText);
+                        else if (power < skillBasePower)
+                            SingleUseBuilder.Surround(ColorReferences.DebuffedRichText);
+                        
+                        stringBuilder.AppendLine(SingleUseBuilder.ToString());
+                    }
+
+                    stringBuilder.Append("</indent>");
+                }
+            }
+        }
+
+        private void DoCharge([NotNull] ISkill skill, int targetCount, ref ChargeStruct chargeOne, ref ChargeStruct chargeTwo, ref ChargeStruct chargeThree, ref ChargeStruct chargeFour)
+        {
+            bool chargeChanged = false;
+
+            for (int i = 0; i < targetCount; i++)
+            {
+                ref ChargeStruct desiredStruct = ref GetChargeStruct(i, ref chargeOne, ref chargeTwo, ref chargeThree, ref chargeFour);
+
+                if (desiredStruct.Charge != skill.Charge)
+                {
+                    chargeChanged = true;
+                    break;
+                }
+            }
+
+            if (chargeChanged == false)
+            {
+                SetChargeText(skill.Charge);
+                return;
+            }
+
+            for (int i = 0; i < targetCount; i++)
+            {
+                StringBuilder stringBuilder = TargetStringBuilders[i];
+                ref ChargeStruct desiredStruct = ref GetChargeStruct(i, ref chargeOne, ref chargeTwo, ref chargeThree, ref chargeFour);
+
+                SingleUseBuilder.Override(ChargeTrans.Translate().GetText(), ' ', desiredStruct.Charge.ToString("0.0"), 's');
+
+                if (desiredStruct.Charge < skill.Charge) // less charge = better
+                    SingleUseBuilder.Surround(ColorReferences.BuffedRichText);
+                else if (desiredStruct.Charge > skill.Charge)
+                    SingleUseBuilder.Surround(ColorReferences.DebuffedRichText);
+
+                stringBuilder.AppendLine(SingleUseBuilder.ToString());
+            }
+        }
+
+        private static void DoUnifiedEffectsText([NotNull] ISkill skill, CharacterStateMachine target, CharacterStateMachine caster)
+        {
+            ReadOnlySpan<IBaseStatusScript> skillCasterEffects = skill.CasterEffects;
+            ReadOnlySpan<IBaseStatusScript> skillTargetEffects = skill.TargetEffects;
+
+            using (CustomValuePooledList<StatusToApply> casterEffects = new(skillCasterEffects.Length))
+            using (CustomValuePooledList<StatusToApply> targetEffects = new(skillTargetEffects.Length))
+            {
+                for (int i = 0; i < skillCasterEffects.Length; i++)
+                {
+                    StatusToApply record = skillCasterEffects[i].GetActual.GetStatusToApply(caster, caster, crit: false, skill: skill);
+                    record.ProcessModifiers();
+                    casterEffects.Add(record);
+                }
+
+                for (int i = 0; i < skillTargetEffects.Length; i++)
+                {
+                    StatusToApply record = skillTargetEffects[i].GetActual.GetStatusToApply(caster, target, crit: false, skill: skill);
+                    record.ProcessModifiers();
+                    targetEffects.Add(record);
+                }
+
+                EffectsStringBuilder.Append(skill.GetCustomStatsAndEffectsText(casterEffects.AsSpan(), targetEffects.AsSpan()));
+            }
+        }
+
+        private static void DoDividedEffectsText([NotNull] ISkill skill, ref CustomValuePooledList<IActualStatusScript> scriptsOne, int targetCount)
         {
             foreach (ICustomSkillStat customStat in skill.CustomStats)
             {
@@ -846,7 +887,7 @@ namespace Core.Character_Panel.Scripts.Skills
 
             for (int i = 0; i < targetCount; i++)
             {
-                StringBuilder stringBuilder = StringBuilders[i];
+                StringBuilder stringBuilder = TargetStringBuilders[i];
                 foreach (StatusToApply record in ReusableStatusRecordArray[i].effects)
                     stringBuilder.AppendLine(record.GetDescription());
             }
@@ -858,16 +899,16 @@ namespace Core.Character_Panel.Scripts.Skills
             }
         }
 
-        private bool TargetEffectsChanged(ISkill skill, ref ValueListPool<IActualStatusScript> targetEffectsOne, int targetCount, CharacterStateMachine caster,
+        private bool TargetEffectsChanged([NotNull] ISkill skill, ref CustomValuePooledList<IActualStatusScript> targetEffectsOne, int targetCount, CharacterStateMachine caster,
                                           ref SkillStruct skillOne, ref SkillStruct skillTwo, ref SkillStruct skillThree, ref SkillStruct skillFour)
         {
-            if (skill.TargetEffects.Count != targetEffectsOne.Count)
+            if (skill.TargetEffects.Length != targetEffectsOne.Count)
                 return true;
 
             for (int index = 1; index < targetCount; index++)
             {
                 ref SkillStruct desiredStruct = ref GetSkillStruct(index, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
-                ref ValueListPool<IActualStatusScript> targetEffects = ref desiredStruct.TargetEffects;
+                ref CustomValuePooledList<IActualStatusScript> targetEffects = ref desiredStruct.TargetEffects;
                 if (targetEffects.Count != targetEffectsOne.Count)
                     return true;
             }
@@ -879,29 +920,35 @@ namespace Core.Character_Panel.Scripts.Skills
             {
                 ref SkillStruct desiredStruct = ref GetSkillStruct(i, ref skillOne, ref skillTwo, ref skillThree, ref skillFour);
                 ReusableStatusRecordArray[i].target = desiredStruct.FirstTarget;
-                ref ValueListPool<IActualStatusScript> targetEffects = ref desiredStruct.TargetEffects;
+                ref CustomValuePooledList<IActualStatusScript> targetEffects = ref desiredStruct.TargetEffects;
                 for (int j = 0; j < targetEffects.Count; j++)
                 {
                     IActualStatusScript statusScript = targetEffects[j];
-                    StatusToApply statusRecord = statusScript.GetStatusToApply(caster, desiredStruct.FirstTarget, false, desiredStruct.Skill);
+                    StatusToApply statusRecord = statusScript.GetStatusToApply(caster, desiredStruct.FirstTarget, crit: false, desiredStruct.Skill);
                     statusRecord.ProcessModifiers();
                     ReusableStatusRecordArray[i].effects.Add(statusRecord);
                 }
             }
 
             for (int i = 1; i < targetCount; i++)
+            {
                 if (ReusableStatusRecordArray[0].effects.Count != ReusableStatusRecordArray[i].effects.Count)
                     return true;
+            }
 
             for (int i = 0; i < targetEffectsOne.Count; i++)
+            {
                 for (int j = 1; j < targetCount; j++)
+                {
                     if (StatusUtils.DoesRecordsHaveSameStats(ReusableStatusRecordArray[j].effects[i], ReusableStatusRecordArray[0].effects[i]) == false)
                         return true;
+                }
+            }
 
             return false;
         }
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         private ref ChargeStruct GetChargeStruct(int index, ref ChargeStruct one, ref ChargeStruct two, ref ChargeStruct three, ref ChargeStruct four)
         {
             switch (index)
@@ -914,7 +961,7 @@ namespace Core.Character_Panel.Scripts.Skills
             }
         }
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         private ref SkillStruct GetSkillStruct(int index, ref SkillStruct one, ref SkillStruct two, ref SkillStruct three, ref SkillStruct four)
         {
             switch (index)
@@ -927,78 +974,58 @@ namespace Core.Character_Panel.Scripts.Skills
             }
         }
 
-        public void RawTooltip(ISkill skill)
+        public void RawTooltip([NotNull] ISkill skill)
         {
-            skillNameText.text = skill.DisplayName;
-            SetChargeText(skill.BaseCharge);
-            SetRecoveryText(skill.BaseRecovery);
+            skillNameText.text = skill.DisplayName.Translate().GetText();
+            SetChargeText(skill.Charge);
+            SetRecoveryText(skill.Recovery);
             
-            if (skill.BaseAccuracy.TrySome(out float accuracy))
+            if (skill.Accuracy.TrySome(out int accuracy))
                 SetAccuracyText(accuracy);
             else
                 accuracyObject.SetActive(false);
             
-            if (skill.BaseDamageMultiplier.TrySome(out float damageMultiplier))
-                SetDamageMultiplierText(damageMultiplier);
+            if (skill.Power.TrySome(out int basePower))
+                SetPowerText(basePower);
             else
                 damageMultiplierObject.SetActive(false);
             
-            if (skill.BaseCriticalChance.TrySome(out float criticalChance))
+            if (skill.CriticalChance.TrySome(out int criticalChance))
                 SetCriticalChanceText(criticalChance);
             else
                 criticalChanceObject.SetActive(false);
 
             EffectsStringBuilder.Clear();
 
-            IReadOnlyList<IBaseStatusScript> skillCasterEffects = skill.CasterEffects;
-            IReadOnlyList<IBaseStatusScript> skillTargetEffects = skill.TargetEffects;
-            using (Lease<IActualStatusScript> casterStatusScripts = ArrayPool<IActualStatusScript>.Shared.Lease(skillCasterEffects.Count))
-            using (Lease<IActualStatusScript> targetStatusScripts = ArrayPool<IActualStatusScript>.Shared.Lease(skillTargetEffects.Count))
+            ReadOnlySpan<IBaseStatusScript> skillCasterEffects = skill.CasterEffects;
+            ReadOnlySpan<IBaseStatusScript> skillTargetEffects = skill.TargetEffects;
+            using (CustomValuePooledList<IActualStatusScript> casterStatusScripts = new(skillCasterEffects.Length))
+            using (CustomValuePooledList<IActualStatusScript> targetStatusScripts = new(skillTargetEffects.Length))
             {
-                for (int i = 0; i < skillCasterEffects.Count; i++)
-                {
-                    IActualStatusScript casterStatusScript = skillCasterEffects[i].GetActual;
-                    casterStatusScripts.Rented[i] = casterStatusScript;
-                }
-                
-                for (int i = 0; i < skillTargetEffects.Count; i++)
-                {
-                    IActualStatusScript targetStatusScript = skillTargetEffects[i].GetActual;
-                    targetStatusScripts.Rented[i] = targetStatusScript;
-                }
-                
-                EffectsStringBuilder.Append(skill.GetCustomStatsAndEffectsText(casterStatusScripts, targetStatusScripts));
+                for (int i = 0; i < skillCasterEffects.Length; i++)
+                    casterStatusScripts.Add(skillCasterEffects[i].GetActual);
+
+                for (int i = 0; i < skillTargetEffects.Length; i++)
+                    targetStatusScripts.Add(skillTargetEffects[i].GetActual);
+
+                EffectsStringBuilder.Append(skill.GetCustomStatsAndEffectsText(casterStatusScripts.AsSpan(), targetStatusScripts.AsSpan()));
             }
 
-            Utils.Patterns.Option<uint> currentSkillGetMaxUseCount = skill.GetMaxUseCount;
+            Utils.Patterns.Option<int> currentSkillGetMaxUseCount = skill.GetMaxUseCount;
             if (currentSkillGetMaxUseCount.IsSome)
-            {
-                EffectsStringBuilder.Append("\n");
-                EffectsStringBuilder.Append("<color=red> Max uses per combat: ", currentSkillGetMaxUseCount.Value.ToString("0"), "</color>");
-            }
+                EffectsStringBuilder.Append("\n<color=red> ", MaxUsesPerCombatTrans.Translate().GetText(), currentSkillGetMaxUseCount.Value.ToString("0"), "</color>");
 
             SetEffectsText(EffectsStringBuilder.ToString());
-            SetFlavorText(skill.FlavorText);
+            SetFlavorText(skill.FlavorText.Translate().GetText());
 
             for (int i = 0; i < castingPositionCircles.Length; i++) 
                 castingPositionCircles[i].sprite = skill.CastingPositions[i] ? friendlyCircle : emptyCircle;
 
-            Sprite dotSprite, connectorSprite;
-
-            if (skill.AllowAllies)
-            {
-                dotSprite = friendlyCircle;
-                connectorSprite = friendlyConnector;
-            }
-            else
-            {
-                dotSprite = enemyCircle;
-                connectorSprite = enemyConnector;
-            }
+            (Sprite dotSprite, Sprite connectorSprite) = skill.IsPositive ? (friendlyCircle, friendlyConnector) : (enemyCircle, enemyConnector);
             
             for (int i = 0; i < 4; i++)
                 targetingPositionCircles[i].sprite = skill.TargetPositions[i] ? dotSprite : emptyCircle;
-
+            
             for (int i = 0; i < 3; i++)
             {
                 Image connector = targetingConnectors[i];
@@ -1012,36 +1039,36 @@ namespace Core.Character_Panel.Scripts.Skills
             gameObject.SetActive(true);
         }
 
-        private void SetChargeText(float value) 
-            => chargeText.text = SingleUseBuilder.Override(value.ToString("0.00"), "s").ToString();
+        private void SetChargeText(TSpan value) 
+            => chargeText.text = SingleUseBuilder.Override(value.ToString("0.0"), "s").ToString();
 
-        private void SetRecoveryText(float value) 
-            => recoveryText.text = SingleUseBuilder.Override(value.ToString("0.00"), "s").ToString();
+        private void SetRecoveryText(TSpan value) 
+            => recoveryText.text = SingleUseBuilder.Override(value.ToString("0.0"), "s").ToString();
 
-        private void SetAccuracyText(float value)
+        private void SetAccuracyText(int value)
         {
-            accuracyText.text = value.ToPercentageString();
+            accuracyText.text = value.ToString("0");
             accuracyObject.SetActive(true);
         }
 
-        private void SetDamageMultiplierText(float value)
+        private void SetPowerText(int value)
         {
-            dmgMultText.text = value.ToPercentageString();
+            dmgMultText.text = value.ToString("0");
             damageMultiplierObject.SetActive(true);
         }
 
-        private void SetCriticalChanceText(float value)
+        private void SetCriticalChanceText(int value)
         {
-            criticalChanceText.text = value.ToPercentageString();
+            criticalChanceText.text = value.ToString("0");
             criticalChanceObject.SetActive(true);
         }
 
         private void SetEffectsText(string value) => effectsText.text = value;
         private void SetFlavorText(string value) => flavorText.text = value;
 
-        private void AppendResiliencePiercingText(float value)
+        private void AppendResiliencePiercingText(int value)
         {
-            SingleUseBuilder.Override("Ignores ", value.ToPercentageString(), " of resilience.(flat)");
+            SingleUseBuilder.Override(ResilienceReductionTrans.Translate().GetText(), value.ToString());
             EffectsStringBuilder.Append(SingleUseBuilder.ToString());
         }
     }

@@ -1,12 +1,12 @@
 ﻿using Core.Local_Map.Scripts.Enums;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
 using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Local_Map.Scripts
 {
@@ -35,8 +35,10 @@ namespace Core.Local_Map.Scripts
         public int GetSpriteIndex(Sprite sprite)
         {
             for (var i = 0; i < mapSprites.Length; i++)
+            {
                 if (mapSprites[i] == sprite)
                     return i;
+            }
 
             return -1;
         }
@@ -76,10 +78,10 @@ namespace Core.Local_Map.Scripts
 
         private bool HideTwo => Type == TileType.WorldLocation;
 
-        [UsedImplicitly]
+        [UsedImplicitly, NotNull]
         private string LabelOne => Type == TileType.WorldLocation ? "World Location" : IsOneWayPath ? "Origin" : "End/Start Location";
 
-        [UsedImplicitly]
+        [UsedImplicitly, NotNull]
         private string LabelTwo => IsOneWayPath ? "Destination" : "End/Start Location";
         
         private bool IsOneDifferentThanTwo() => one != two;

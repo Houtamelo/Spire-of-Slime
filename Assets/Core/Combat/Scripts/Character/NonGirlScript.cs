@@ -1,112 +1,114 @@
 ﻿using System;
 using System.Collections.Generic;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Localization.Scripts;
 using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts
 {
     [CreateAssetMenu(fileName = "NonGirl", menuName = "Database/Combat/NonGirl")]
     public class NonGirlScript : CharacterScriptable
     {
-        [OdinSerialize, PropertyRange(1, 200)]
-        private uint _stamina;
-        public override uint Stamina => _stamina;
+        [SerializeField, Range(1, 200)]
+        private int stamina;
+        public override int Stamina => stamina;
         
-        [OdinSerialize] 
-        private uint _staminaAmplitude;
-        public override uint StaminaAmplitude => _staminaAmplitude;
+        [SerializeField, Range(0, 50)]
+        private int staminaAmplitude;
+        public override int StaminaAmplitude => staminaAmplitude;
         
-        [OdinSerialize, SuffixLabel("%"), PropertyRange(-50, 200)]
-        private int _resilience;
-        public override float Resilience => _resilience / 100f;
+        [SerializeField, Range(IStaminaModule.MinResilience, IStaminaModule.MaxResilience)]
+        private int resilience;
+        public override int Resilience => resilience;
 
-        [OdinSerialize, SuffixLabel("%"), PropertyRange(-50, 200)]
-        private int _debuffResistance;
-        public override float DebuffResistance => _debuffResistance / 100f;
+        [SerializeField, Range(IResistancesModule.MinResistance, IResistancesModule.MaxResistance)]
+        private int debuffResistance;
+        public override int DebuffResistance => debuffResistance;
         
-        [OdinSerialize, SuffixLabel("%"), PropertyRange(-50, 200)]
-        private int _debuffApplyChance;
-        public override float DebuffApplyChance => _debuffApplyChance / 100f;
+        [SerializeField, Range(IStatusApplierModule.MinDebuffApplyChance, IStatusApplierModule.MaxDebuffApplyChance)]
+        private int debuffApplyChance;
+        public override int DebuffApplyChance => debuffApplyChance;
 
-        [OdinSerialize, SuffixLabel("%"), PropertyRange(-50, 200)]
-        private int _moveResistance;
-        public override float MoveResistance => _moveResistance / 100f;
+        [SerializeField, Range(IResistancesModule.MinResistance, IResistancesModule.MaxResistance)]
+        private int moveResistance;
+        public override int MoveResistance => moveResistance;
         
-        [OdinSerialize, SuffixLabel("%"), PropertyRange(-50, 200)]
-        private int _moveApplyChance;
-        public override float MoveApplyChance => _moveApplyChance / 100f;
+        [SerializeField, Range(IStatusApplierModule.MinMoveApplyChance, IStatusApplierModule.MaxMoveApplyChance)]
+        private int moveApplyChance;
+        public override int MoveApplyChance => moveApplyChance;
 
-        [OdinSerialize, SuffixLabel("%"), PropertyRange(-50, 200)]
-        private int _poisonResistance;
-        public override float PoisonResistance => _poisonResistance / 100f;
+        [SerializeField, Range(IResistancesModule.MinResistance, IResistancesModule.MaxResistance)]
+        private int poisonResistance;
+        public override int PoisonResistance => poisonResistance;
 
-        [OdinSerialize, SuffixLabel("%"), PropertyRange(-50, 200)]
-        private int _poisonApplyChance;
-        public override float PoisonApplyChance => _poisonApplyChance / 100f;
+        [SerializeField, Range(IStatusApplierModule.MinPoisonApplyChance, IStatusApplierModule.MaxPoisonApplyChance)]
+        private int poisonApplyChance;
+        public override int PoisonApplyChance => poisonApplyChance;
         
-        [OdinSerialize, SuffixLabel("%"), PropertyRange(-50, 200)]
-        private int _arousalApplyChance;
-        public override float ArousalApplyChance => _arousalApplyChance / 100f;
+        [SerializeField, Range(IStatusApplierModule.MinArousalApplyChance, IStatusApplierModule.MaxArousalApplyChance)]
+        private int arousalApplyChance;
+        public override int ArousalApplyChance => arousalApplyChance;
 
-        [OdinSerialize, SuffixLabel("%"), PropertyRange(0, 200)]
-        private int _speed = 1;
-        public override float Speed => _speed / 100f;
+        [SerializeField, Range(IStatsModule.MinSpeed, IStatsModule.MaxSpeed)]
+        private int speed = 100;
+        public override int Speed => speed;
         
-        [OdinSerialize, SuffixLabel("%"), PropertyRange(0, 200)]
-        private int _stunRecoverySpeed = 1;
-        public override float StunRecoverySpeed => _stunRecoverySpeed / 100f;
+        [SerializeField, Range(IStunModule.MinStunMitigation, IStunModule.MaxStunMitigation)]
+        private int stunMitigation;
+        public override int StunMitigation => stunMitigation;
         
-        [OdinSerialize, SuffixLabel("%"), PropertyRange(-50, 200)]
-        private int _accuracy;
-        public override float Accuracy => _accuracy / 100f;
+        [SerializeField, Range(IStatsModule.MinAccuracy, IStatsModule.MaxAccuracy)]
+        private int accuracy;
+        public override int Accuracy => accuracy;
         
-        [OdinSerialize, SuffixLabel("%"), PropertyRange(-50, 200)]
-        private int _critical;
-        public override float Critical => _critical / 100f;
+        [SerializeField, Range(IStatsModule.MinCriticalChance, IStatsModule.MaxCriticalChance)]
+        private int criticalChance;
+        public override int CriticalChance => criticalChance;
         
-        [OdinSerialize, SuffixLabel("%"), PropertyRange(-50, 200)]
-        private int _dodge;
-        public override float Dodge => _dodge / 100f;
+        [SerializeField, Range(IStatsModule.MinDodge, IStatsModule.MaxDodge)]
+        private int dodge;
+        public override int Dodge => dodge;
         
-        [OdinSerialize, SuffixLabel("%"), PropertyRange(0, 300)]
-        private int _expMultiplier = 100;
-        public override float ExpMultiplier => _expMultiplier / 100f;
+        [SerializeField, Range(0, 3)]
+        private double expMultiplier = 1;
+        public override double ExpMultiplier => expMultiplier;
         
-        [OdinSerialize] private string _characterName;
-        public override string CharacterName => _characterName;
+        [SerializeField]
+        private LocalizedText characterName;
+        public override LocalizedText CharacterName => characterName;
 
-        [SerializeField] 
+        [SerializeField, Required] 
         private SkillScriptable[] skills = new SkillScriptable[0];
-        public override IReadOnlyList<ISkill> Skills => skills;
+        public override ReadOnlySpan<ISkill> Skills => skills;
 
-        [OdinSerialize, PropertyRange(0, 200)]
-        private uint _lowerDamage;
+        [SerializeField, Range(0, 200)]
+        private int lowerDamage;
         
-        [OdinSerialize, PropertyRange(0, 200), ValidateInput(nameof(IsUpperDamageEqualOrBiggerToLower))]
-        private uint _upperDamage;
+        [SerializeField, Range(0, 200), ValidateInput(nameof(IsUpperDamageEqualOrBiggerToLower))]
+        private int upperDamage;
 
-        private bool IsUpperDamageEqualOrBiggerToLower() => _upperDamage >= _lowerDamage;
+        public override (int lower, int upper) Damage => (lowerDamage, upperDamage);
+        
+        private bool IsUpperDamageEqualOrBiggerToLower() => upperDamage >= lowerDamage;
 
         [SerializeField, Required]
         private PerkScriptable[] perks;
         public override ReadOnlySpan<IPerk> GetStartingPerks => perks ?? ReadOnlySpan<IPerk>.Empty;
 
-        public override (uint lower, uint upper) Damage => (_lowerDamage, _upperDamage);
         public override bool IsGirl => false;
-        //public override float TemptationResistance => 0;
 
-        public override uint Lust => 0;
-        public override ClampedPercentage Temptation => 0;
-        public override float Composure => 0;
-        public override uint OrgasmLimit => 0;
-        public override uint OrgasmCount => 0;
+        public override int Lust => 0;
+        public override int Temptation => 0;
+        public override int Composure => 0;
+        public override int OrgasmLimit => 0;
+        public override int OrgasmCount => 0;
 
         [OdinSerialize, Required]
         private (CharacterScriptable character, string parameter, float graphicalX)[] _sexableCharacters = new (CharacterScriptable character, string parameter, float graphicalX)[0];
@@ -116,8 +118,10 @@ namespace Core.Combat.Scripts
         public override Option<(string parameter, float graphicalX)> DoesActiveSex(CharacterStateMachine other)
         {
             foreach ((CharacterScriptable character, string parameter, float graphicalX) in _sexableCharacters)
+            {
                 if (other.Script.Key == character.Key)
                     return Option<(string parameter, float graphicalX)>.Some((parameter, graphicalX));
+            }
 
             return Option.None;
         }
@@ -125,9 +129,11 @@ namespace Core.Combat.Scripts
         public override Option<float> GetSexGraphicalX(string animationTrigger)
         {
             foreach ((_, string parameter, float graphicalX) in _sexableCharacters)
+            {
                 if (parameter == animationTrigger)
                     return Option<float>.Some(graphicalX);
-            
+            }
+
             return Option.None;
         }
     }

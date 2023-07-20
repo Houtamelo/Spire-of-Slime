@@ -1,110 +1,151 @@
 ﻿using System.Text;
+using JetBrains.Annotations;
 
 namespace Core.Utils.Extensions
 {
     public static class StringBuilderExtensions
     {
-        public static void Append(this StringBuilder builder, string first, string second)
+        public static void Append([NotNull] this StringBuilder builder, string first, string second)
         {
             builder.Append(first);
             builder.Append(second);
         }
         
-        public static void Append(this StringBuilder builder, string first, string second, string third)
+        public static void Append([NotNull] this StringBuilder builder, string first, string second, string third)
         {
             builder.Append(first);
             builder.Append(second);
             builder.Append(third);
         }
 
-        public static void Append(this StringBuilder builder, char first, char second)
+        public static void Append([NotNull] this StringBuilder builder, char first, char second)
         {
             builder.Append(first);
             builder.Append(second);
         }
         
-        public static void Append(this StringBuilder builder, char first, char second, char third)
-        {
-            builder.Append(first);
-            builder.Append(second);
-            builder.Append(third);
-        }
-        
-        public static void Append(this StringBuilder builder, char first, char second, string third)
+        public static void Append([NotNull] this StringBuilder builder, char first, char second, char third)
         {
             builder.Append(first);
             builder.Append(second);
             builder.Append(third);
         }
         
-        public static void Append(this StringBuilder builder, string first, char second, char third)
+        public static void Append([NotNull] this StringBuilder builder, char first, char second, string third)
         {
             builder.Append(first);
             builder.Append(second);
             builder.Append(third);
         }
         
-        public static void Append(this StringBuilder builder, string first, char second, string third)
+        public static void Append([NotNull] this StringBuilder builder, string first, char second, char third)
         {
             builder.Append(first);
             builder.Append(second);
             builder.Append(third);
         }
         
-        public static void Append(this StringBuilder builder, string first, string second, char third)
+        public static void Append([NotNull] this StringBuilder builder, string first, char second, string third)
         {
             builder.Append(first);
             builder.Append(second);
             builder.Append(third);
         }
         
-        public static void Append(this StringBuilder builder, char first, string second, char third)
+        public static void Append([NotNull] this StringBuilder builder, string first, string second, char third)
         {
             builder.Append(first);
             builder.Append(second);
             builder.Append(third);
         }
         
-        public static void Append(this StringBuilder builder, char first, string second, string third)
+        public static void Append([NotNull] this StringBuilder builder, char first, string second, char third)
         {
             builder.Append(first);
             builder.Append(second);
             builder.Append(third);
         }
         
-        public static void Append(this StringBuilder builder, char first, string second)
+        public static void Append([NotNull] this StringBuilder builder, char first, string second, string third)
+        {
+            builder.Append(first);
+            builder.Append(second);
+            builder.Append(third);
+        }
+        
+        public static void Append([NotNull] this StringBuilder builder, char first, string second)
         {
             builder.Append(first);
             builder.Append(second);
         }
         
-        public static void Append(this StringBuilder builder, string first, char second)
+        public static void Append([NotNull] this StringBuilder builder, string first, char second)
         {
             builder.Append(first);
             builder.Append(second);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second)
+        public static void Append([NotNull] this StringBuilder builder, string first, string second, char third, string fourth)
+        {
+            builder.Append(first);
+            builder.Append(second);
+            builder.Append(third);
+            builder.Append(fourth);
+        }
+        
+        public static void Append([NotNull] this StringBuilder builder, string first, string second, char third, char fourth)
+        {
+            builder.Append(first);
+            builder.Append(second);
+            builder.Append(third);
+            builder.Append(fourth);
+        }
+        
+        public static void Append([NotNull] this StringBuilder builder, string first, string second, string third, char fourth)
+        {
+            builder.Append(first);
+            builder.Append(second);
+            builder.Append(third);
+            builder.Append(fourth);
+        }
+        
+        public static void Append([NotNull] this StringBuilder builder, string first, string second, string third, string fourth)
+        {
+            builder.Append(first);
+            builder.Append(second);
+            builder.Append(third);
+            builder.Append(fourth);
+        }
+        
+        public static void Append([NotNull] this StringBuilder builder, char first, string second, string third, char fourth)
+        {
+            builder.Append(first);
+            builder.Append(second);
+            builder.Append(third);
+            builder.Append(fourth);
+        }
+        
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second)
         {
             builder.Append(first);
             builder.AppendLine(second);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third)
         {
             builder.Append(first);
             builder.Append(second);
             builder.AppendLine(third);
         }
         
-        public static void AppendLine(this StringBuilder builder, char first, char second)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, char second)
         {
             builder.Append(first);
             builder.Append(second);
             builder.AppendLine();
         }
         
-        public static void AppendLine(this StringBuilder builder, char first, char second, char third)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, char second, char third)
         {
             builder.Append(first);
             builder.Append(second);
@@ -112,14 +153,14 @@ namespace Core.Utils.Extensions
             builder.AppendLine();
         }
         
-        public static void AppendLine(this StringBuilder builder, char first, char second, string third)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, char second, string third)
         {
             builder.Append(first);
             builder.Append(second);
             builder.AppendLine(third);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, char second, char third)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, char second, char third)
         {
             builder.Append(first);
             builder.Append(second);
@@ -127,14 +168,14 @@ namespace Core.Utils.Extensions
             builder.AppendLine();
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, char second, string third)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, char second, string third)
         {
             builder.Append(first);
             builder.Append(second);
             builder.AppendLine(third);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, char third)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, char third)
         {
             builder.Append(first);
             builder.Append(second);
@@ -142,7 +183,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine();
         }
         
-        public static void AppendLine(this StringBuilder builder, char first, string second, char third)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, string second, char third)
         {
             builder.Append(first);
             builder.Append(second);
@@ -150,28 +191,28 @@ namespace Core.Utils.Extensions
             builder.AppendLine();
         }
         
-        public static void AppendLine(this StringBuilder builder, char first, string second, string third)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, string second, string third)
         {
             builder.Append(first);
             builder.Append(second);
             builder.AppendLine(third);
         }
         
-        public static void AppendLine(this StringBuilder builder, char first, string second)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, string second)
         {
             builder.Append(first);
             builder.Append(second);
             builder.AppendLine();
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, char second)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, char second)
         {
             builder.Append(first);
             builder.Append(second);
             builder.AppendLine();
         }
 
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, string fourth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, string fourth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -179,7 +220,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(fourth);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, char fourth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, char fourth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -188,7 +229,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine();
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, char third, string fourth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, char third, string fourth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -196,7 +237,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(fourth);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, char second, string third, string fourth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, char second, string third, string fourth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -204,7 +245,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(fourth);
         }
         
-        public static void AppendLine(this StringBuilder builder, char first, string second, string third, string fourth)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, string second, string third, string fourth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -212,7 +253,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(fourth);
         }
 
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, string fourth, char fifth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, char fifth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -222,7 +263,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine();
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, char fourth, string fifth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, char fourth, string fifth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -231,7 +272,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(fifth);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, char third, string fourth, string fifth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, char third, string fourth, string fifth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -240,7 +281,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(fifth);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, char second, string third, string fourth, string fifth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, char second, string third, string fourth, string fifth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -249,7 +290,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(fifth);
         }
         
-        public static void AppendLine(this StringBuilder builder, char first, string second, string third, string fourth, string fifth)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, string second, string third, string fourth, string fifth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -258,7 +299,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(fifth);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, string fourth, string fifth, char sixth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, string fifth, char sixth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -269,7 +310,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine();
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, string fourth, char fifth, string sixth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, char fifth, string sixth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -279,7 +320,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(sixth);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, char fourth, string fifth, string sixth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, char fourth, string fifth, string sixth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -289,7 +330,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(sixth);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, char third, string fourth, string fifth, string sixth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, char third, string fourth, string fifth, string sixth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -299,7 +340,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(sixth);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, char second, string third, string fourth, string fifth, string sixth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, char second, string third, string fourth, string fifth, string sixth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -309,7 +350,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(sixth);
         }
         
-        public static void AppendLine(this StringBuilder builder, char first, string second, string third, string fourth, string fifth, string sixth)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, string second, string third, string fourth, string fifth, string sixth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -319,7 +360,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(sixth);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth, char seventh)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth, char seventh)
         {
             builder.Append(first);
             builder.Append(second);
@@ -331,7 +372,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine();
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, string fourth, string fifth, char sixth, string seventh)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, string fifth, char sixth, string seventh)
         {
             builder.Append(first);
             builder.Append(second);
@@ -342,7 +383,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(seventh);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, string fourth, char fifth, string sixth, string seventh)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, char fifth, string sixth, string seventh)
         {
             builder.Append(first);
             builder.Append(second);
@@ -353,7 +394,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(seventh);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, char fourth, string fifth, string sixth, string seventh)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, char fourth, string fifth, string sixth, string seventh)
         {
             builder.Append(first);
             builder.Append(second);
@@ -364,7 +405,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(seventh);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, char third, string fourth, string fifth, string sixth, string seventh)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, char third, string fourth, string fifth, string sixth, string seventh)
         {
             builder.Append(first);
             builder.Append(second);
@@ -375,7 +416,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(seventh);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, char second, string third, string fourth, string fifth, string sixth, string seventh)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, char second, string third, string fourth, string fifth, string sixth, string seventh)
         {
             builder.Append(first);
             builder.Append(second);
@@ -386,7 +427,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(seventh);
         }
         
-        public static void AppendLine(this StringBuilder builder, char first, string second, string third, string fourth, string fifth, string sixth, string seventh)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, string second, string third, string fourth, string fifth, string sixth, string seventh)
         {
             builder.Append(first);
             builder.Append(second);
@@ -397,7 +438,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(seventh);
         }
 
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, string fourth, string fifth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, string fifth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -406,7 +447,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(fifth);
         }
 
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -416,7 +457,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(sixth);
         }
 
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth, string seventh)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth, string seventh)
         {
             builder.Append(first);
             builder.Append(second);
@@ -427,19 +468,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(seventh);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth, string seventh, string eighth)
-        {
-            builder.Append(first);
-            builder.Append(second);
-            builder.Append(third);
-            builder.Append(fourth);
-            builder.Append(fifth);
-            builder.Append(sixth);
-            builder.Append(seventh);
-            builder.AppendLine(eighth);
-        }
-
-        public static void AppendLine(this StringBuilder builder, char first, string second, string third, string fourth, string fifth, string sixth, string seventh, string eighth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth, string seventh, string eighth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -450,8 +479,20 @@ namespace Core.Utils.Extensions
             builder.Append(seventh);
             builder.AppendLine(eighth);
         }
+
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, string second, string third, string fourth, string fifth, string sixth, string seventh, string eighth)
+        {
+            builder.Append(first);
+            builder.Append(second);
+            builder.Append(third);
+            builder.Append(fourth);
+            builder.Append(fifth);
+            builder.Append(sixth);
+            builder.Append(seventh);
+            builder.AppendLine(eighth);
+        }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth, string seventh, char eighth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth, string seventh, char eighth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -464,7 +505,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine();
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth, char seventh, string eighth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth, char seventh, string eighth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -476,7 +517,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(eighth);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, string fourth, string fifth, char sixth, string seventh, string eighth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, string fifth, char sixth, string seventh, string eighth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -488,7 +529,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(eighth);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, string fourth, char fifth, string sixth, string seventh, string eighth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, char fifth, string sixth, string seventh, string eighth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -500,7 +541,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(eighth);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, string third, char fourth, string fifth, string sixth, string seventh, string eighth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, string third, char fourth, string fifth, string sixth, string seventh, string eighth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -512,7 +553,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(eighth);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, string second, char third, string fourth, string fifth, string sixth, string seventh, string eighth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, string second, char third, string fourth, string fifth, string sixth, string seventh, string eighth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -524,7 +565,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(eighth);
         }
         
-        public static void AppendLine(this StringBuilder builder, string first, char second, string third, string fourth, string fifth, string sixth, string seventh, string eighth)
+        public static void AppendLine([NotNull] this StringBuilder builder, string first, char second, string third, string fourth, string fifth, string sixth, string seventh, string eighth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -536,7 +577,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(eighth);
         }
         
-        public static void AppendLine(this StringBuilder builder, char first, char second, string third, string fourth, string fifth, string sixth, string seventh, string eighth)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, char second, string third, string fourth, string fifth, string sixth, string seventh, string eighth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -548,7 +589,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(eighth);
         }
         
-        public static void AppendLine(this StringBuilder builder, char first, string second, char third, string fourth, string fifth, string sixth, string seventh, string eighth)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, string second, char third, string fourth, string fifth, string sixth, string seventh, string eighth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -560,7 +601,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(eighth);
         }
         
-        public static void AppendLine(this StringBuilder builder, char first, string second, string third, char fourth, string fifth, string sixth, string seventh, string eighth)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, string second, string third, char fourth, string fifth, string sixth, string seventh, string eighth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -572,7 +613,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(eighth);
         }
         
-        public static void AppendLine(this StringBuilder builder, char first, string second, string third, string fourth, char fifth, string sixth, string seventh, string eighth)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, string second, string third, string fourth, char fifth, string sixth, string seventh, string eighth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -584,7 +625,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(eighth);
         }
         
-        public static void AppendLine(this StringBuilder builder, char first, string second, string third, string fourth, string fifth, char sixth, string seventh, string eighth)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, string second, string third, string fourth, string fifth, char sixth, string seventh, string eighth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -596,7 +637,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(eighth);
         }
         
-        public static void AppendLine(this StringBuilder builder, char first, string second, string third, string fourth, string fifth, string sixth, char seventh, string eighth)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, string second, string third, string fourth, string fifth, string sixth, char seventh, string eighth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -608,7 +649,7 @@ namespace Core.Utils.Extensions
             builder.AppendLine(eighth);
         }
 
-        public static void AppendLine(this StringBuilder builder, char first, string second, string third, string fourth, string fifth, string sixth, string seventh, char eighth)
+        public static void AppendLine([NotNull] this StringBuilder builder, char first, string second, string third, string fourth, string fifth, string sixth, string seventh, char eighth)
         {
             builder.Append(first);
             builder.Append(second);
@@ -621,38 +662,16 @@ namespace Core.Utils.Extensions
             builder.AppendLine();
         }
 
-        public static StringBuilder Override(this StringBuilder builder, string first)
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first)
         {
             builder.Clear();
             builder.Append(first);
             return builder;
         }
 
-        public static StringBuilder Override(this StringBuilder builder, string first, string second)
-        {
-            builder.Clear();
-            builder.Append(first);
-            builder.Append(second);
-            return builder;
-        }
-
-        public static StringBuilder Override(this StringBuilder builder, string first, string second, string third)
-        {
-            builder.Clear();
-            builder.Append(first);
-            builder.Append(second);
-            builder.Append(third);
-            return builder;
-        }
-
-        public static StringBuilder Override(this StringBuilder builder, char first)
-        {
-            builder.Clear();
-            builder.Append(first);
-            return builder;
-        }
-
-        public static StringBuilder Override(this StringBuilder builder, char first, char second)
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first, string second)
         {
             builder.Clear();
             builder.Append(first);
@@ -660,24 +679,18 @@ namespace Core.Utils.Extensions
             return builder;
         }
         
-        public static StringBuilder Override(this StringBuilder builder, char first, string second)
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first, char second)
         {
             builder.Clear();
             builder.Append(first);
             builder.Append(second);
             return builder;
         }
+        
 
-        public static StringBuilder Override(this StringBuilder builder, char first, char second, char third)
-        {
-            builder.Clear();
-            builder.Append(first);
-            builder.Append(second);
-            builder.Append(third);
-            return builder;
-        }
-
-        public static StringBuilder Override(this StringBuilder builder, char first, char second, string third)
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first, string second, string third)
         {
             builder.Clear();
             builder.Append(first);
@@ -686,7 +699,34 @@ namespace Core.Utils.Extensions
             return builder;
         }
 
-        public static StringBuilder Override(this StringBuilder builder, string first, char second, char third)
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, char first)
+        {
+            builder.Clear();
+            builder.Append(first);
+            return builder;
+        }
+
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, char first, char second)
+        {
+            builder.Clear();
+            builder.Append(first);
+            builder.Append(second);
+            return builder;
+        }
+        
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, char first, string second)
+        {
+            builder.Clear();
+            builder.Append(first);
+            builder.Append(second);
+            return builder;
+        }
+
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, char first, char second, char third)
         {
             builder.Clear();
             builder.Append(first);
@@ -695,7 +735,8 @@ namespace Core.Utils.Extensions
             return builder;
         }
 
-        public static StringBuilder Override(this StringBuilder builder, string first, char second, string third)
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, char first, char second, string third)
         {
             builder.Clear();
             builder.Append(first);
@@ -704,7 +745,8 @@ namespace Core.Utils.Extensions
             return builder;
         }
 
-        public static StringBuilder Override(this StringBuilder builder, string first, string second, char third)
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first, char second, char third)
         {
             builder.Clear();
             builder.Append(first);
@@ -713,7 +755,8 @@ namespace Core.Utils.Extensions
             return builder;
         }
 
-        public static StringBuilder Override(this StringBuilder builder, char first, string second, char third)
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first, char second, string third)
         {
             builder.Clear();
             builder.Append(first);
@@ -722,7 +765,28 @@ namespace Core.Utils.Extensions
             return builder;
         }
 
-        public static StringBuilder Override(this StringBuilder builder, char first, string second, string third)
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first, string second, char third)
+        {
+            builder.Clear();
+            builder.Append(first);
+            builder.Append(second);
+            builder.Append(third);
+            return builder;
+        }
+
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, char first, string second, char third)
+        {
+            builder.Clear();
+            builder.Append(first);
+            builder.Append(second);
+            builder.Append(third);
+            return builder;
+        }
+
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, char first, string second, string third)
         {
             builder.Clear();
             builder.Append(first);
@@ -731,7 +795,8 @@ namespace Core.Utils.Extensions
             return builder;
         }
         
-        public static StringBuilder Override(this StringBuilder builder, string first, string second, string third, string fourth)
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first, string second, string third, string fourth)
         {
             builder.Clear();
             builder.Append(first);
@@ -741,7 +806,8 @@ namespace Core.Utils.Extensions
             return builder;
         }
         
-        public static StringBuilder Override(this StringBuilder builder, string first, string second, char third, string fourth)
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first, string second, char third, string fourth)
         {
             builder.Clear();
             builder.Append(first);
@@ -751,7 +817,41 @@ namespace Core.Utils.Extensions
             return builder;
         }
         
-        public static StringBuilder Override(this StringBuilder builder, string first, string second, string third, string fourth, string fifth)
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first, char second, string third, string fourth)
+        {
+            builder.Clear();
+            builder.Append(first);
+            builder.Append(second);
+            builder.Append(third);
+            builder.Append(fourth);
+            return builder;
+        }
+        
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, char first, string second, string third, string fourth)
+        {
+            builder.Clear();
+            builder.Append(first);
+            builder.Append(second);
+            builder.Append(third);
+            builder.Append(fourth);
+            return builder;
+        }
+        
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first, char second, string third, char fourth)
+        {
+            builder.Clear();
+            builder.Append(first);
+            builder.Append(second);
+            builder.Append(third);
+            builder.Append(fourth);
+            return builder;
+        }
+        
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, string fifth)
         {
             builder.Clear();
             builder.Append(first);
@@ -762,7 +862,20 @@ namespace Core.Utils.Extensions
             return builder;
         }
 
-        public static StringBuilder Override(this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth)
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first, char second, string third, string fourth, string fifth)
+        {
+            builder.Clear();
+            builder.Append(first);
+            builder.Append(second);
+            builder.Append(third);
+            builder.Append(fourth);
+            builder.Append(fifth);
+            return builder;
+        }
+
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth)
         {
             builder.Clear();
             builder.Append(first);
@@ -774,7 +887,8 @@ namespace Core.Utils.Extensions
             return builder;
         }
         
-        public static StringBuilder Override(this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth, string seventh)
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth, string seventh)
         {
             builder.Clear();
             builder.Append(first);
@@ -787,7 +901,8 @@ namespace Core.Utils.Extensions
             return builder;
         }
         
-        public static StringBuilder Override(this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth, string seventh, string eighth)
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth, string seventh, string eighth)
         {
             builder.Clear();
             builder.Append(first);
@@ -801,7 +916,8 @@ namespace Core.Utils.Extensions
             return builder;
         }
         
-        public static StringBuilder Override(this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth, string seventh, string eighth, string ninth)
+        [NotNull]
+        public static StringBuilder Override([NotNull] this StringBuilder builder, string first, string second, string third, string fourth, string fifth, string sixth, string seventh, string eighth, string ninth)
         {
             builder.Clear();
             builder.Append(first);
@@ -816,56 +932,64 @@ namespace Core.Utils.Extensions
             return builder;
         }
 
-        public static StringBuilder Surround(this StringBuilder builder, char first, char second)
+        [NotNull]
+        public static StringBuilder Surround([NotNull] this StringBuilder builder, char first, char second)
         {
             builder.Insert(0, first);
             builder.Append(second);
             return builder;
         }
         
-        public static StringBuilder Surround(this StringBuilder builder, string first, string second)
+        [NotNull]
+        public static StringBuilder Surround([NotNull] this StringBuilder builder, string first, string second)
         {
             builder.Insert(0, first);
             builder.Append(second);
             return builder;
         }
         
-        public static StringBuilder Surround(this StringBuilder builder, char first, string second)
+        [NotNull]
+        public static StringBuilder Surround([NotNull] this StringBuilder builder, char first, string second)
         {
             builder.Insert(0, first);
             builder.Append(second);
             return builder;
         }
         
-        public static StringBuilder Surround(this StringBuilder builder, string first, char second)
+        [NotNull]
+        public static StringBuilder Surround([NotNull] this StringBuilder builder, string first, char second)
         {
             builder.Insert(0, first);
             builder.Append(second);
             return builder;
         }
         
-        public static StringBuilder Surround(this StringBuilder builder, (string start, char end) tuple)
+        [NotNull]
+        public static StringBuilder Surround([NotNull] this StringBuilder builder, (string start, char end) tuple)
         {
             builder.Insert(0, tuple.start);
             builder.Append(tuple.end);
             return builder;
         }
         
-        public static StringBuilder Surround(this StringBuilder builder, (char start, string end) tuple)
+        [NotNull]
+        public static StringBuilder Surround([NotNull] this StringBuilder builder, (char start, string end) tuple)
         {
             builder.Insert(0, tuple.start);
             builder.Append(tuple.end);
             return builder;
         }
         
-        public static StringBuilder Surround(this StringBuilder builder, (string start, string end) tuple)
+        [NotNull]
+        public static StringBuilder Surround([NotNull] this StringBuilder builder, (string start, string end) tuple)
         {
             builder.Insert(0, tuple.start);
             builder.Append(tuple.end);
             return builder;
         }
         
-        public static StringBuilder Surround(this StringBuilder builder, (char start, char end) tuple)
+        [NotNull]
+        public static StringBuilder Surround([NotNull] this StringBuilder builder, (char start, char end) tuple)
         {
             builder.Insert(0, tuple.start);
             builder.Append(tuple.end);

@@ -5,7 +5,6 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Game_Manager.Scripts
 {

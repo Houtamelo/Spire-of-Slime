@@ -8,6 +8,7 @@ using Core.Main_Database.Visual_Novel;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using Core.Visual_Novel.Scripts;
+using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
 using Utils.Patterns;
@@ -54,7 +55,7 @@ namespace Core.Main_Database.Editor
                 Debug.LogWarning(mainBuilder.ToString());
         }
 
-        private static void CheckCGs(List<TextAsset> assets, StringBuilder builder)
+        private static void CheckCGs([NotNull] List<TextAsset> assets, StringBuilder builder)
         {
             Core.Main_Database.Editor.Utils.TryFindAssetWithType(out CgDatabase cgDatabase);
 
@@ -198,7 +199,7 @@ namespace Core.Main_Database.Editor
         }
         
         // lines that have the <<set_ambience name volume>> or <<set_ambience name>> or <<add_ambience name volume>> or <<add_ambience name>> tags
-        private static void CheckAmbienceSounds(List<TextAsset> assets, StringBuilder builder)
+        private static void CheckAmbienceSounds([NotNull] List<TextAsset> assets, StringBuilder builder)
         {
             Core.Main_Database.Editor.Utils.TryFindAssetWithType(out AudioPathsDatabase soundDatabase);
 
@@ -276,7 +277,7 @@ namespace Core.Main_Database.Editor
         }
         
         // lines that have the <<sfx name>> or <<sfx name volume>> or <<wait_sfx name>> or <<wait_sfx name volume>> tags
-        private static void CheckSfxs(List<TextAsset> assets, StringBuilder builder)
+        private static void CheckSfxs([NotNull] List<TextAsset> assets, StringBuilder builder)
         {
             Core.Main_Database.Editor.Utils.TryFindAssetWithType(out AudioPathsDatabase soundDatabase);
 
@@ -411,7 +412,7 @@ namespace Core.Main_Database.Editor
         }
         
         // lines that have the <<music name>> or <<music name volume>> tags
-        private static void CheckMusic(List<TextAsset> assets, StringBuilder builder)
+        private static void CheckMusic([NotNull] List<TextAsset> assets, StringBuilder builder)
         {
             Core.Main_Database.Editor.Utils.TryFindAssetWithType(out AudioPathsDatabase soundDatabase);
             StringBuilder missingDoubleArrowsBuilder = new();
@@ -486,7 +487,7 @@ namespace Core.Main_Database.Editor
 
         // lines that have the <<combat key onWinScene onLossScene>> tag
         // scenes are on the line with format: title: name
-        private static void CheckCombatScripts(List<TextAsset> assets, StringBuilder builder)
+        private static void CheckCombatScripts([NotNull] List<TextAsset> assets, StringBuilder builder)
         {
             Core.Main_Database.Editor.Utils.TryFindAssetWithType(out CombatScriptDatabase combatScriptDatabase);
             StringBuilder missingDoubleArrowsBuilder = new();
@@ -621,7 +622,7 @@ namespace Core.Main_Database.Editor
         }
 
         // variables can be found in every single line, their format is $variableName, variables are alphanumeric and can contain underscores and dashes
-        private static void CheckVariables(List<TextAsset> assets, StringBuilder builder)
+        private static void CheckVariables([NotNull] List<TextAsset> assets, StringBuilder builder)
         {
             Core.Main_Database.Editor.Utils.TryFindAssetWithType(out VariableDatabase variableDatabase);
             Dictionary<string, List<(string asset, int lineNumber)>> missingFiles = new();
@@ -698,7 +699,7 @@ namespace Core.Main_Database.Editor
             builder.AppendLine("\n");
         }
 
-        private static void CheckPortraits(List<TextAsset> assets, StringBuilder builder)
+        private static void CheckPortraits([NotNull] List<TextAsset> assets, StringBuilder builder)
         {
             Core.Main_Database.Editor.Utils.TryFindAssetWithType(out PortraitDatabase portraitDatabase);
             

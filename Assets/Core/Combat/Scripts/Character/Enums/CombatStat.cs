@@ -10,12 +10,12 @@
         Dodge = 7,
         Resilience = 8,
         Composure = 9,
-        StunSpeed = 10,
         DamageMultiplier = 11,
         Speed = 15,
         DebuffApplyChance = 16,
         PoisonApplyChance = 17,
         MoveApplyChance = 18,
-        ArousalApplyChance = 19
+        ArousalApplyChance = 19,
+        StunMitigation = 20,
     }
 }

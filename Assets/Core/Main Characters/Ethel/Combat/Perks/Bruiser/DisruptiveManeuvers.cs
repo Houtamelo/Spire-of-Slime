@@ -13,14 +13,15 @@ using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using ListPool;
-using Utils.Patterns;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
 {
     public class DisruptiveManeuvers : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             DisruptiveManeuversInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -41,14 +42,15 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters) 
+        [NotNull]
+        public override PerkInstance CreateInstance(CharacterStateMachine owner, DirectCharacterEnumerator allCharacters) 
             => new DisruptiveManeuversInstance(owner, Key);
     }
     
     public class DisruptiveManeuversInstance : PerkInstance, ISelfAttackedListener
     {
-        private const float ApplyChance = 1f;
-        private static readonly BuffOrDebuffScript Debuff = new(false, BaseDuration: default, ApplyChance, CombatStat.Accuracy, BaseDelta: default); // default values are overriden in OnActionComplete()
+        private const int ApplyChance = 100;
+        private static readonly BuffOrDebuffScript Debuff = new(Permanent: false, BaseDuration: default, ApplyChance, CombatStat.Accuracy, BaseDelta: default); // default values are overriden in OnActionComplete()
 
         public DisruptiveManeuversInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
@@ -64,6 +66,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
             Owner.Events.SelfAttackedListeners.Remove(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new DisruptiveManeuversRecord(Key);
 
         private bool _recursionLock;
@@ -84,7 +87,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
             {
                 Option<StatusInstance> instance = statusResult.StatusInstance;
                 if (statusResult.IsFailure || instance.IsNone || instance.Value.IsPositive || statusResult.Caster == Owner ||
-                    statusResult.Caster.PositionHandler.IsLeftSide == Owner.PositionHandler.IsLeftSide || instance.Value is not BuffOrDebuff buffOrDebuff || buffOrDebuff.IsPermanent)
+                    statusResult.Caster.PositionHandler.IsLeftSide == Owner.PositionHandler.IsLeftSide || instance.Value is not BuffOrDebuff buffOrDebuff || buffOrDebuff.Permanent)
                     continue;
 
                 _recursionLock = true;
@@ -95,12 +98,12 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
                 BuffOrDebuffToApply targetStruct = (BuffOrDebuffToApply) Debuff.GetStatusToApply(statusResult.Caster, statusResult.Target, false, null);
                 targetStruct.Stat = toApplyOnTarget;
                 targetStruct.Duration = buffOrDebuff.Duration;
-                targetStruct.Delta = buffOrDebuff.Delta;
+                targetStruct.Delta = buffOrDebuff.GetDelta;
                 
                 BuffOrDebuffToApply casterStruct = (BuffOrDebuffToApply) Debuff.GetStatusToApply(statusResult.Caster, statusResult.Caster, false, null);
                 casterStruct.Stat = toApplyOnCaster;
                 casterStruct.Duration = buffOrDebuff.Duration;
-                casterStruct.Delta = buffOrDebuff.Delta;
+                casterStruct.Delta = buffOrDebuff.GetDelta;
                 
                 BuffOrDebuffScript.ProcessModifiersAndTryApply(targetStruct);
                 BuffOrDebuffScript.ProcessModifiersAndTryApply(casterStruct);

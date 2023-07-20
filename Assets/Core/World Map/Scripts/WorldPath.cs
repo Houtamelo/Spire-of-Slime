@@ -36,8 +36,10 @@ namespace Core.World_Map.Scripts
         public bool AreRequirementsMet(Save save)
         {
             foreach (VariableRequirement variable in requirements)
+            {
                 if (variable.Validate(save) == false)
                     return false;
+            }
 
             return true;
         }

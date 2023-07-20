@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 using UnityEngine;
 
 // ReSharper disable InconsistentNaming
@@ -9,15 +10,8 @@ namespace Core.Save_Management.SaveObjects
     {
         public void SetVariable(CleanString variableName, bool boolValue)
         {
-            if (TryGetBool(variableName, out bool oldValue))
-            {
-                if (oldValue == boolValue)
-                    return;
-            }
-            else
-            {
-                oldValue = false;
-            }
+            if (TryGetBool(variableName, out bool oldValue) && oldValue == boolValue)
+                return;
             
             SetDirty();
             if (VariablesName.BoolSetters.TryGetValue(variableName, out VariablesName.BoolSetter setter))
@@ -25,12 +19,12 @@ namespace Core.Save_Management.SaveObjects
             else
                 Booleans[variableName] = boolValue;
             
-            global::Core.Save_Management.SaveObjects.Save.BoolChanged?.Invoke(variableName, oldValue, boolValue);
+            BoolChanged?.Invoke(variableName, oldValue, boolValue);
         }
 
         public void SetVariable(CleanString variableName, CleanString stringValue)
         {
-            if (!TryGetString(variableName, out CleanString oldValue))
+            if (TryGetString(variableName, out CleanString oldValue) == false)
                 oldValue = string.Empty;
 
             if (oldValue == stringValue)
@@ -38,34 +32,28 @@ namespace Core.Save_Management.SaveObjects
 
             SetDirty();
             if (VariablesName.StringSetters.TryGetValue(variableName, out VariablesName.StringSetter setter))
-                setter.Invoke(this, stringValue, variableName);
+                setter.Invoke(save: this, stringValue, variableName);
             else
                 Strings[variableName] = stringValue;
 
-            global::Core.Save_Management.SaveObjects.Save.StringChanged?.Invoke(variableName, oldValue, stringValue);
+            StringChanged?.Invoke(variableName, oldValue, stringValue);
         }
 
-        public void SetVariable(CleanString variableName, float floatValue)
+        public void SetVariable(CleanString variableName, int intValue)
         {
-            if (TryGetFloat(variableName, out float oldValue))
-            {
-                if (Math.Abs(oldValue - floatValue) < 0.00001f)
-                    return;
-            }
-            else
-            {
-                oldValue = 0f;
-            }
-
+            if (TryGetInt(variableName, out int oldValue) && oldValue == intValue)
+                return;
+            
             SetDirty();
-            if (VariablesName.FloatSetters.TryGetValue(variableName, out VariablesName.FloatSetter setter))
-                setter.Invoke(save: this, floatValue, variableName);
+            if (VariablesName.IntSetters.TryGetValue(variableName, out VariablesName.IntSetter setter))
+                setter.Invoke(save: this, intValue, variableName);
             else
-                Floats[variableName] = floatValue;
+                Ints[variableName] = intValue;
 
-            global::Core.Save_Management.SaveObjects.Save.FloatChanged?.Invoke(variableName, oldValue, floatValue);
+            IntChanged?.Invoke(variableName, oldValue, intValue);
         }
         
+        [CanBeNull]
         public T GetVariable<T>(CleanString variableName)
         {
             if (TryGetString(variableName, out CleanString stringValue))
@@ -80,7 +68,7 @@ namespace Core.Save_Management.SaveObjects
                 return default;
             }
             
-            if (global::Core.Save_Management.SaveObjects.Save.VariableDatabase.TryGetDefault(variableName, out stringValue))
+            if (VariableDatabase.TryGetDefault(variableName, out stringValue))
             {
                 SetVariable(variableName, stringValue);
                 if (TryGetString(variableName, out stringValue))
@@ -117,7 +105,7 @@ namespace Core.Save_Management.SaveObjects
                 return default;
             }
             
-            if (global::Core.Save_Management.SaveObjects.Save.VariableDatabase.TryGetDefault(variableName, out boolValue))
+            if (VariableDatabase.TryGetDefault(variableName, out boolValue))
             {
                 SetVariable(variableName, boolValue);
                 if (TryGetBool(variableName, out boolValue))
@@ -139,42 +127,40 @@ namespace Core.Save_Management.SaveObjects
                 }
             }
             
-            if (TryGetFloat(variableName, out float floatValue))
+            if (TryGetInt(variableName, out int intValue))
             {
-                if (floatValue is T castedFloat)
-                    return castedFloat;
+                if (intValue is T castedInt)
+                    return castedInt;
 
-                Debug.LogWarning($"Variable:{variableName.ToString()} exists as float but is requested as {typeof(T).Name}");
+                Debug.LogWarning($"Variable:{variableName.ToString()} exists as int but is requested as {typeof(T).Name}");
                 return default;
             }
             
-            if (global::Core.Save_Management.SaveObjects.Save.VariableDatabase.TryGetDefault(variableName, out floatValue))
+            if (VariableDatabase.TryGetDefault(variableName, out intValue))
             {
-                SetVariable(variableName, floatValue);
-                if (TryGetFloat(variableName, out floatValue))
+                SetVariable(variableName, intValue);
+                if (TryGetInt(variableName, out intValue))
                 {
-                    if (floatValue is T castedFloat)
-                        return castedFloat;
+                    if (intValue is T castedInt)
+                        return castedInt;
                     
-                    Debug.LogWarning($"Variable:{variableName.ToString()} exists as float but is requested as {typeof(T).Name}");
+                    Debug.LogWarning($"Variable:{variableName.ToString()} exists as int but is requested as {typeof(T).Name}");
                     return default;
                 }
 
                 {
-                    Debug.LogWarning($"Variable:{variableName.ToString()}, has been set with default value:{floatValue} but wasn't found with {nameof(TryGetFloat)}");
-                    if (floatValue is T castedFloat)
+                    Debug.LogWarning($"Variable:{variableName.ToString()}, has been set with default value:{intValue} but wasn't found with {nameof(TryGetInt)}");
+                    if (intValue is T castedFloat)
                         return castedFloat;
 
-                    Debug.LogWarning($"Variable:{variableName.ToString()} has default value as float but is requested as {typeof(T).Name}");
+                    Debug.LogWarning($"Variable:{variableName.ToString()} has default value as int but is requested as {typeof(T).Name}");
                     return default;
                 }
             }
             
-            if (0f is not T && false is not T && string.Empty is not T && new CleanString(string.Empty) is not T)
-            {
-                Debug.LogWarning($"T must be string, bool or float, requested: {typeof(T).Name}, variable name: {variableName.ToString()}.");
-            }
-            
+            if (0 is not T && false is not T && string.Empty is not T && new CleanString(string.Empty) is not T)
+                Debug.LogWarning($"T must be string, bool, int, requested: {typeof(T).Name}, variable name: {variableName.ToString()}.");
+
             return default;
         }
 
@@ -189,14 +175,14 @@ namespace Core.Save_Management.SaveObjects
             return Strings.TryGetValue(variableName, out stringValue);
         }
         
-        public bool TryGetFloat(CleanString variableName, out float value)
+        public bool TryGetInt(CleanString variableName, out int value)
         {
-            if (VariablesName.FloatGetters.TryGetValue(variableName, out VariablesName.FloatGetter floatGetter))
+            if (VariablesName.IntGetters.TryGetValue(variableName, out VariablesName.IntGetter intGetter))
             {
-                value = floatGetter.Invoke(save: this, variableName);
+                value = intGetter.Invoke(save: this, variableName);
                 return true;
             }
-            return Floats.TryGetValue(variableName, out value);
+            return Ints.TryGetValue(variableName, out value);
         }
 
         public bool TryGetBool(CleanString variableName, out bool value)

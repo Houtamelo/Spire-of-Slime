@@ -7,7 +7,6 @@ using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Cues
 {
@@ -41,10 +40,7 @@ namespace Core.Combat.Scripts.Cues
                 clip = serializedClip;
             }
             
-            public static implicit operator (Sprite icon, AudioClip clip)(CueData data)
-            {
-                return (data.serializedIcon, data.serializedClip);
-            }
+            public static implicit operator (Sprite icon, AudioClip clip)(CueData data) => (data.serializedIcon, data.serializedClip);
         }
     }
 }

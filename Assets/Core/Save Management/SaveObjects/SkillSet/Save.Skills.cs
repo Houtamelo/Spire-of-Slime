@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Core.Combat.Scripts.Interfaces;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Main_Database.Combat;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Save_Management.SaveObjects
 {
@@ -30,10 +31,10 @@ namespace Core.Save_Management.SaveObjects
                     return;
                 }
                 
-                uint oldPoints = _ethelStats.AvailablePerkPoints;
-                uint newPoints = _ethelStats.AvailablePerkPoints - 1;
+                int oldPoints = _ethelStats.AvailablePerkPoints;
+                int newPoints = _ethelStats.AvailablePerkPoints - 1;
                 _ethelStats.AvailablePerkPoints = newPoints;
-                FloatChanged?.Invoke(VariablesName.Ethel_AvailablePerkPoints, oldPoints, newPoints);
+                IntChanged?.Invoke(VariablesName.Ethel_AvailablePerkPoints, oldPoints, newPoints);
             }
             else if (key.StartsWith("perk_nema") || key.StartsWith("skill_nema"))
             {
@@ -43,10 +44,10 @@ namespace Core.Save_Management.SaveObjects
                     return;
                 }
                 
-                uint oldPoints = _nemaStats.AvailablePerkPoints;
-                uint newPoints = _nemaStats.AvailablePerkPoints - 1;
+                int oldPoints = _nemaStats.AvailablePerkPoints;
+                int newPoints = _nemaStats.AvailablePerkPoints - 1;
                 _nemaStats.AvailablePerkPoints = newPoints;
-                FloatChanged?.Invoke(VariablesName.Nema_AvailablePerkPoints, oldPoints, newPoints);
+                IntChanged?.Invoke(VariablesName.Nema_AvailablePerkPoints, oldPoints, newPoints);
             }
             else
             {
@@ -104,7 +105,7 @@ namespace Core.Save_Management.SaveObjects
                 StringChanged?.Invoke(variableName, oldValue.ToString(), skillKey.ToString());
         }
         
-        public bool UnassignSkill(CleanString characterKey, ISkill skill) => UnassignSkill(characterKey, skill.Key);
+        public bool UnassignSkill(CleanString characterKey, [NotNull] ISkill skill) => UnassignSkill(characterKey, skill.Key);
         
         public bool UnassignSkill(CleanString characterKey, CleanString skillKey)
         {
@@ -171,7 +172,7 @@ namespace Core.Save_Management.SaveObjects
             return false;
         }
 
-        public void OverrideSkill(CleanString characterKey, ISkill skill, int slotIndex) => OverrideSkill(characterKey, skill.Key, slotIndex);
+        public void OverrideSkill(CleanString characterKey, [NotNull] ISkill skill, int slotIndex) => OverrideSkill(characterKey, skill.Key, slotIndex);
 
         public void OverrideSkill(CleanString characterKey, CleanString skillKey, int slotIndex) 
         {
@@ -193,11 +194,11 @@ namespace Core.Save_Management.SaveObjects
             return skill.IsNullOrEmpty() ? Option.None : skill;
         }
 
-        public void GetSkills(CleanString characterKey, in IList<ISkill> destinationList, ICharacterScript character, ref int hash)
+        public void FillSkills(CleanString characterKey, IList<ISkill> fillMe, ICharacterScript character, ref int hash)
         {
             if (GetStats(characterKey).AssertSome(out CharacterStats stats) == false)
                 return;
-            
+
             SetDirty();
             int currentHash = stats.SkillSet.GetHashCode();
             if (currentHash == hash)
@@ -206,8 +207,8 @@ namespace Core.Save_Management.SaveObjects
             CleanString oldOne = stats.SkillSet.One, oldTwo = stats.SkillSet.Two, oldThree = stats.SkillSet.Three, oldFour = stats.SkillSet.Four;
             hash = currentHash;
                 
-            destinationList.Clear();
-            IReadOnlyList<ISkill> possibleSkills = character.GetAllPossibleSkills();
+            fillMe.Clear();
+            ReadOnlySpan<ISkill> possibleSkills = character.GetAllPossibleSkills();
             foreach (CleanString skillKey in stats.SkillSet)
             {
                 bool found = false;
@@ -216,7 +217,7 @@ namespace Core.Save_Management.SaveObjects
                     if (skill.Key != skillKey)
                         continue;
 
-                    destinationList.Add(skill);
+                    fillMe.Add(skill);
                     found = true;
                     break;
                 }
@@ -226,13 +227,13 @@ namespace Core.Save_Management.SaveObjects
 
                 Debug.LogWarning($"Skill with key {skillKey.ToString()} not found in character {character.CharacterName}. Searching on database.");
                 if (SkillDatabase.GetSkill(skillKey).AssertSome(out SkillScriptable skillScriptable))
-                    destinationList.Add(skillScriptable);
+                    fillMe.Add(skillScriptable);
             }
 
             Sort(stats, oldOne, oldTwo, oldThree, oldFour);
         }
 
-        public static void Sort(CharacterStats stats, CleanString oldOne, CleanString oldTwo, CleanString oldThree, CleanString oldFour)
+        public static void Sort([NotNull] CharacterStats stats, CleanString oldOne, CleanString oldTwo, CleanString oldThree, CleanString oldFour)
         {
             for (int i = 0; i < 4; i++)
             {

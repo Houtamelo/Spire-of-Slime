@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Core.Save_Management;
 using Core.Save_Management.SaveObjects;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Core.Main_Menu.Scripts
@@ -33,7 +34,7 @@ namespace Core.Main_Menu.Scripts
                 saveFilesManager.OnSaveFilesChanged -= CreateSaveButtons;
         }
 
-        private void CreateSaveButtons(IReadOnlyCollection<SaveRecord> saves)
+        private void CreateSaveButtons([NotNull] IReadOnlyCollection<SaveRecord> saves)
         {
             for (int index = _saveButtons.Count; index < saves.Count; index++)
             {

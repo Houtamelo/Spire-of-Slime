@@ -1,119 +1,176 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Core.Combat.Scripts.Behaviour;
+﻿using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Managers.Enumerators;
-using Core.Utils.Extensions;
+using Core.Combat.Scripts.Timeline;
+using Core.Utils.Collections;
 using Core.Utils.Math;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Effects.Types.Poison
 {
-    public record PoisonRecord(float Duration, bool IsPermanent, uint DamagePerTime, float AccumulatedTime, Guid Caster) : StatusRecord(Duration, IsPermanent)
-    {
-        public override bool IsDataValid(StringBuilder errors, ICollection<CharacterRecord> allCharacters)
-        {
-            if (DamagePerTime == 0)
-            {
-                errors.AppendLine("Invalid ", nameof(PoisonRecord), " data. ", nameof(DamagePerTime), " is 0.");
-                return false;
-            }
-            
-            foreach (CharacterRecord character in allCharacters)
-            {
-                if (character.Guid == Caster)
-                    return true;
-            }
-            
-            errors.AppendLine("Invalid ", nameof(PoisonRecord), " data. ", nameof(Caster), "'s Guid: ", Caster.ToString(), " could not be mapped to a character.");
-            return false;
-        }
-    }
-
     public class Poison : StatusInstance
     {
         public override bool IsPositive => false;
 
         public readonly CharacterStateMachine Caster;
-        public readonly uint DamagePerTime;
-        private float _accumulatedTime;
+        public readonly int DamagePerSecond;
+        private TSpan _accumulatedTime;
 
-        private Poison(float duration, bool isPermanent, CharacterStateMachine owner, CharacterStateMachine caster, uint damagePerSecond) : base(duration: duration, isPermanent: isPermanent, owner: owner)
+        private Poison(TSpan duration, bool isPermanent, CharacterStateMachine owner, CharacterStateMachine caster, int damagePerSecond)
+            : base(duration, isPermanent, owner)
         {
-            DamagePerTime = damagePerSecond;
+            DamagePerSecond = damagePerSecond;
             Caster = caster;
         }
 
-        public static Option<StatusInstance> CreateInstance(float duration, bool isPermanent, CharacterStateMachine owner, CharacterStateMachine caster, uint damagePerSecond)
+        public static Option<StatusInstance> CreateInstance(TSpan duration, bool isPermanent, CharacterStateMachine owner, CharacterStateMachine caster, int damagePerSecond)
         {
-            if ((duration <= 0 && !isPermanent) || damagePerSecond <= 0)
+            if ((duration.Ticks <= 0 && isPermanent == false) || damagePerSecond <= 0)
             {
                 Debug.LogWarning($"Invalid poison parameters: duration: {duration}, isPermanent: {isPermanent}, damagePerSecond: {damagePerSecond}");
-                return Option<StatusInstance>.None;
+                return Option.None;
             }
             
             Poison instance = new(duration, isPermanent, owner, caster, damagePerSecond);
-            owner.StatusModule.AddStatus(instance, caster);
+            owner.StatusReceiverModule.AddStatus(instance, caster);
             return Option<StatusInstance>.Some(instance);
         }
 
-        private Poison(PoisonRecord record, CharacterStateMachine owner, CharacterStateMachine caster) : base(record, owner)
+        public Poison([NotNull] PoisonRecord record, CharacterStateMachine owner, CharacterStateMachine caster) : base(record, owner)
         {
-            DamagePerTime = record.DamagePerTime;
+            DamagePerSecond = record.DamagePerTime;
             _accumulatedTime = record.AccumulatedTime;
             Caster = caster;
         }
 
-        public static Option<StatusInstance> CreateInstance(PoisonRecord record, CharacterStateMachine owner, ref CharacterEnumerator allCharacters)
+        public override void Tick(TSpan timeStep)
         {
-            CharacterStateMachine caster = null;
-            foreach (CharacterStateMachine character in allCharacters)
-            {
-                if (character.Guid == record.Caster)
-                {
-                    caster = character;
-                    break;
-                }
-            }
-            
-            if (caster == null)
-                return Option<StatusInstance>.None;
-            
-            Poison instance = new(record, owner, caster);
-            owner.StatusModule.AddStatus(instance, owner);
-            return Option<StatusInstance>.Some(instance);
-        }
-
-        public override void Tick(float timeStep)
-        {
+            _accumulatedTime += TSpan.ChoseMin(timeStep, Duration);
             if (Duration <= timeStep)
             {
-                _accumulatedTime += Duration;
-                uint roundDamage = (_accumulatedTime * DamagePerTime).CeilToUInt();
-                if (Owner.StaminaModule.IsSome && roundDamage != 0)
-                    Owner.StaminaModule.Value.ReceiveDamage(roundDamage, DamageType.Poison, Caster);
-                
-                return;
-            }
+                int damage = (int)(_accumulatedTime.Seconds * DamagePerSecond);
+                _accumulatedTime.Ticks = 0;
 
-            _accumulatedTime += timeStep;
-            if (_accumulatedTime >= 1)
+                if (damage != 0 && Owner.StaminaModule.TrySome(out IStaminaModule staminaModule))
+                    staminaModule.ReceiveDamage(damage, DamageType.Poison, Caster);
+            }
+            else if (_accumulatedTime.Seconds >= 1)
             {
-                uint roundTime = _accumulatedTime.FloorToUInt();
-                _accumulatedTime -= roundTime;
-                uint damage = roundTime * DamagePerTime;
-                if (Owner.StaminaModule.IsSome && damage != 0)
-                    Owner.StaminaModule.Value.ReceiveDamage(damage, DamageType.Poison, Caster);
+                int roundSeconds = (int)_accumulatedTime.Seconds;
+                _accumulatedTime.Ticks -= roundSeconds * TSpan.TicksPerSecond;
+                
+                if (Owner.StaminaModule.TrySome(out IStaminaModule staminaModule))
+                    staminaModule.ReceiveDamage(roundSeconds * DamagePerSecond, DamageType.Poison, Caster);
             }
 
             base.Tick(timeStep);
         }
 
+        public override void FillTimelineEvents([NotNull] SelfSortingList<CombatEvent> events)
+        {
+            Debug.Assert(IsActive);
 
-        public override StatusRecord GetRecord() => new PoisonRecord(Duration, IsPermanent, DamagePerTime, _accumulatedTime, Caster.Guid);
+            switch (Permanent)
+            {
+                case true when DamagePerSecond > 0:
+                {
+                    AddEventsAsPermanent();
+                    break;
+                }
+                case false:
+                {
+                    events.Add(CombatEvent.FromStatusEnd(Owner, Duration, status: this));
+
+                    if (DamagePerSecond > 0)
+                        AddEventsUntilEnd();
+
+                    break;
+                }
+            }
+
+            return;
+
+            void AddEventsAsPermanent()
+            {
+                TSpan current;
+
+                if (_accumulatedTime >= TSpan.OneSecond)
+                {
+                    int roundSeconds = (int)_accumulatedTime.Seconds;
+                    int damage = roundSeconds * DamagePerSecond;
+
+                    if (damage > 0)
+                        events.Add(CombatEvent.FromPoisonTick(Owner, TSpan.Zero, source: this, damage));
+
+                    current = -(_accumulatedTime - TSpan.FromSeconds(roundSeconds));
+                }
+                else
+                {
+                    current = -_accumulatedTime;
+                }
+
+                for (int i = 0; i < 10; i++)
+                {
+                    current += TSpan.OneSecond;
+                    events.Add(CombatEvent.FromPoisonTick(Owner, current, source: this, DamagePerSecond));
+                }
+            }
+
+            void AddEventsUntilEnd()
+            {
+                TSpan totalTime = Duration + _accumulatedTime;
+                int roundTotalSecondsLeft = (int)(totalTime.Seconds);
+                if (roundTotalSecondsLeft < 1)
+                {
+                    int poisonDamage = (int)(totalTime.Seconds * DamagePerSecond);
+                    if (poisonDamage > 0)
+                        events.Add(CombatEvent.FromPoisonTick(Owner, Duration, source: this, poisonDamage));
+                
+                    return;
+                }
+                
+                TSpan current;
+
+                if (_accumulatedTime >= TSpan.OneSecond)
+                {
+                    int roundSeconds = (int)_accumulatedTime.Seconds;
+                    int damage = roundSeconds * DamagePerSecond;
+
+                    if (damage > 0)
+                        events.Add(CombatEvent.FromPoisonTick(Owner, TSpan.Zero, source: this, damage));
+
+                    current = -(_accumulatedTime - TSpan.FromSeconds(roundSeconds));
+                    roundTotalSecondsLeft -= roundSeconds;
+                }
+                else
+                {
+                    current = -_accumulatedTime;
+                }
+
+                for (int i = 0; i < roundTotalSecondsLeft; i++)
+                {
+                    current += TSpan.OneSecond;
+                    events.Add(CombatEvent.FromPoisonTick(Owner, current, source: this, DamagePerSecond));
+                }
+
+                TSpan remainingTime = totalTime - TSpan.FromSeconds(roundTotalSecondsLeft);
+
+                if (remainingTime.Ticks > 0)
+                {
+                    current += remainingTime;
+                    int damage = (int)(remainingTime.Seconds * DamagePerSecond);
+
+                    if (damage > 0)
+                        events.Add(CombatEvent.FromPoisonTick(Owner, current, source: this, damage));
+                }
+            }
+        }
+
+        [NotNull]
+        public override StatusRecord GetRecord() => new PoisonRecord(Duration, Permanent, DamagePerSecond, _accumulatedTime, Caster.Guid);
 
         public override Option<string> GetDescription() => StatusInstanceDescriptions.Get(this);
         public override EffectType EffectType => EffectType.Poison;

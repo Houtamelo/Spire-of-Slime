@@ -13,12 +13,14 @@ using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Nema.Combat.Perks.Poison
 {
     public class Madness : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             MadnessInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -39,7 +41,8 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Poison
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             MadnessInstance instance = new(owner, this);
             owner.PerksModule.Add(instance);
@@ -47,23 +50,15 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Poison
         }
     }
     
-    public class MadnessInstance : PerkInstance, IPoisonModifier, IBaseFloatAttributeModifier
+    public class MadnessInstance : PerkInstance, IPoisonModifier, IBaseAttributeModifier
     {
-        private const float DamageModifier = 0.5f;
-        public string SharedId => nameof(MadnessInstance);
-        public int Priority => 999;
+        private const int DamageModifier = 50;
 
         private readonly Action<CharacterStateMachine> _onCharacterSetup;
 
-        public MadnessInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
-        {
-            _onCharacterSetup = OnCharacterSetup;
-        }
+        public MadnessInstance(CharacterStateMachine owner, CleanString key) : base(owner, key) => _onCharacterSetup = OnCharacterSetup;
 
-        public MadnessInstance(CharacterStateMachine owner, MadnessRecord record) : base(owner, record)
-        {
-            _onCharacterSetup = OnCharacterSetup;
-        }
+        public MadnessInstance(CharacterStateMachine owner, [NotNull] MadnessRecord record) : base(owner, record) => _onCharacterSetup = OnCharacterSetup;
 
         protected override void OnSubscribe()
         {
@@ -73,8 +68,10 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Poison
 
             CombatManager combatManager = Owner.Display.Value.CombatManager;
             foreach (CharacterStateMachine character in combatManager.Characters.GetAllFixed())
-                if (character.StateEvaluator.PureEvaluate() is not CharacterState.Defeated and not CharacterState.Corpse)
-                    character.StatsModule.SubscribePower(this, allowDuplicates: false);
+            {
+                if (character.StateEvaluator.PureEvaluate() is not (CharacterState.Defeated or CharacterState.Corpse))
+                    character.StatsModule.SubscribePower(modifier: this, allowDuplicates: false);
+            }
 
             combatManager.Characters.CharacterSetup += _onCharacterSetup;
         }
@@ -87,21 +84,19 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Poison
             
             CombatManager combatManager = Owner.Display.Value.CombatManager;
             foreach (CharacterStateMachine character in combatManager.Characters.GetAllFixed())
-                character.StatsModule.UnsubscribePower(this);
+                character.StatsModule.UnsubscribePower(modifier: this);
 
             combatManager.Characters.CharacterSetup -= _onCharacterSetup;
         }
 
-        public override PerkRecord GetRecord() => new MadnessRecord(Key);
-
-        private void OnCharacterSetup(CharacterStateMachine character)
+        private void OnCharacterSetup([NotNull] CharacterStateMachine character)
         {
-            character.StatsModule.SubscribePower(this, allowDuplicates: false);
+            character.StatsModule.SubscribePower(modifier: this, allowDuplicates: false);
         }
 
-        public void Modify(ref float value, CharacterStateMachine self)
+        public void Modify(ref int value, [NotNull] CharacterStateMachine self)
         {
-            foreach (StatusInstance status in self.StatusModule.GetAll)
+            foreach (StatusInstance status in self.StatusReceiverModule.GetAll)
             {
                 if (status is Core.Combat.Scripts.Effects.Types.Poison.Poison poison && poison.Caster == Owner && status.IsActive)
                 {
@@ -111,9 +106,16 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Poison
             }
         }
 
-        public void Modify(ref PoisonToApply effectStruct)
+        public void Modify([NotNull] ref PoisonToApply effectStruct)
         {
-            effectStruct.PoisonPerTime *= 2;
+            effectStruct.PoisonPerSecond *= 2;
         }
+
+        [NotNull]
+        public override PerkRecord GetRecord() => new MadnessRecord(Key);
+
+        [NotNull]
+        public string SharedId => nameof(MadnessInstance);
+        public int Priority => 999;
     }
 }

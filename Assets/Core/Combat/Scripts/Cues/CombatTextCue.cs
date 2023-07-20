@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using DG.Tweening;
+using JetBrains.Annotations;
 using TMPro;
 using UnityEngine;
 
@@ -43,7 +44,7 @@ namespace Core.Combat.Scripts.Cues
             }
             else
             {
-                Vector3 endPosition = options.WorldPosition + options.Speed * options.Duration;
+                Vector3 endPosition = options.WorldPosition + (options.Speed * options.Duration);
                 _sequence.Append(transform.DOMove(endValue: endPosition, duration: options.Duration));
             }
             
@@ -84,7 +85,7 @@ namespace Core.Combat.Scripts.Cues
             }
             else
             {
-                Vector3 endPosition = options.WorldPosition + options.Speed * options.Duration;
+                Vector3 endPosition = options.WorldPosition + (options.Speed * options.Duration);
                 _sequence.Append(t: transform.DOMove(endValue: endPosition, duration: options.Duration));
             }
             
@@ -115,6 +116,7 @@ namespace Core.Combat.Scripts.Cues
                 _sequence.Kill();
         }
 
+        [NotNull]
         public CombatTextCue OnCreate()
         {
             transform.localScale = Vector3.one;

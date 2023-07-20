@@ -3,8 +3,8 @@ using Core.Save_Management.SaveObjects;
 using Core.Utils.Async;
 using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
+using JetBrains.Annotations;
 using KGySoft.CoreLibraries;
-using Utils.Patterns;
 
 namespace Core.Local_Map.Scripts.Events.ReachLocation
 {
@@ -23,9 +23,7 @@ namespace Core.Local_Map.Scripts.Events.ReachLocation
 
         public IconType GetIconType(in Option<float> multiplier) => IconType.ReachLocation;
 
-        public CoroutineWrapper Execute(TileInfo tileInfo, in Option<float> multiplier)
-        {
-            return ReachLocationEventHandler.HandleReachLocation(Location);
-        }
+        [NotNull]
+        public CoroutineWrapper Execute(TileInfo tileInfo, in Option<float> multiplier) => ReachLocationEventHandler.HandleReachLocation(Location);
     }
 }

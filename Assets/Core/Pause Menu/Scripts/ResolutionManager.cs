@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using Core.Utils.Async;
 using Core.Utils.Patterns;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Pause_Menu.Scripts
 {

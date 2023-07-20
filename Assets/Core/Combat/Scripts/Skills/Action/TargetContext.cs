@@ -4,9 +4,6 @@
     {
         public readonly ActionResult Result;
 
-        public TargetContext(ActionResult result)
-        {
-            Result = result;
-        }
+        public TargetContext(ActionResult result) => Result = result;
     }
 }

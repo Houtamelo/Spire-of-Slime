@@ -1,13 +1,12 @@
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using Core.Combat.Scripts.BackgroundGeneration;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Main_Database.Combat
 {
@@ -47,11 +46,11 @@ namespace Core.Main_Database.Combat
             return spawned;
         }
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         public static Option<CombatBackground> GetBackgroundPrefab(CleanString key) 
             => Instance.BackgroundDatabase._mappedBackgrounds.TryGetValue(key, out CombatBackground background) ? Option<CombatBackground>.Some(background) : Option.None;
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         public static Option<CombatBackground> GetBackgroundPrefab(BothWays path)
         {
             BackgroundDatabase backgroundDatabase = Instance.BackgroundDatabase;
@@ -60,9 +59,7 @@ namespace Core.Main_Database.Combat
                 CombatBackground background = backgroundDatabase.allBackgrounds[index];
                 Option<BothWays> location = background.GetLocation;
                 if (location.IsSome && location.Value == path)
-                {
                     return background;
-                }
             }
             
             return Option<CombatBackground>.None;
@@ -77,7 +74,7 @@ namespace Core.Main_Database.Combat
         }
 
 #if UNITY_EDITOR
-        public void AssignData(IEnumerable<CombatBackground> backgrounds)
+        public void AssignData([NotNull] IEnumerable<CombatBackground> backgrounds)
         {
             allBackgrounds = backgrounds.ToArray();
             UnityEditor.EditorUtility.SetDirty(this);

@@ -8,7 +8,6 @@ using Core.Utils.Collections;
 using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Animations
 {
@@ -60,12 +59,16 @@ namespace Core.Combat.Scripts.Animations
                     }
                 }
                 else if (info.IsFinished == false)
+                {
                     return QueueState.Playing;
+                }
             }
             
             foreach (CharacterStateMachine character in combatManager.Characters.GetAllFixed())
-                if (character.StateEvaluator.PureEvaluate() is not CharacterState.Defeated && character.Display.TrySome(out CharacterDisplay display) && display.IsBusy)
+            {
+                if (character.StateEvaluator.PureEvaluate() is not CharacterState.Defeated && character.Display.TrySome(out DisplayModule display) && display.IsBusy)
                     return QueueState.Playing;
+            }
 
             if (_priorityQueue.Count > 0 || _queuedActions.Count > 0 || statusVfxManager.AnyPending())// || _queuedLustPrompts.Count > 0)
                 return QueueState.Queued;
@@ -86,7 +89,6 @@ namespace Core.Combat.Scripts.Animations
             _currentVFXAnimations.Clear();
             Option<AnimationRoutineInfo> nextPriority = _priorityQueue.Dequeue();
             if (nextPriority.IsSome)
-            {
                 while (true)
                 {
                     if (nextPriority.Value.StartIfValid())
@@ -99,7 +101,6 @@ namespace Core.Combat.Scripts.Animations
                     if (nextPriority.IsNone)
                         break;
                 }
-            }
 
             if (statusVfxManager.PlayPendingCues())
                 return true;
@@ -122,7 +123,7 @@ namespace Core.Combat.Scripts.Animations
             return false;
         }
 
-        public void CancelActionsOfCharacter(CharacterStateMachine character, bool compensateChargeLost)
+        public void CancelActionsOfCharacter(CharacterStateMachine character)
         {
             for (int i = 0; i < _queuedActions.Count; i++)
             {
@@ -133,9 +134,6 @@ namespace Core.Combat.Scripts.Animations
                 action.ForceStop();
                 _queuedActions.RemoveAt(i);
                 i--;
-                
-                if (compensateChargeLost)
-                    action.Caster.SkillModule.CompensateChargeLost();
             }
         }
 

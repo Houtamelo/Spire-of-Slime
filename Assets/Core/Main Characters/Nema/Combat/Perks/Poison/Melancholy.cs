@@ -2,20 +2,22 @@
 using System.Text;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects.Types.Poison;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
 using Data.Main_Characters.Nema;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Nema.Combat.Perks.Poison
 {
     public class Melancholy : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             MelancholyInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -36,7 +38,8 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Poison
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             MelancholyInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -46,16 +49,13 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Poison
     
     public class MelancholyInstance : PerkInstance, IPoisonModifier
     {
-        private const float PoisonApplyChanceModifier = 0.2f;
-        public string SharedId => nameof(MelancholyInstance);
-
-        public int Priority => 0;
+        private const int PoisonApplyChanceModifier = 20;
 
         public MelancholyInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public MelancholyInstance(CharacterStateMachine owner, MelancholyRecord record) : base(owner, record)
+
+        public MelancholyInstance(CharacterStateMachine owner, [NotNull] MelancholyRecord record) : base(owner, record)
         {
         }
 
@@ -77,14 +77,19 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Poison
             applierModule.BasePoisonApplyChance -= PoisonApplyChanceModifier;
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new MelancholyRecord(Key);
 
-        public void Modify(ref PoisonToApply effectStruct)
+        public void Modify([NotNull] ref PoisonToApply effectStruct)
         {
-            if (!effectStruct.FromSkill || effectStruct.GetSkill().Key != NemaSkills.Woe.key)
+            if (effectStruct.FromSkill == false || effectStruct.GetSkill().Key != NemaSkills.Woe.key)
                 return;
 
-            effectStruct.PoisonPerTime += 1;
+            effectStruct.PoisonPerSecond += 1;
         }
+
+        [NotNull]
+        public string SharedId => nameof(MelancholyInstance);
+        public int Priority => 0;
     }
 }

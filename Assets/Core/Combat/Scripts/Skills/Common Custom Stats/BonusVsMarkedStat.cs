@@ -2,37 +2,43 @@
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Effects.Types.Marked;
+using Core.Localization.Scripts;
+using Core.Utils.Collections;
 using Core.Utils.Math;
 using Core.Utils.Patterns;
 using ListPool;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
+using UnityEngine.UIElements;
+using Core.Utils.Extensions;
 
 namespace Core.Combat.Scripts.Skills.Common_Custom_Stats
 {
     [CreateAssetMenu(menuName = "Database/Combat/Skill/CustomStat/Bonus Vs Marked", fileName = "custom-stat_bonus-vs-marked")]
     public class BonusVsMarkedStat : CustomStatScriptable
     {
-        [SerializeField, PropertyRange(-100, 200), LabelText("Bonus Damage"), SuffixLabel("%")]
-        private int serializedBonusDamage;
-        private float BonusDamagePercentage => serializedBonusDamage / 100f;
+        private static readonly LocalizedText
+            LabelTrans = new("customstat_bonusvsmarked_label"),
+            DamageTrans = new("customstat_bonusvsmarked_damage"),
+            CriticalTrans = new("customstat_bonusvsmarked_crit"),
+            AccuracyTrans = new("customstat_bonusvsmarked_accuracy"),
+            ResilienceReductionTrans = new("customstat_bonusvsmarked_resiliencereduction");
         
-        [SerializeField, PropertyRange(-100, 100), LabelText("Bonus Crit"), SuffixLabel("%")]
-        private int serializedBonusCriticalChance;
-        private float BonusCriticalChancePercentage => serializedBonusCriticalChance / 100f;
+        [SerializeField, Range(-100, 200)]
+        private int bonusPower;
         
-        [SerializeField, PropertyRange(-100, 100), LabelText("Bonus Accuracy"), SuffixLabel("%")]
-        private int serializedBonusAccuracy;
-        private float BonusAccuracyPercentage => serializedBonusAccuracy / 100f;
+        [SerializeField, Range(-100, 100)]
+        private int bonusCriticalChance;
         
-        [SerializeField, PropertyRange(-100, 100), LabelText("Resilience Piercing"), SuffixLabel("%")]
-        private int serializedResiliencePiercing;
-        private float ResiliencePiercing => serializedResiliencePiercing / 100f;
+        [SerializeField, Range(-100, 100)]
+        private int bonusAccuracy;
+        
+        [SerializeField, Range(-100, 100)]
+        private int bonusResilienceReduction;
 
         public override void Apply(ref SkillStruct skillStruct)
         {
-            ref ValueListPool<TargetProperties> targetProperties = ref skillStruct.TargetProperties;
+            ref CustomValuePooledList<TargetProperties> targetProperties = ref skillStruct.TargetProperties;
             int count = targetProperties.Count;
             for (int index = 0; index < count; index++)
             {
@@ -40,7 +46,7 @@ namespace Core.Combat.Scripts.Skills.Common_Custom_Stats
                 CharacterStateMachine character = targetProperty.Target;
                 bool hasMark = false;
 
-                foreach (StatusInstance status in character.StatusModule.GetAll)
+                foreach (StatusInstance status in character.StatusReceiverModule.GetAll)
                 {
                     if (status is not Marked { IsActive: true })
                         continue;
@@ -52,57 +58,39 @@ namespace Core.Combat.Scripts.Skills.Common_Custom_Stats
                 if (hasMark == false)
                     continue;
                 
-                if (targetProperty.DamageModifier.IsSome)
-                    targetProperty.DamageModifier = targetProperty.DamageModifier.Value + BonusDamagePercentage;
+                if (targetProperty.Power.IsSome)
+                    targetProperty.Power = targetProperty.Power.Value + bonusPower;
                 
                 if (targetProperty.AccuracyModifier.IsSome)
-                    targetProperty.AccuracyModifier = targetProperty.AccuracyModifier.Value + BonusAccuracyPercentage;
+                    targetProperty.AccuracyModifier = targetProperty.AccuracyModifier.Value + bonusAccuracy;
                 
                 if (targetProperty.CriticalChanceModifier.IsSome)
-                    targetProperty.CriticalChanceModifier = targetProperty.CriticalChanceModifier.Value + BonusCriticalChancePercentage;
+                    targetProperty.CriticalChanceModifier = targetProperty.CriticalChanceModifier.Value + bonusCriticalChance;
 
-                if (targetProperty.ResiliencePiercingModifier.IsSome)
-                    targetProperty.ResiliencePiercingModifier = targetProperty.ResiliencePiercingModifier.Value + ResiliencePiercing;
-
-                #region Assertion
-#if UNITY_EDITOR
-                Debug.Assert(targetProperty == targetProperties[index],    
-                             $"{targetProperty} != {targetProperties[index]}");
-                Debug.Assert(targetProperty == skillStruct.TargetProperties[index],
-                             $"{targetProperty} != {skillStruct.TargetProperties[index]}");
-                Debug.Assert(skillStruct.TargetProperties[index].DamageModifier == targetProperty.DamageModifier,
-                             $"{skillStruct.TargetProperties[index].DamageModifier} != {targetProperty.DamageModifier}");
-                Debug.Assert(skillStruct.TargetProperties[index].AccuracyModifier == targetProperty.AccuracyModifier,
-                             $"{skillStruct.TargetProperties[index].AccuracyModifier} != {targetProperty.AccuracyModifier}");
-                Debug.Assert(skillStruct.TargetProperties[index].CriticalChanceModifier == targetProperty.CriticalChanceModifier,
-                             $"{skillStruct.TargetProperties[index].CriticalChanceModifier} != {targetProperty.CriticalChanceModifier}");
-                Debug.Assert(skillStruct.TargetProperties[index].ResiliencePiercingModifier == targetProperty.ResiliencePiercingModifier,
-                             $"{skillStruct.TargetProperties[index].ResiliencePiercingModifier} != {targetProperty.ResiliencePiercingModifier}");
-#endif
-
-                #endregion
+                if (targetProperty.ResilienceReductionModifier.IsSome)
+                    targetProperty.ResilienceReductionModifier = targetProperty.ResilienceReductionModifier.Value + bonusResilienceReduction;
             }
         }
 
         [Pure]
         public override Option<string> GetDescription()
         {
-            if (serializedBonusDamage == 0 && serializedBonusCriticalChance == 0 && serializedBonusAccuracy == 0 && serializedResiliencePiercing == 0)
-                return Option<string>.None;
+            if (bonusPower == 0 && bonusCriticalChance == 0 && bonusAccuracy == 0 && bonusResilienceReduction == 0)
+                return Option.None;
             
             SharedStringBuilder.Clear();
-            SharedStringBuilder.AppendLine("Bonus vs Marked: ");
-            if (serializedBonusDamage != 0)
-                SharedStringBuilder.AppendLine($"Damage: {BonusDamagePercentage.ToPercentageString()}");
+            SharedStringBuilder.AppendLine(LabelTrans.Translate().GetText());
+            if (bonusPower != 0)
+                SharedStringBuilder.AppendLine(DamageTrans.Translate().GetText(), bonusPower.WithSymbol());
             
-            if (serializedBonusCriticalChance != 0)
-                SharedStringBuilder.AppendLine($"Crit: {BonusCriticalChancePercentage.ToPercentageString()}");
+            if (bonusCriticalChance != 0)
+                SharedStringBuilder.AppendLine(CriticalTrans.Translate().GetText(), bonusCriticalChance.WithSymbol());
             
-            if (serializedBonusAccuracy != 0)
-                SharedStringBuilder.AppendLine($"Accuracy: {BonusAccuracyPercentage.ToPercentageString()}");
+            if (bonusAccuracy != 0)
+                SharedStringBuilder.AppendLine(AccuracyTrans.Translate().GetText(), bonusAccuracy.WithSymbol());
             
-            if (serializedResiliencePiercing != 0)
-                SharedStringBuilder.AppendLine($"Ignores Resilience: {ResiliencePiercing.ToPercentageString()}");
+            if (bonusResilienceReduction != 0)
+                SharedStringBuilder.AppendLine(ResilienceReductionTrans.Translate().GetText(), bonusResilienceReduction.WithSymbol());
             
             return SharedStringBuilder.ToString();
         }

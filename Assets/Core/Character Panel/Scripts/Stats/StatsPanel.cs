@@ -1,24 +1,27 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Core.Combat.Scripts.Managers;
 using Core.Game_Manager.Scripts;
+using Core.Main_Characters.Ethel.Combat;
 using Core.Main_Characters.Nema.Combat;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
 using Core.Utils.Math;
 using Core.Utils.Patterns;
-using Data.Main_Characters.Ethel;
 using KGySoft.CoreLibraries;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using TMPro;
 using UnityEngine;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Character_Panel.Scripts.Stats
 {
     public sealed class StatsPanel : Singleton<StatsPanel>
     {
+        private static readonly StringBuilder Builder = new();
         private static readonly Dictionary<CleanString, GeneralStat> EthelVariables = Enum<GeneralStat>.GetValues().ToDictionary(stat => VariablesName.StatName(Ethel.GlobalKey, stat), stat => stat);
         private static readonly Dictionary<CleanString, GeneralStat> NemaVariables = Enum<GeneralStat>.GetValues().ToDictionary(stat => VariablesName.StatName(Nema.GlobalKey,   stat), stat => stat);
 
@@ -50,13 +53,13 @@ namespace Core.Character_Panel.Scripts.Stats
             characterMenu.SelectedCharacter.Changed += OnSelectedCharacterChanged;
             characterMenu.SelectedCharacter.Changed += CheckPrimaryUpgradeButtons;
             characterMenu.SelectedCharacter.Changed += CheckSecondaryUpgradeButtons;
-            Save.FloatChanged += OnFloatChanged;
+            Save.IntChanged += OnIntChanged;
             SetOpen(false);
         }
         protected override void OnDestroy()
         {
             base.OnDestroy();
-            Save.FloatChanged -= OnFloatChanged;
+            Save.IntChanged -= OnIntChanged;
             if (characterMenu == null)
                 return;
             
@@ -65,25 +68,25 @@ namespace Core.Character_Panel.Scripts.Stats
             characterMenu.SelectedCharacter.Changed -= CheckSecondaryUpgradeButtons;
         }
 
-        private void OnFloatChanged(CleanString variableName, float oldValue, float newValue)
+        private void OnIntChanged(CleanString variableName, int oldValue, int newValue)
         {
             Option<IReadonlyCharacterStats> character = characterMenu.SelectedCharacter.AsOption();
             if (character.TrySome(out IReadonlyCharacterStats stats) == false)
                 return;
             
-            if (false == ((EthelVariables.TryGetValue(variableName, out GeneralStat stat) && stats.Key == Ethel.GlobalKey) || 
-                          NemaVariables.TryGetValue(variableName, out stat) && stats.Key == Nema.GlobalKey))
+            if (false == 
+                ((EthelVariables.TryGetValue(variableName, out GeneralStat stat) && stats.Key == Ethel.GlobalKey) || (NemaVariables.TryGetValue(variableName, out stat) && stats.Key == Nema.GlobalKey)))
                 return;
 
             if (stat is GeneralStat.DamageLower or GeneralStat.DamageUpper)
             {
-                (uint lower, uint upper) damage = character.Value.GetDamage();
-                baseDamageTmp.text = damage.ToDamageFormat();
+                (int lower, int upper) damage = character.Value.GetDamage();
+                baseDamageTmp.text = damage.ToDamageRangeFormat();
             }
             else if (_generalStatTmps.TryGetValue(stat, out TMP_Text tmp))
             {
                 if (stat is GeneralStat.OrgasmLimit or GeneralStat.OrgasmCount)
-                    tmp.text = $"{stats.OrgasmCount} / {stats.OrgasmLimit}";
+                    tmp.text = Builder.Override(stats.OrgasmCount.ToString(), " / ", stats.OrgasmLimit.ToString()).ToString();
                 else
                     tmp.text = stat.AltFormat(newValue);
             }
@@ -110,15 +113,15 @@ namespace Core.Character_Panel.Scripts.Stats
 
             foreach ((GeneralStat stat, TMP_Text tmp) in _generalStatTmps)
             {
-                float value = stats.GetValue(stat);
+                int value = stats.GetValue(stat);
                 if (stat is GeneralStat.OrgasmLimit or GeneralStat.OrgasmCount)
-                    tmp.text = $"{stats.OrgasmCount} / {stats.OrgasmLimit}";
+                    tmp.text = Builder.Override(stats.OrgasmCount.ToString(), " / ", stats.OrgasmLimit.ToString()).ToString();
                 else
                     tmp.text = stat.AltFormat(value);
             }
 
-            (uint lower, uint upper) damage = stats.GetDamage();
-            baseDamageTmp.text = damage.ToDamageFormat();
+            (int lower, int upper) damage = stats.GetDamage();
+            baseDamageTmp.text = damage.ToDamageRangeFormat();
         }
 
         private void CheckPrimaryUpgradeButtons(Option<IReadonlyCharacterStats> character)
@@ -132,14 +135,14 @@ namespace Core.Character_Panel.Scripts.Stats
             }
 
             IReadonlyCharacterStats stats = character.Value;
-            uint tierToCheck = stats.GetUsedPrimaryPoints() + 1;
-            List<PrimaryUpgrade> options = stats.GetPrimaryUpgradeOptions(tierToCheck);
+            int tierToCheck = stats.GetUsedPrimaryPoints() + 1;
+            ReadOnlySpan<PrimaryUpgrade> options = stats.GetPrimaryUpgradeOptions(tierToCheck);
 
-            for (int i = _primaryButtons.Count; i < options.Count; i++) 
+            for (int i = _primaryButtons.Count; i < options.Length; i++) 
                 CreatePrimaryButton();
 
             int index = 0;
-            for (; index < options.Count; index++)
+            for (; index < options.Length; index++)
             {
                 PrimaryUpgrade option = options[index];
                 StatUpgradeButton button = _primaryButtons[index];
@@ -162,14 +165,14 @@ namespace Core.Character_Panel.Scripts.Stats
             }
             
             IReadonlyCharacterStats stats = character.Value;
-            uint tierToCheck = stats.GetUsedSecondaryPoints() + 1;
-            List<SecondaryUpgrade> options = stats.GetSecondaryUpgradeOptions(tierToCheck);
+            int tierToCheck = stats.GetUsedSecondaryPoints() + 1;
+            ReadOnlySpan<SecondaryUpgrade> options = stats.GetSecondaryUpgradeOptions(tierToCheck);
             
-            for (int i = _secondaryButtons.Count; i < options.Count; i++) 
+            for (int i = _secondaryButtons.Count; i < options.Length; i++) 
                 CreateSecondaryButton();
             
             int index = 0;
-            for (; index < options.Count; index++)
+            for (; index < options.Length; index++)
             {
                 SecondaryUpgrade option = options[index];
                 StatUpgradeButton button = _secondaryButtons[index];

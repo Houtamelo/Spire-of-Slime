@@ -1,69 +1,55 @@
-﻿using System.Collections.Generic;
-using System.Text;
-using Core.Combat.Scripts.Behaviour;
+﻿using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Effects.Interfaces;
 using Core.Combat.Scripts.Enums;
-using Core.Utils.Extensions;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Effects.Types.BuffOrDebuff
 {
-    public record BuffOrDebuffRecord(float Duration, bool IsPermanent, CombatStat Attribute, float Delta) : StatusRecord(Duration, IsPermanent)
-    {
-        public override bool IsDataValid(StringBuilder errors, ICollection<CharacterRecord> allCharacters)
-        {
-            if (Delta == 0)
-            {
-                errors.AppendLine("Invalid ", nameof(BuffOrDebuffRecord), " data. ", nameof(Delta), " cannot be 0.");
-                return false;
-            }
-            
-            return true;
-        }
-    }
-
-    public class BuffOrDebuff : StatusInstance, IBaseFloatAttributeModifier, IBaseIntAttributeModifier
+    public class BuffOrDebuff : StatusInstance, IBaseAttributeModifier
     {
         public override bool IsPositive => EffectType == EffectType.Buff;
 
         public readonly CombatStat Attribute;
-        public readonly float Delta;
 
-        private BuffOrDebuff(float duration, bool isPermanent, CharacterStateMachine owner, CombatStat attribute, float delta) : base(duration: duration, isPermanent: isPermanent, owner: owner)
+        protected int Delta;
+        public virtual int GetDelta => Delta;
+
+        protected BuffOrDebuff(TSpan duration, bool isPermanent, CharacterStateMachine owner, CombatStat attribute, int delta) : base(duration, isPermanent, owner)
         {
             Attribute = attribute;
             Delta = delta;
             EffectType = delta > 0 ? EffectType.Buff : EffectType.Debuff;
         }
 
-        public static Option<StatusInstance> CreateInstance(float duration, bool isPermanent, CharacterStateMachine owner, CharacterStateMachine caster, CombatStat attribute, float delta)
+        public static Option<StatusInstance> CreateInstance(TSpan duration, bool isPermanent, CharacterStateMachine owner, CharacterStateMachine caster, CombatStat attribute, int delta)
         {
-            if ((duration <= 0 && !isPermanent) || delta == 0)
+            if ((duration.Ticks <= 0 && !isPermanent) || delta == 0)
             {
-                Debug.LogWarning($"Invalid parameters for {nameof(BuffOrDebuff)} effect. Duration: {duration.ToString()}, IsPermanent: {isPermanent.ToString()}, Delta: {delta.ToString()}");
-                return Option<StatusInstance>.None;
+                Debug.LogWarning($"Invalid parameters for {nameof(BuffOrDebuff)} effect. Duration: {duration.Seconds.ToString()}, Permanent: {isPermanent.ToString()}, Delta: {delta.ToString()}");
+                return Option.None;
             }
 
             BuffOrDebuff buffOrDebuff = new(duration, isPermanent, owner, attribute, delta);
             buffOrDebuff.Subscribe();
-            owner.StatusModule.AddStatus(buffOrDebuff, caster);
-            return Option<StatusInstance>.Some(buffOrDebuff);
+            owner.StatusReceiverModule.AddStatus(buffOrDebuff, caster);
+            return buffOrDebuff;
         }
 
-        private BuffOrDebuff(BuffOrDebuffRecord record, CharacterStateMachine owner) : base(record, owner)
+        public BuffOrDebuff([NotNull] BuffOrDebuffRecord record, CharacterStateMachine owner) : base(record, owner)
         {
             EffectType = record.Delta > 0 ? EffectType.Buff : EffectType.Debuff;
             Attribute = record.Attribute;
             Delta = record.Delta;
         }
 
-        public static Option<StatusInstance> CreateInstance(BuffOrDebuffRecord record, CharacterStateMachine owner)
+        public static Option<StatusInstance> CreateInstance([NotNull] BuffOrDebuffRecord record, [NotNull] CharacterStateMachine owner)
         {
             BuffOrDebuff buffOrDebuff = new(record, owner);
-            owner.StatusModule.AddStatus(buffOrDebuff, owner);
+            owner.StatusReceiverModule.AddStatus(buffOrDebuff, owner);
             buffOrDebuff.Subscribe();
             return Option<StatusInstance>.Some(buffOrDebuff);
         }
@@ -73,16 +59,17 @@ namespace Core.Combat.Scripts.Effects.Types.BuffOrDebuff
             this.Unsubscribe();
             base.RequestDeactivation();
         }
+        
+        public void Modify(ref int value, CharacterStateMachine self) => value += GetDelta;
 
-
-        public void Modify(ref float value, CharacterStateMachine self) => value += Delta;
-        public void Modify(ref int value, CharacterStateMachine self) => value += (int) Delta;
-
-        public override StatusRecord GetRecord() => new BuffOrDebuffRecord(Duration, IsPermanent, Attribute, Delta);
+        [NotNull]
+        public override StatusRecord GetRecord() => new BuffOrDebuffRecord(Duration, Permanent, Attribute, Delta);
 
         public override Option<string> GetDescription() => StatusInstanceDescriptions.Get(this);
         public override EffectType EffectType { get; }
+        
         public const int GlobalId = Arousal.Arousal.GlobalId + 1;
+        [NotNull]
         public string SharedId => nameof(BuffOrDebuff);
         public int Priority => -1;
     }

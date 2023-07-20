@@ -1,21 +1,26 @@
 ﻿using System;
+using System.Text;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Extensions;
 using Core.Utils.Math;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
+using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Character_Panel.Scripts.Stats
 {
     public sealed class StatUpgradeButton : MonoBehaviour, IPointerEnterHandler
     {
-        [SerializeField] 
+        private static readonly StringBuilder Builder = new();
+        
+        [SerializeField, Required] 
         private TMP_Text abbreviationTmp, valueTmp;
         
-        [SerializeField] 
+        [SerializeField, Required]
         private Button button;
         
         private AudioSource _pointerEnterSource, _pointerClickSource, _invalidClickSource;
@@ -39,7 +44,7 @@ namespace Core.Character_Panel.Scripts.Stats
             _audioSourcesAssigned = true;
         }
 
-        public void Initialize(PrimaryUpgrade primaryUpgrade, IReadonlyCharacterStats characterStats)
+        public void Initialize(PrimaryUpgrade primaryUpgrade, [NotNull] IReadonlyCharacterStats characterStats)
         {
             if (characterStats.AvailablePrimaryPoints <= 0)
             {
@@ -52,25 +57,18 @@ namespace Core.Character_Panel.Scripts.Stats
             _isPrimary = true;
             _primaryUpgrade = primaryUpgrade;
 
-            abbreviationTmp.text = primaryUpgrade switch
-            {
-                PrimaryUpgrade.Accuracy   => "Accuracy",
-                PrimaryUpgrade.Dodge      => "Dodge",
-                PrimaryUpgrade.Critical   => "Critical",
-                PrimaryUpgrade.Resilience => "Resilience",
-                _                         => throw new ArgumentOutOfRangeException(nameof(primaryUpgrade), primaryUpgrade, null)
-            };
+            abbreviationTmp.text = primaryUpgrade.UpperCaseName().Translate().GetText();
 
-            uint currentTier = characterStats.PrimaryUpgrades[primaryUpgrade];
+            int currentTier = characterStats.PrimaryUpgrades[primaryUpgrade];
 
-            float current = characterStats.GetValue(primaryUpgrade);
-            float bonus = UpgradeHelper.GetUpgradeIncrement(currentTier, primaryUpgrade);
-            valueTmp.text = $"{current.ToPercentageString()} => {(current + bonus).ToPercentageString()}";
+            int current = characterStats.GetValue(primaryUpgrade);
+            int bonus = UpgradeHelper.GetUpgradeIncrement(currentTier, primaryUpgrade);
+            valueTmp.text = Builder.Override(current.ToString(), " => ", (current + bonus).ToString()).ToString();
             
             gameObject.SetActive(true);
         }
 
-        public void Initialize(SecondaryUpgrade secondaryUpgrade, IReadonlyCharacterStats characterStats)
+        public void Initialize(SecondaryUpgrade secondaryUpgrade, [NotNull] IReadonlyCharacterStats characterStats)
         {
             if (characterStats.AvailableSecondaryPoints <= 0)
             {
@@ -82,26 +80,15 @@ namespace Core.Character_Panel.Scripts.Stats
             _initialized = true;
             _isPrimary = false;
             _secondaryUpgrade = secondaryUpgrade;
-            
-            abbreviationTmp.text = secondaryUpgrade switch
-            {
-                SecondaryUpgrade.Composure         => "Composure",
-                SecondaryUpgrade.StunRecoverySpeed => "Stun Recovery",
-                SecondaryUpgrade.MoveResistance    => "Move Res",
-                SecondaryUpgrade.DebuffResistance  => "Debuff Res",
-                SecondaryUpgrade.PoisonResistance  => "Poison Res",
-                SecondaryUpgrade.PoisonApplyChance => "Poison Apply Chance",
-                SecondaryUpgrade.DebuffApplyChance => "Debuff Apply Chance",
-                SecondaryUpgrade.MoveApplyChance   => "Move Apply Chance",
-                _                                  => throw new ArgumentOutOfRangeException(nameof(secondaryUpgrade), secondaryUpgrade, null)
-            };
-            
-            uint currentTier = characterStats.SecondaryUpgrades[secondaryUpgrade];
-            
-            float current = characterStats.GetValue(secondaryUpgrade);
-            float bonus = UpgradeHelper.GetUpgradeIncrement(currentTier, secondaryUpgrade);
 
-            valueTmp.text = $"{current.ToPercentageString()} => {(bonus + current).ToPercentageString()}";
+            abbreviationTmp.text = secondaryUpgrade.UpperCaseName().Translate().GetText();
+            
+            int currentTier = characterStats.SecondaryUpgrades[secondaryUpgrade];
+            
+            int current = characterStats.GetValue(secondaryUpgrade);
+            int bonus = UpgradeHelper.GetUpgradeIncrement(currentTier, secondaryUpgrade);
+
+            valueTmp.text = Builder.Override(current.ToString(), " => ", (bonus + current).ToString()).ToString();
             
             gameObject.SetActive(true);
         }

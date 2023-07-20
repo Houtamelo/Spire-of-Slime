@@ -4,10 +4,10 @@ using Core.Main_Database.Audio;
 using Core.ResourceManagement;
 using Core.Utils.Patterns;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Audio.Scripts
 {
@@ -43,8 +43,10 @@ namespace Core.Audio.Scripts
         private AudioSource GetIdleSource()
         {
             foreach (AudioSource source in _ambienceSources)
+            {
                 if (source.isPlaying == false)
                     return source;
+            }
 
             return CreateSource();
         }
@@ -66,13 +68,15 @@ namespace Core.Audio.Scripts
         public void End()
         {
             foreach (AudioSource source in _ambienceSources)
+            {
                 if (source.isPlaying && source.volume > 0)
                     source.DOFade(endValue: 0, MusicManager.FadeDuration).SetSpeedBased().OnComplete(_clearInactiveSources);
+            }
 
             ReleaseHandles();
         }
 
-        private void PlayClipOnSource(AudioSource source, string fileName, float volume, bool loop)
+        private void PlayClipOnSource(AudioSource source, [NotNull] string fileName, float volume, bool loop)
         {
             Result<AudioClip> operationResult = LoadClip(fileName);
             if (operationResult.IsOk)
@@ -81,7 +85,7 @@ namespace Core.Audio.Scripts
                 Debug.LogWarning(operationResult.Reason);
         }
 
-        private void PlayClipOnSource(AudioSource source, AudioClip clip, float volume, bool loop)
+        private void PlayClipOnSource([NotNull] AudioSource source, AudioClip clip, float volume, bool loop)
         {
             source.clip = clip;
             source.volume = 0.01f;
@@ -90,7 +94,7 @@ namespace Core.Audio.Scripts
             source.Play();
         }
 
-        private Result<AudioClip> LoadClip(string fileName)
+        private Result<AudioClip> LoadClip([NotNull] string fileName)
         {
             Result<ResourceHandle<AudioClip>> handle = AudioPathsDatabase.LoadClip(fileName);
             if (handle.IsOk)
@@ -113,11 +117,13 @@ namespace Core.Audio.Scripts
         private void ClearInactiveSources()
         {
             foreach (AudioSource audioSource in _ambienceSources)
+            {
                 if (audioSource.volume <= 0)
                 {
                     audioSource.Stop();
                     audioSource.clip = null;
                 }
+            }
         }
     }
 }

@@ -5,6 +5,7 @@ using Core.Combat.Scripts.WinningCondition;
 using Core.Main_Database.Combat;
 using Core.Main_Database.Local_Map;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections.Extensions;
 using Core.World_Map.Scripts;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -26,24 +27,20 @@ namespace Core.Combat.Scripts.Managers
             CleanString backgroundKey = PathDatabase.GetPathInfo(tileIdentifier).Value.BackgroundPrefab.Key;
 
             IReadOnlyList<(IReadonlyCharacterStats stats, bool bindToSave)> alliesOrder = save.GetCombatOrderAsStats();
-            List<(ICharacterScript, CombatSetupInfo.RecoveryInfo, float expAtStart, bool bindToSave)> allies = new(alliesOrder.Count);
+            List<(ICharacterScript, CombatSetupInfo.RecoveryInfo, int expAtStart, bool bindToSave)> allies = new(alliesOrder.Count);
 
             foreach ((IReadonlyCharacterStats stats, bool bindToSave) in alliesOrder)
             {
                 ICharacterScript characterScript = stats.GetScript();
-                allies.Add((characterScript, CombatSetupInfo.RecoveryInfo.Default, stats.Experience, bindToSave));
+                allies.Add((characterScript, CombatSetupInfo.RecoveryInfo.Default, stats.TotalExperience, bindToSave));
             }
             
-            CombatSetupInfo combatSetupInfo = new(allies.ToArray(), enemies, true, allowLust: true, GeneralPaddingSettings.Default);
-
+            CombatSetupInfo combatSetupInfo = new(allies.ToArrayNonAlloc(), enemies, mistExists: true, allowLust: true, GeneralPaddingSettings.Default);
+            
             CombatTracker flag = new(new CombatTracker.StandardLocalMap());
             CombatManager combatManager = FindObjectOfType<CombatManager>();
             if (combatManager != null)
                 combatManager.SetupCombatFromBeginning(combatSetupInfo, flag, WinningConditionGenerator.Default, backgroundKey);
-            else
-            {
-                Debug.LogWarning("No CombatManager found");
-            }
         }
     }
 }

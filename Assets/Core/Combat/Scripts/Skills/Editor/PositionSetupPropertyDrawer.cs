@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using JetBrains.Annotations;
+using UnityEditor;
 using UnityEngine;
 
 namespace Core.Combat.Scripts.Skills.Editor
@@ -7,7 +8,7 @@ namespace Core.Combat.Scripts.Skills.Editor
     public class PositionSetupPropertyDrawer : PropertyDrawer
     {
         private const float MaxWidthPerBox = 20f;
-        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        public override void OnGUI(Rect position, [NotNull] SerializedProperty property, GUIContent label)
         {
             // draw 4 boolean boxes in a single line that's the same as the label
             EditorGUI.BeginProperty(position, label, property);

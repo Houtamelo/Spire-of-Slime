@@ -10,12 +10,15 @@ using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Nema.Combat.Perks.Healer
 {
     public class Alarmed : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             AlarmedInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -36,7 +39,8 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Healer
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             AlarmedInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -46,20 +50,13 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Healer
     
     public class AlarmedInstance : PerkInstance
     {
-        private const float Duration = 5f;
-        private static readonly BuffOrDebuffScript Buff = new(Permanent: false, Duration, BaseApplyChance: 1f, CombatStat.Dodge, +0.5f);
+        private static readonly BuffOrDebuffScript Buff = new(Permanent: false, TSpan.FromSeconds(5.0), BaseApplyChance: 100, CombatStat.Dodge, BaseDelta: 50);
 
         private readonly Action _onCombatBegin;
 
-        public AlarmedInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
-        {
-            _onCombatBegin = OnCombatBegin;
-        }
-        
-        public AlarmedInstance(CharacterStateMachine owner, AlarmedRecord record) : base(owner, record)
-        {
-            _onCombatBegin = OnCombatBegin;
-        }
+        public AlarmedInstance(CharacterStateMachine owner, CleanString key) : base(owner, key) => _onCombatBegin = OnCombatBegin;
+
+        public AlarmedInstance(CharacterStateMachine owner, [NotNull] AlarmedRecord record) : base(owner, record) => _onCombatBegin = OnCombatBegin;
 
         protected override void OnSubscribe()
         {
@@ -73,6 +70,7 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Healer
                 Owner.Display.Value.CombatManager.OnCombatBegin -= _onCombatBegin;
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new AlarmedRecord(Key);
 
         private void OnCombatBegin()

@@ -2,20 +2,23 @@
 using System.Text;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects.Interfaces;
 using Core.Combat.Scripts.Effects.Types.BuffOrDebuff;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
 {
     public class HardNogging : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             HardNoggingInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -36,7 +39,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             HardNoggingInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -44,18 +48,16 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
         }
     }
 
-    public class HardNoggingInstance : PerkInstance, IBuffOrDebuffModifier, IBaseFloatAttributeModifier
+    public class HardNoggingInstance : PerkInstance, IBuffOrDebuffModifier, IBaseAttributeModifier
     {
-        private const float ExtraDebuffDuration = 1f;
-        private const float ResilienceModifierIfStunned = 0.15f;
-        public string SharedId => nameof(HardNoggingInstance);
-        public int Priority => 0;
+        private static readonly TSpan ExtraDebuffDuration = TSpan.FromSeconds(1.0);
+        private const int ResilienceModifierIfStunned = 15;
 
         public HardNoggingInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public HardNoggingInstance(CharacterStateMachine owner, HardNoggingRecord record) : base(owner, record)
+
+        public HardNoggingInstance(CharacterStateMachine owner, [NotNull] HardNoggingRecord record) : base(owner, record)
         {
         }
 
@@ -64,7 +66,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
             Owner.StatusApplierModule.BuffOrDebuffApplyModifiers.Add(this);
             
             if (Owner.StaminaModule.TrySome(out IStaminaModule staminaModule))
-                staminaModule.SubscribeResilience(this, allowDuplicates: false);
+                staminaModule.SubscribeResilience(modifier: this, allowDuplicates: false);
         }
 
         protected override void OnUnsubscribe()
@@ -72,21 +74,28 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
             Owner.StatusApplierModule.BuffOrDebuffApplyModifiers.Remove(this);
             
             if (Owner.StaminaModule.TrySome(out IStaminaModule staminaModule))
-                staminaModule.UnsubscribeResilience(this);
+                staminaModule.UnsubscribeResilience(modifier: this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new HardNoggingRecord(Key);
 
-        public void Modify(ref BuffOrDebuffToApply effectStruct)
+        public void Modify([NotNull] ref BuffOrDebuffToApply effectStruct)
         {
-            if (effectStruct.Delta < 0) 
-                effectStruct.Duration += ExtraDebuffDuration;
+            if (effectStruct.Delta >= 0)
+                return;
+            
+            effectStruct.Duration += ExtraDebuffDuration;
         }
-        
-        public void Modify(ref float value, CharacterStateMachine self)
+
+        public void Modify(ref int value, [NotNull] CharacterStateMachine self)
         {
-            if (self.StunModule.GetRemaining() > 0)
+            if (self.StunModule.GetRemaining().Ticks > 0)
                 value += ResilienceModifierIfStunned;
         }
+
+        [NotNull]
+        public string SharedId => nameof(HardNoggingInstance);
+        public int Priority => 0;
     }
 }

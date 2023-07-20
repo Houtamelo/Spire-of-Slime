@@ -2,23 +2,26 @@
 using System.Text;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects.Interfaces;
 using Core.Combat.Scripts.Interfaces;
 using Core.Combat.Scripts.Interfaces.Events;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 using Utils.Patterns;
 
 namespace Core.Main_Characters.Nema.Combat.Perks.BattleMage
 {
     public class Trust : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             TrustInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -26,7 +29,7 @@ namespace Core.Main_Characters.Nema.Combat.Perks.BattleMage
         }
     }
     
-    public record TrustRecord(CleanString Key, int Stacks, float AccumulatedTime) : PerkRecord(Key)
+    public record TrustRecord(CleanString Key, int Stacks, TSpan AccumulatedTime) : PerkRecord(Key)
     {
         public override bool IsDataValid(StringBuilder errors, ICollection<CharacterRecord> allCharacters)
         {
@@ -39,7 +42,8 @@ namespace Core.Main_Characters.Nema.Combat.Perks.BattleMage
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             TrustInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -49,15 +53,16 @@ namespace Core.Main_Characters.Nema.Combat.Perks.BattleMage
     
     public class TrustInstance : PerkInstance, ITick, ISelfAttackedListener
     {
-        private const float SpeedPerStack = 0.05f;
-        private const float CriticalChancePerStack = 0.04f;
-        private const float AccuracyPerStack = 0.02f;
+        private const int SpeedPerStack = 5;
+        private const int CriticalChancePerStack = 4;
+        private const int AccuracyPerStack = 2;
 
         private readonly Reference<int> _stackCounter;
         private readonly SpeedModifier _speedModifier;
         private readonly CriticalChanceModifier _criticalChanceModifier;
         private readonly AccuracyModifier _accuracyModifier;
-        private float _accumulatedTime;
+        
+        private TSpan _accumulatedTime;
 
         public TrustInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
@@ -67,7 +72,7 @@ namespace Core.Main_Characters.Nema.Combat.Perks.BattleMage
             _accuracyModifier = new AccuracyModifier(_stackCounter);
         }
         
-        public TrustInstance(CharacterStateMachine owner, TrustRecord record) : base(owner, record)
+        public TrustInstance(CharacterStateMachine owner, [NotNull] TrustRecord record) : base(owner, record)
         {
             _stackCounter = new Reference<int>(record.Stacks);
             _speedModifier = new SpeedModifier(_stackCounter);
@@ -98,73 +103,68 @@ namespace Core.Main_Characters.Nema.Combat.Perks.BattleMage
             statsModule.UnsubscribeAccuracy(_accuracyModifier);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new TrustRecord(Key, _stackCounter, _accumulatedTime);
 
         public void OnSelfAttacked(ref ActionResult result)
         {
-            if (result.Hit && result.DamageDealt.TrySome(out uint damage) && damage > 0)
+            if (result.Hit && result.DamageDealt.TrySome(out int damage) && damage > 0)
                 _stackCounter.Value = 0;
         }
 
-        public void Tick(float timeStep)
+        public void Tick(TSpan timeStep)
         {
             _accumulatedTime += timeStep;
-            if (_accumulatedTime >= 1f)
+            if (_accumulatedTime.Seconds >= 1f)
             {
-                _accumulatedTime -= 1f;
+                _accumulatedTime.SubtractSeconds(1.0);
                 _stackCounter.Value = _stackCounter + 1;
             }
         }
 
-        private class SpeedModifier : IBaseFloatAttributeModifier
+        private class SpeedModifier : IBaseAttributeModifier
         {
             public int Priority => 0;
+            [NotNull]
             public string SharedId => nameof(TrustInstance);
             private readonly Reference<int> _stackCounter;
 
-            public void Modify(ref float value, CharacterStateMachine self)
+            public void Modify(ref int value, CharacterStateMachine self)
             {
                 value += _stackCounter * SpeedPerStack;
             }
             
-            public SpeedModifier(Reference<int> stackCounter)
-            {
-                _stackCounter = stackCounter;
-            }
+            public SpeedModifier(Reference<int> stackCounter) => _stackCounter = stackCounter;
         }
 
-        private class CriticalChanceModifier : IBaseFloatAttributeModifier
+        private class CriticalChanceModifier : IBaseAttributeModifier
         {
             public int Priority => 0;
+            [NotNull]
             public string SharedId => nameof(TrustInstance);
             private readonly Reference<int> _stackCounter;
 
-            public void Modify(ref float value, CharacterStateMachine self)
+            public void Modify(ref int value, CharacterStateMachine self)
             {
                 value += _stackCounter * CriticalChancePerStack;
             }
             
-            public CriticalChanceModifier(Reference<int> stackCounter)
-            {
-                _stackCounter = stackCounter;
-            }
+            public CriticalChanceModifier(Reference<int> stackCounter) => _stackCounter = stackCounter;
         }
 
-        private class AccuracyModifier : IBaseFloatAttributeModifier
+        private class AccuracyModifier : IBaseAttributeModifier
         {
+            [NotNull]
             public string SharedId => nameof(TrustInstance);
             public int Priority => 0;
             private readonly Reference<int> _stackCounter;
 
-            public void Modify(ref float value, CharacterStateMachine self)
+            public void Modify(ref int value, CharacterStateMachine self)
             {
                 value += _stackCounter * AccuracyPerStack;
             }
             
-            public AccuracyModifier(Reference<int> stackCounter)
-            {
-                _stackCounter = stackCounter;
-            }
+            public AccuracyModifier(Reference<int> stackCounter) => _stackCounter = stackCounter;
         }
     }
 }

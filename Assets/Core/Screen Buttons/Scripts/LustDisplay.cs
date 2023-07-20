@@ -5,18 +5,18 @@ using System.Linq;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Managers;
 using Core.Game_Manager.Scripts;
+using Core.Main_Characters.Ethel.Combat;
 using Core.Main_Characters.Nema.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Async;
 using Core.Utils.Extensions;
 using Core.Utils.Math;
 using Core.Utils.Patterns;
-using Data.Main_Characters.Ethel;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Screen_Buttons.Scripts
@@ -37,7 +37,7 @@ namespace Core.Screen_Buttons.Scripts
 
         private void Start()
         {
-            Save.FloatChanged += OnFloatChanged;
+            Save.IntChanged += OnIntChanged;
             Save.Handler.Changed += OnSaveChanged;
             GameManager.OnRootEnabled += OnRootEnabled;
             GameManager.OnRootDisabled += OnRootDisabled;
@@ -52,26 +52,30 @@ namespace Core.Screen_Buttons.Scripts
                     _waitForCombatRoutine = new CoroutineWrapper(WaitForCombatRoutine(), nameof(WaitForCombatRoutine), this, autoStart: true);
             }
             else if (localMapScene.IsValid() && localMapScene.isLoaded && localMapScene.GetRootGameObjects().Any(obj => obj.activeInHierarchy))
+            {
                 gameObject.SetActive(true);
+            }
             else
+            {
                 gameObject.SetActive(false);
+            }
         }
 
         private void OnDestroy()
         {
-            Save.FloatChanged -= OnFloatChanged;
+            Save.IntChanged -= OnIntChanged;
             Save.Handler.Changed -= OnSaveChanged;
             GameManager.OnRootEnabled -= OnRootEnabled;
             GameManager.OnRootDisabled -= OnRootDisabled;
         }
 
-        private void OnSaveChanged(Save save)
+        private void OnSaveChanged([CanBeNull] Save save)
         {
             if (save != null)
                 UpdateSliders();
         }
 
-        private void OnFloatChanged(CleanString variableName, float oldValue, float newValue)
+        private void OnIntChanged(CleanString variableName, int oldValue, int newValue)
         {
             CleanString characterKey;
             if (variableName == VariablesName.Ethel_Lust)
@@ -82,8 +86,8 @@ namespace Core.Screen_Buttons.Scripts
                 return;
 
             UpdateSliders();
-            int delta = (int)(newValue - oldValue);
-            if (gameObject.activeInHierarchy == false || delta == 0f || CombatManager.Instance.IsSome || WorldTextCueManager.AssertInstance(out WorldTextCueManager generalPurposeTextCueManager) == false)
+            int delta = newValue - oldValue;
+            if (gameObject.activeInHierarchy == false || delta == 0 || CombatManager.Instance.IsSome || WorldTextCueManager.AssertInstance(out WorldTextCueManager generalPurposeTextCueManager) == false)
                 return;
             
             if (GetSliderThatBelongsToCharacter(characterKey).TrySome(out LustSlider slider) == false)
@@ -114,9 +118,7 @@ namespace Core.Screen_Buttons.Scripts
             {
                 Scene combatScene = SceneManager.GetSceneByName(SceneRef.Combat.Name);
                 if (combatScene.IsValid() == false || combatScene.isLoaded == false || combatScene.GetRootGameObjects().All(obj => obj.activeInHierarchy == false))
-                {
                     gameObject.SetActive(false);
-                }
                 else if (_waitForCombatRoutine is not { Running: true })
                     _waitForCombatRoutine = new CoroutineWrapper(WaitForCombatRoutine(), nameof(WaitForCombatRoutine), this, autoStart: true);
             }
@@ -124,9 +126,7 @@ namespace Core.Screen_Buttons.Scripts
             {
                 Scene localMapScene = SceneManager.GetSceneByName(SceneRef.LocalMap.Name);
                 if (localMapScene.IsValid() == false || localMapScene.isLoaded == false || localMapScene.GetRootGameObjects().All(obj => obj.activeInHierarchy == false))
-                {
                     gameObject.SetActive(false);
-                }
             }
         }
 
@@ -140,11 +140,10 @@ namespace Core.Screen_Buttons.Scripts
                 yield return null;
 
             if (CombatManager.Instance.TrySome(out combatManager))
-            {
                 gameObject.SetActive(combatManager.CombatSetupInfo.AllowLust);
-            }
         }
 
+        [NotNull]
         private LustSlider CreateSlider()
         {
             LustSlider slider = sliderPrefab.InstantiateWithFixedLocalScale(slidersParent);
@@ -173,8 +172,10 @@ namespace Core.Screen_Buttons.Scripts
         private Option<LustSlider> GetSliderThatBelongsToCharacter(CleanString characterKey)
         {
             foreach (LustSlider slider in _sliders)
+            {
                 if (slider.gameObject.activeSelf && slider.AssignedCharacter.TrySome(out IReadonlyCharacterStats character) && character.GetScript().Key == characterKey)
                     return Option<LustSlider>.Some(slider);
+            }
 
             return Option<LustSlider>.None;
         }

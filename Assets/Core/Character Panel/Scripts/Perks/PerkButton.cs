@@ -3,14 +3,15 @@ using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills;
 using Core.Game_Manager.Scripts;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using ListPool;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Character_Panel.Scripts.Perks
@@ -69,7 +70,7 @@ namespace Core.Character_Panel.Scripts.Perks
             });
         }
 
-        public void UpdateSelf(ref ValueListPool<CleanString> unlockedPerksAndSkills, ref ValueListPool<CleanString> activePerks)
+        public void UpdateSelf(ref CustomValuePooledList<CleanString> unlockedPerksAndSkills, ref CustomValuePooledList<CleanString> activePerks)
         {
             _unlocked = unlockedPerksAndSkills.Contains(perk.Key);
             toggle.SetIsOnWithoutNotify(activePerks.Contains(perk.Key));
@@ -93,7 +94,7 @@ namespace Core.Character_Panel.Scripts.Perks
             }
         }
 
-        public void OnPointerClick(PointerEventData eventData)
+        public void OnPointerClick([NotNull] PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left)
                 return;
@@ -162,7 +163,7 @@ namespace Core.Character_Panel.Scripts.Perks
 
             areYouSurePanel.Show(() => OnYes(confirmPerkSource, button: this, stats.Key, save), message: $"Are you sure you wish to unlock {perk.DisplayName}?");
 
-            static void OnYes(AudioSource confirmPerkSource, PerkButton button, CleanString characterKey, Save save)
+            static void OnYes(AudioSource confirmPerkSource, PerkButton button, CleanString characterKey, [NotNull] Save save)
             {
                 if (save.GetReadOnlyStats(characterKey).AssertSome(out IReadonlyCharacterStats stats) == false)
                     return;
@@ -185,32 +186,40 @@ namespace Core.Character_Panel.Scripts.Perks
             }
         }
 
-        private static bool ArePrerequisitesMet(PerkScriptable perk, IReadonlyCharacterStats stats, Save save)
+        private static bool ArePrerequisitesMet([NotNull] PerkScriptable perk, [NotNull] IReadonlyCharacterStats stats, Save save)
         {
-            using (ValueListPool<CleanString> unlockedPerksAndSkills = stats.GetUnlockedPerksAndSkills(save))
+            using (CustomValuePooledList<CleanString> unlockedPerksAndSkills = stats.GetUnlockedPerksAndSkills(save))
             {
                 foreach (PerkScriptable prerequisite in perk.PerkPrerequisites)
+                {
                     if (unlockedPerksAndSkills.Contains(prerequisite.Key) == false)
                         return false;
+                }
 
                 foreach (SkillScriptable prerequisite in perk.SkillPrerequisites)
+                {
                     if (unlockedPerksAndSkills.Contains(prerequisite.Key) == false)
                         return false;
+                }
             }
 
             return true;
         }
 
-        private static bool ArePrerequisitesMet(PerkScriptable perk, ref ValueListPool<CleanString> unlockedPerksAndSkills)
+        private static bool ArePrerequisitesMet([NotNull] PerkScriptable perk, ref CustomValuePooledList<CleanString> unlockedPerksAndSkills)
         {
             foreach (PerkScriptable prerequisite in perk.PerkPrerequisites)
+            {
                 if (unlockedPerksAndSkills.Contains(prerequisite.Key) == false)
                     return false;
+            }
 
             foreach (SkillScriptable prerequisite in perk.SkillPrerequisites)
+            {
                 if (unlockedPerksAndSkills.Contains(prerequisite.Key) == false)
                     return false;
-            
+            }
+
             return true;
         }
 

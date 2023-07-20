@@ -6,6 +6,7 @@ using Core.Game_Manager.Scripts;
 using Core.Local_Map.Scripts;
 using Core.Utils.Extensions;
 using Core.Visual_Novel.Scripts;
+using JetBrains.Annotations;
 
 namespace Core.Save_Management.SaveObjects
 {
@@ -22,7 +23,7 @@ namespace Core.Save_Management.SaveObjects
 
         public static void TryGenerateFromCurrentSession()
         {
-            if (Core.Save_Management.SaveObjects.Save.AssertInstance(out Core.Save_Management.SaveObjects.Save save) == false)
+            if (Save.AssertInstance(out Save save) == false)
                 return;
             
             if (DialogueController.Instance.TrySome(out DialogueController dialogueController) && dialogueController.IsDialogueRunning)
@@ -60,10 +61,10 @@ namespace Core.Save_Management.SaveObjects
             save.ForceRecordManually(new WorldMap(musicKey));
         }
 
-        public static void RecordLocalMap(LocalMapManager manager)
+        public static void RecordLocalMap([NotNull] LocalMapManager manager)
         {
             if (manager.RunningEvent || 
-                Core.Save_Management.SaveObjects.Save.AssertInstance(out Core.Save_Management.SaveObjects.Save save) == false ||
+                Save.AssertInstance(out Save save) == false ||
                 (DialogueController.Instance.TrySome(out DialogueController dialogueController) && dialogueController.IsDialogueRunning) || 
                 SceneRef.Combat.IsLoadedAndActive())
                 return;
@@ -75,7 +76,7 @@ namespace Core.Save_Management.SaveObjects
 
         public static void RecordLocalMapEventStart(string sceneName)
         {
-            if (Core.Save_Management.SaveObjects.Save.AssertInstance(out Core.Save_Management.SaveObjects.Save save) == false ||
+            if (Save.AssertInstance(out Save save) == false ||
                 (DialogueController.Instance.TrySome(out DialogueController dialogueController) && dialogueController.IsDialogueRunning) || 
                 SceneRef.Combat.IsLoadedAndActive())
                 return;
@@ -93,7 +94,7 @@ namespace Core.Save_Management.SaveObjects
 
         public static void RecordWorldMapPure()
         {
-            if (Core.Save_Management.SaveObjects.Save.AssertInstance(out Core.Save_Management.SaveObjects.Save save) == false ||
+            if (Save.AssertInstance(out Save save) == false ||
                 (DialogueController.Instance.TrySome(out DialogueController dialogueController) && dialogueController.IsDialogueRunning) || 
                 SceneRef.Combat.IsLoadedAndActive() || 
                 SceneRef.LocalMap.IsLoadedAndActive())
@@ -105,7 +106,7 @@ namespace Core.Save_Management.SaveObjects
 
         public static void RecordWorldMapEvent(string scene)
         {
-            if (Core.Save_Management.SaveObjects.Save.AssertInstance(out Core.Save_Management.SaveObjects.Save save) == false ||
+            if (Save.AssertInstance(out Save save) == false ||
                 (DialogueController.Instance.TrySome(out DialogueController dialogueController) && dialogueController.IsDialogueRunning) || 
                 SceneRef.Combat.IsLoadedAndActive() || 
                 SceneRef.LocalMap.IsLoadedAndActive())
@@ -117,7 +118,7 @@ namespace Core.Save_Management.SaveObjects
 
         public static void RecordSceneStartAnonymously(string sceneName)
         {
-            if (Core.Save_Management.SaveObjects.Save.AssertInstance(out Core.Save_Management.SaveObjects.Save save) == false ||
+            if (Save.AssertInstance(out Save save) == false ||
                 (DialogueController.Instance.TrySome(out DialogueController dialogueController) && dialogueController.IsDialogueRunning) ||
                 SceneRef.Combat.IsLoadedAndActive())
                 return;
@@ -137,7 +138,7 @@ namespace Core.Save_Management.SaveObjects
 
         public static void RecordCombatStart()
         {
-            if (Core.Save_Management.SaveObjects.Save.AssertInstance(out Core.Save_Management.SaveObjects.Save save) == false ||
+            if (Save.AssertInstance(out Save save) == false ||
                 (DialogueController.Instance.TrySome(out DialogueController dialogueController) && dialogueController.IsDialogueRunning) ||
                 SceneRef.Combat.IsLoadedAndActive() == false ||
                 CombatManager.Instance.TrySome(out CombatManager combatManager) == false ||
@@ -158,7 +159,7 @@ namespace Core.Save_Management.SaveObjects
             }
         }
 
-        public static bool IsDataValid(this Base savePoint, StringBuilder errors)
+        public static bool IsDataValid([CanBeNull] this Base savePoint, StringBuilder errors)
         {
             switch (savePoint)
             {

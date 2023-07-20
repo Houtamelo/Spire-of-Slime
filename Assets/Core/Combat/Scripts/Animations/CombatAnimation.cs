@@ -2,7 +2,6 @@
 using Core.Combat.Scripts.Skills.Action;
 using Core.Utils.Patterns;
 using UnityEngine;
-using Utils.Patterns;
 
 // ReSharper disable InconsistentNaming
 

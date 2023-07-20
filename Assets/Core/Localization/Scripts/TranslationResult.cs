@@ -12,33 +12,28 @@ namespace Core.Localization.Scripts
         
         public int Substitutions { get; init; }
         
-        private string _Text { get; init; }
-        public string Text
-        {
-            init => _Text = value;
-        }
+        public string Text { get; private init; }
+
+        public string RawText => Text;
 
         public TranslationResult(string text, int substitutions)
         {
-            _Text = text;
+            Text = text;
             Substitutions = substitutions;
         }
         
-        public static TranslationResult Empty => new(string.Empty, 0);
+        public static readonly TranslationResult Empty = new(string.Empty, substitutions: 0);
 
-        public bool IsSome() => _Text.IsSome();
-        public bool IsNone() => _Text.IsNone();
+        public bool IsSome() => Text.IsSome();
+        public bool IsNone() => Text.IsNone();
 
         [Pure]
         public string GetText()
         {
             if (Substitutions != 0)
-            {
-                Debug.LogWarning($"Substitutions length ({Substitutions}) does not match the number of substitutions ({Substitutions}) in the translation result."
-                               + $"Translation: {_Text}");
-            }
-            
-            return _Text;
+                Debug.LogWarning($"Substitutions length ({Substitutions}) does not match the number of substitutions ({Substitutions}) in the translation result." + $"Translation: {Text}");
+
+            return Text;
         }
 
         [Pure]
@@ -46,13 +41,12 @@ namespace Core.Localization.Scripts
         {
             if (Substitutions != 1)
             {
-                Debug.LogWarning($"Substitutions length ({Substitutions}) does not match the number of substitutions ({Substitutions}) in the translation result, refusing to perform substitutions."
-                               + $"Translation: {_Text}");
+                Debug.LogWarning($"Substitutions length ({Substitutions}) does not match the number of substitutions ({Substitutions}) in the translation result, refusing to perform substitutions." + $" Translation: {Text}");
                 
-                return _Text;
+                return Text;
             }
             
-            return _Text.Replace(TranslationDatabase.Substitutions[0], substitution);
+            return Text.Replace(TranslationDatabase.Substitutions[0], substitution);
         }
         
         [Pure]
@@ -61,12 +55,12 @@ namespace Core.Localization.Scripts
             if (Substitutions != 2)
             {
                 Debug.LogWarning($"Substitutions length ({Substitutions}) does not match the number of substitutions ({Substitutions}) in the translation result, refusing to perform substitutions."
-                               + $"Translation: {_Text}");
+                               + $"Translation: {Text}");
                 
-                return _Text;
+                return Text;
             }
             
-            Builder.Override(_Text);
+            Builder.Override(Text);
             Builder.Replace(TranslationDatabase.Substitutions[0], substitution_1);
             Builder.Replace(TranslationDatabase.Substitutions[1], substitution_2);
             return Builder.ToString();
@@ -78,12 +72,12 @@ namespace Core.Localization.Scripts
             if (Substitutions != 3)
             {
                 Debug.LogWarning($"Substitutions length ({Substitutions}) does not match the number of substitutions ({Substitutions}) in the translation result, refusing to perform substitutions."
-                               + $"Translation: {_Text}");
+                               + $"Translation: {Text}");
                 
-                return _Text;
+                return Text;
             }
             
-            Builder.Override(_Text);
+            Builder.Override(Text);
             Builder.Replace(TranslationDatabase.Substitutions[0], substitution_1);
             Builder.Replace(TranslationDatabase.Substitutions[1], substitution_2);
             Builder.Replace(TranslationDatabase.Substitutions[2], substitution_3);
@@ -96,12 +90,12 @@ namespace Core.Localization.Scripts
             if (Substitutions != 4)
             {
                 Debug.LogWarning($"Substitutions length ({Substitutions}) does not match the number of substitutions ({Substitutions}) in the translation result, refusing to perform substitutions."
-                               + $"Translation: {_Text}");
+                               + $"Translation: {Text}");
                 
-                return _Text;
+                return Text;
             }
             
-            Builder.Override(_Text);
+            Builder.Override(Text);
             Builder.Replace(TranslationDatabase.Substitutions[0], substitution_1);
             Builder.Replace(TranslationDatabase.Substitutions[1], substitution_2);
             Builder.Replace(TranslationDatabase.Substitutions[2], substitution_3);
@@ -115,12 +109,12 @@ namespace Core.Localization.Scripts
             if (Substitutions != 5)
             {
                 Debug.LogWarning($"Substitutions length ({Substitutions}) does not match the number of substitutions ({Substitutions}) in the translation result, refusing to perform substitutions."
-                               + $"Translation: {_Text}");
+                               + $"Translation: {Text}");
                 
-                return _Text;
+                return Text;
             }
             
-            Builder.Override(_Text);
+            Builder.Override(Text);
             Builder.Replace(TranslationDatabase.Substitutions[0], substitution_1);
             Builder.Replace(TranslationDatabase.Substitutions[1], substitution_2);
             Builder.Replace(TranslationDatabase.Substitutions[2], substitution_3);
@@ -135,12 +129,12 @@ namespace Core.Localization.Scripts
             if (Substitutions != 6)
             {
                 Debug.LogWarning($"Substitutions length ({Substitutions}) does not match the number of substitutions ({Substitutions}) in the translation result, refusing to perform substitutions."
-                               + $"Translation: {_Text}");
+                               + $"Translation: {Text}");
                 
-                return _Text;
+                return Text;
             }
             
-            Builder.Override(_Text);
+            Builder.Override(Text);
             Builder.Replace(TranslationDatabase.Substitutions[0], substitution_1);
             Builder.Replace(TranslationDatabase.Substitutions[1], substitution_2);
             Builder.Replace(TranslationDatabase.Substitutions[2], substitution_3);
@@ -156,12 +150,12 @@ namespace Core.Localization.Scripts
             if (Substitutions != 7)
             {
                 Debug.LogWarning($"Substitutions length ({Substitutions}) does not match the number of substitutions ({Substitutions}) in the translation result, refusing to perform substitutions."
-                               + $"Translation: {_Text}");
+                               + $"Translation: {Text}");
                 
-                return _Text;
+                return Text;
             }
             
-            Builder.Override(_Text);
+            Builder.Override(Text);
             Builder.Replace(TranslationDatabase.Substitutions[0], substitution_1);
             Builder.Replace(TranslationDatabase.Substitutions[1], substitution_2);
             Builder.Replace(TranslationDatabase.Substitutions[2], substitution_3);
@@ -185,12 +179,12 @@ namespace Core.Localization.Scripts
             if (substitutions.Length != Substitutions)
             {
                 Debug.LogWarning($"Substitutions length ({substitutions.Length}) does not match the number of substitutions ({Substitutions}) in the translation result, refusing to perform substitutions."
-                               + $"Translation: {_Text}");
+                               + $"Translation: {Text}");
                 
-                return _Text;
+                return Text;
             }
 
-            Builder.Override(_Text);
+            Builder.Override(Text);
             
             for (int i = 0; i < Substitutions; i++)
                 Builder.Replace(TranslationDatabase.Substitutions[i], substitutions[i]);

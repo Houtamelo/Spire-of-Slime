@@ -1,15 +1,15 @@
 ﻿using System;
 using Core.Combat.Scripts.Managers;
 using Core.Localization.Scripts;
+using Core.Main_Characters.Ethel.Combat;
 using Core.Main_Characters.Nema.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
-using Data.Main_Characters.Ethel;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 using Threshold = Core.Save_Management.SaveObjects.Corruption.Threshold;
 
@@ -46,11 +46,11 @@ namespace Core.Combat.Scripts.Skills.Action.Overlay
         private Tween _tween;
         private void OnDestroy() => _tween.KillIfActive();
 
-        public override Sequence Announce(Announcer announcer, PlannedSkill plan, float startDuration, float popDuration, float speed)
+        public override Sequence Announce([NotNull] Announcer announcer, [NotNull] PlannedSkill plan, float startDuration, float popDuration, float speed)
         {
             CleanString targetKey = plan.Target.Script.Key;
             if (Save.AssertInstance(out Save save) == false || save.GetReadOnlyStats(targetKey).AssertSome(out IReadonlyCharacterStats stats) == false)
-                return Announcer.DefaultAnnounce(announcer, plan.Skill.DisplayName, delayBeforeStart: Option.None, startDuration, speed);
+                return Announcer.DefaultAnnounce(announcer, plan.Skill.DisplayName.Translate().GetText(), delayBeforeStart: Option.None, startDuration, speed);
             
             Character target = targetKey switch
             {
@@ -62,7 +62,7 @@ namespace Core.Combat.Scripts.Skills.Action.Overlay
             if (target is Character.Unknown)
             {
                 Debug.LogWarning($"Trying to animate tempt skill on unsupported character, key: {targetKey}");
-                return Announcer.DefaultAnnounce(announcer, plan.Skill.DisplayName, delayBeforeStart: Option.None, startDuration, speed);
+                return Announcer.DefaultAnnounce(announcer, plan.Skill.DisplayName.Translate().GetText(), delayBeforeStart: Option.None, startDuration, speed);
             }
 
             announcer.Animator.speed = speed;
@@ -84,11 +84,11 @@ namespace Core.Combat.Scripts.Skills.Action.Overlay
             {
                 float thresholdStrength = threshold switch
                 {
-                    Threshold.Low    => 0.25f,
-                    Threshold.Medium => 0.5f,
-                    Threshold.High   => 0.75f,
-                    Threshold.Max    => 1f,
-                    _                => throw new ArgumentOutOfRangeException(nameof(threshold), threshold, message: null)
+                    Threshold.Low     => 0.25f,
+                    Threshold.Medium  => 0.5f,
+                    Threshold.High    => 0.75f,
+                    Threshold.Max     => 1f,
+                    _                 => throw new ArgumentOutOfRangeException(nameof(threshold), threshold, message: null)
                 };
 
                 for (int i = 0; i < displayName.Length; i++)
@@ -126,7 +126,7 @@ namespace Core.Combat.Scripts.Skills.Action.Overlay
             return localizedText.Translate().GetText();
         }
 
-        public override void FadeUp(float duration, PlannedSkill plan)
+        public override void FadeUp(float duration, [NotNull] PlannedSkill plan)
         {
             _tween.KillIfActive();
             CleanString targetKey = plan.Target.Script.Key;

@@ -11,14 +11,18 @@ using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 using ListPool;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Duelist
 {
     public class AlluringChallenger : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             AlluringChallengerInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -39,7 +43,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Duelist
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             AlluringChallengerInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -49,45 +54,49 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Duelist
     
     public class AlluringChallengerInstance : PerkInstance, IRiposteModifier, ISkillModifier
     {
-        private const int MarkedDuration = 4;
-        public string SharedId => nameof(AlluringChallengerInstance);
-        private static readonly MarkedScript MarkedScript = new(false, MarkedDuration);
-        public int Priority => 0;
-        
+        private static readonly TSpan MarkedDuration = TSpan.FromSeconds(4);
+        private static readonly MarkedScript MarkedScript = new(Permanent: false, MarkedDuration);
+        private static readonly TSpan ExtraRiposteDuration = TSpan.FromSeconds(1);
+
         public AlluringChallengerInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public AlluringChallengerInstance(CharacterStateMachine owner, AlluringChallengerRecord record) : base(owner, record)
+
+        public AlluringChallengerInstance(CharacterStateMachine owner, [NotNull] AlluringChallengerRecord record) : base(owner, record)
         {
         }
 
         protected override void OnSubscribe()
         {
             Owner.SkillModule.SkillModifiers.Add(this);
-            Owner.StatusModule.RiposteReceiveModifiers.Add(this);
+            Owner.StatusReceiverModule.RiposteReceiveModifiers.Add(this);
         }
 
         protected override void OnUnsubscribe()
         {
             Owner.SkillModule.SkillModifiers.Remove(this);
-            Owner.StatusModule.RiposteReceiveModifiers.Remove(this);
+            Owner.StatusReceiverModule.RiposteReceiveModifiers.Remove(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new AlluringChallengerRecord(Key);
 
-        public void Modify(ref RiposteToApply effectStruct)
+        public void Modify([NotNull] ref RiposteToApply effectStruct)
         {
-            effectStruct.Duration += 1;
+            effectStruct.Duration += ExtraRiposteDuration;
         }
-        
+
         public void Modify(ref SkillStruct skillStruct)
         {
             if (skillStruct.Skill.Key != EthelSkills.Challenge || skillStruct.Caster != Owner)
                 return;
 
-            ref ValueListPool<IActualStatusScript> ownerEffects = ref skillStruct.CasterEffects;
+            ref CustomValuePooledList<IActualStatusScript> ownerEffects = ref skillStruct.CasterEffects;
             ownerEffects.Add(MarkedScript);
         }
+
+        [NotNull]
+        public string SharedId => nameof(AlluringChallengerInstance);
+        public int Priority => 0;
     }
 }

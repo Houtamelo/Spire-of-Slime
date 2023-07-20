@@ -3,6 +3,7 @@ using System.Collections;
 using System.ComponentModel;
 using System.Drawing;
 using System.Globalization;
+using JetBrains.Annotations;
 
 namespace Core.Combat.Scripts
 {
@@ -10,8 +11,7 @@ namespace Core.Combat.Scripts
     {
         private static readonly Hashtable HtmlSysColorTable;
 
-        static CustomColorTranslator()
-        {
+        static CustomColorTranslator() =>
             HtmlSysColorTable = new Hashtable(26)
             {
                 ["activeborder"] = Color.FromKnownColor(KnownColor.ActiveBorder),
@@ -42,9 +42,8 @@ namespace Core.Combat.Scripts
                 ["windowframe"] = Color.FromKnownColor(KnownColor.WindowFrame),
                 ["windowtext"] = Color.FromKnownColor(KnownColor.WindowText)
             };
-        }
-        
-        public static Color FromHtml(string htmlColor)
+
+        public static Color FromHtml([CanBeNull] string htmlColor)
         {
             Color c = Color.Empty;
 
@@ -75,25 +74,19 @@ namespace Core.Combat.Scripts
 
             // special case. Html requires LightGrey, but .NET uses LightGray
             if (c.IsEmpty && String.Equals(htmlColor, "LightGrey", StringComparison.OrdinalIgnoreCase))
-            {
                 c = Color.LightGray;
-            }
 
             // System color
             if (c.IsEmpty)
             {
                 object o = HtmlSysColorTable[htmlColor.ToLower(CultureInfo.InvariantCulture)];
                 if (o != null)
-                {
                     c = (Color)o;
-                }
             }
 
             // resort to type converter which will handle named colors
             if (c.IsEmpty)
-            {
                 c = (Color)TypeDescriptor.GetConverter(typeof(Color)).ConvertFromString(htmlColor);
-            }
 
             return c;
         }

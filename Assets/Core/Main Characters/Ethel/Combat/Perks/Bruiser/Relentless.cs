@@ -12,13 +12,15 @@ using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
 using Core.Utils.Math;
+using JetBrains.Annotations;
 using ListPool;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
 {
     public class Relentless : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             RelentlessInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -26,7 +28,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
         }
     }
     
-    public record RelentlessRecord(CleanString Key, uint StackCount) : PerkRecord(Key)
+    public record RelentlessRecord(CleanString Key, int StackCount) : PerkRecord(Key)
     {
         public override bool IsDataValid(StringBuilder errors, ICollection<CharacterRecord> allCharacters)
         {
@@ -39,7 +41,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             RelentlessInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -47,23 +50,18 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
         }
     }
     
-    public class RelentlessInstance : PerkInstance, IBaseFloatAttributeModifier, IActionCompletedListener
+    public class RelentlessInstance : PerkInstance, IBaseAttributeModifier, IActionCompletedListener
     {
-        public string SharedId => nameof(RelentlessInstance);
-        public int Priority => 0;
-        private const float HealMultiplier = 0.5f;
-        private const float StackMultiplier = -0.07f;
-        
-        private uint _stackCount;
+        private const int HealMultiplier = 50;
+        private const int StackMultiplier = -7;
+
+        private int _stackCount;
 
         public RelentlessInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public RelentlessInstance(CharacterStateMachine owner, RelentlessRecord record) : base(owner, record)
-        {
-            _stackCount = record.StackCount;
-        }
+
+        public RelentlessInstance(CharacterStateMachine owner, [NotNull] RelentlessRecord record) : base(owner, record) => _stackCount = record.StackCount;
 
         protected override void OnSubscribe()
         {
@@ -77,18 +75,19 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
             Owner.StatsModule.UnsubscribeAccuracy(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new RelentlessRecord(Key, _stackCount);
 
-        public void OnActionCompleted(ListPool<ActionResult> results)
+        public void OnActionCompleted([NotNull] ListPool<ActionResult> results)
         {
             Span<ActionResult> spanResults = results.AsSpan();
             bool anyValid = false;
             bool anyFailed = false;
-            uint totalDamageDealt = 0;
+            int totalDamageDealt = 0;
             for (int index = 0; index < results.Count; index++)
             {
                 ref ActionResult result = ref spanResults[index];
-                if (result.Skill.AllowAllies)
+                if (result.Skill.IsPositive)
                     continue;
 
                 if (result.Hit)
@@ -117,13 +116,17 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
             if (Owner.StaminaModule.IsNone)
                 return;
             
-            uint healAmount = (totalDamageDealt * HealMultiplier).CeilToUInt();
+            int healAmount = (totalDamageDealt * HealMultiplier) / 100;
             Owner.StaminaModule.Value.DoHeal(healAmount, isOvertime: false);
         }
 
-        public void Modify(ref float value, CharacterStateMachine self)
+        public void Modify(ref int value, CharacterStateMachine self)
         {
             value += _stackCount * StackMultiplier;
         }
+
+        [NotNull]
+        public string SharedId => nameof(RelentlessInstance);
+        public int Priority => 0;
     }
 }

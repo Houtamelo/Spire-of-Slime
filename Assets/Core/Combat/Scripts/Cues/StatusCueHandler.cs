@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Effects;
 using Core.Combat.Scripts.Enums;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Core.Combat.Scripts.Cues
@@ -19,7 +20,7 @@ namespace Core.Combat.Scripts.Cues
             if (character.StateEvaluator.PureEvaluate() is CharacterState.Defeated or CharacterState.Grappled)
                 return false;
 
-            if (character.Display.TrySome(out CharacterDisplay display) == false)
+            if (character.Display.TrySome(out DisplayModule display) == false)
                 return false;
 
             if (display.AnimationStatus is AnimationStatus.Defeated or AnimationStatus.Grappled)
@@ -38,14 +39,14 @@ namespace Core.Combat.Scripts.Cues
         private bool Success { get; init; }
         public bool GetSuccess() => Type == CueType.EffectApplied ? Success : throw new InvalidOperationException($"Cannot get success from: {Type} cue");
 
-        private uint PoisonAmount { get; init; }
-        public uint GetPoisonAmount() => Type is CueType.PoisonTick ? PoisonAmount : throw new InvalidOperationException($"Cannot get poison amount from: {Type} cue");
+        private int PoisonAmount { get; init; }
+        public int GetPoisonAmount() => Type is CueType.PoisonTick ? PoisonAmount : throw new InvalidOperationException($"Cannot get poison amount from: {Type} cue");
         
         private int LustDelta { get; init; }
         public int GetLustDelta() => Type is CueType.LustTick ? LustDelta : throw new InvalidOperationException($"Cannot get lust delta from: {Type} cue");
         
-        private float TemptationAmount { get; init; }
-        public float GetTemptationAmount() => Type == CueType.TemptationTick ? TemptationAmount : throw new InvalidOperationException($"Cannot get temptation amount from: {Type} cue");
+        private int TemptationAmount { get; init; }
+        public int GetTemptationAmount() => Type == CueType.TemptationTick ? TemptationAmount : throw new InvalidOperationException($"Cannot get temptation amount from: {Type} cue");
 
         public event Action Started;
         private bool _started;
@@ -56,22 +57,23 @@ namespace Core.Combat.Scripts.Cues
             _validator = validator;
         }
 
+        [NotNull]
         public static StatusCueHandler FromAppliedStatus(CharacterStateMachine character, Predicate<CharacterStateMachine> validator, EffectType effectType, bool success) 
             => new(character, validator) { Type = CueType.EffectApplied, EffectType = effectType, Success = success };
         
-        public static StatusCueHandler FromPoisonTick(CharacterStateMachine character, Predicate<CharacterStateMachine> validator, uint amount) 
+        [NotNull]
+        public static StatusCueHandler FromPoisonTick(CharacterStateMachine character, Predicate<CharacterStateMachine> validator, int amount) 
             => new(character, validator) { Type = CueType.PoisonTick, PoisonAmount = amount };
         
+        [NotNull]
         public static StatusCueHandler FromLustTick(CharacterStateMachine character, Predicate<CharacterStateMachine> validator, int delta)
             => new(character, validator) { Type = CueType.LustTick, LustDelta = delta };
         
-        public static StatusCueHandler FromTemptationTick(CharacterStateMachine character, Predicate<CharacterStateMachine> validator, float amount)
+        [NotNull]
+        public static StatusCueHandler FromTemptationTick(CharacterStateMachine character, Predicate<CharacterStateMachine> validator, int amount)
             => new(character, validator) { Type = CueType.TemptationTick, TemptationAmount = amount };
 
-        public bool IsValid()
-        {
-            return Character != null && _validator(Character);
-        }
+        public bool IsValid() => Character != null && _validator(Character);
 
         public void NotifyStart()
         {
@@ -85,7 +87,7 @@ namespace Core.Combat.Scripts.Cues
             Started?.Invoke();
         }
 
-        public bool CanGroupWith(StatusCueHandler other)
+        public bool CanGroupWith([NotNull] StatusCueHandler other)
         {
             if (Type != other.Type)
                 return false;

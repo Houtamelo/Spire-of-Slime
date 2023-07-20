@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Main_Database.Visual_Novel
 {
@@ -14,7 +14,7 @@ namespace Core.Main_Database.Visual_Novel
         [OdinSerialize, Required]
         private Dictionary<string, (Sprite portrait, bool isLeftSide)> _portraitDictionary;
 
-        public static Option<(Sprite portrait, bool isLeftSide)> GetPortrait(string fileName)
+        public static Option<(Sprite portrait, bool isLeftSide)> GetPortrait([NotNull] string fileName)
         {
             PortraitDatabase database = Instance;
             if (database._portraitDictionary.TryGetValue(fileName, out (Sprite portrait, bool isLeftSide) tuple))
@@ -24,9 +24,9 @@ namespace Core.Main_Database.Visual_Novel
         }
 
 #if UNITY_EDITOR        
-        public void AssignData(HashSet<Sprite> portraitSprites)
+        public void AssignData([NotNull] HashSet<Sprite> portraitSprites)
         {
-            _portraitDictionary = new(); // portraitSprites.ToDictionary(sprite => sprite.name);
+            _portraitDictionary = new Dictionary<string, (Sprite portrait, bool isLeftSide)>(); // portraitSprites.ToDictionary(sprite => sprite.name);
             
             foreach (Sprite sprite in portraitSprites)
             {
@@ -41,7 +41,7 @@ namespace Core.Main_Database.Visual_Novel
             UnityEditor.EditorUtility.SetDirty(this);
         }
         
-        public bool PortraitExists(string fileName) => _portraitDictionary.ContainsKey(fileName);
+        public bool PortraitExists([NotNull] string fileName) => _portraitDictionary.ContainsKey(fileName);
 #endif
     }
 }

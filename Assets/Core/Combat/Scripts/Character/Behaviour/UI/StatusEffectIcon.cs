@@ -5,11 +5,11 @@ using Core.Combat.Scripts.Effects;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Utils.Patterns;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Behaviour.UI
 {
@@ -24,7 +24,7 @@ namespace Core.Combat.Scripts.Behaviour.UI
         private readonly StringBuilder _tooltipBuilder = new();
         
         private Option<CharacterStateMachine> _owner;
-        private Option<CharacterDisplay> _display;
+        private Option<DisplayModule> _display;
         private bool _isMouseOver;
 
         public Option<EffectType> GetEffectType()
@@ -38,8 +38,10 @@ namespace Core.Combat.Scripts.Behaviour.UI
             RemoveDeactivatedStatuses();
             _tooltipBuilder.Clear();
             foreach (StatusInstance statusInstance in _statusInstances)
+            {
                 if (statusInstance.GetDescription().TrySome(out string description))
                     _tooltipBuilder.AppendLine(description);
+            }
 
             return _tooltipBuilder.Length == 0 ? Option<string>.None : _tooltipBuilder.ToString();
         }
@@ -49,17 +51,17 @@ namespace Core.Combat.Scripts.Behaviour.UI
             if (_isMouseOver == false || _owner.IsNone)
                 return;
 
-            if (_display.TrySome(out CharacterDisplay display) && GetDescription().TrySome(out string description))
+            if (_display.TrySome(out DisplayModule display) && GetDescription().TrySome(out string description))
                 display.ShowStatusTooltip(description);
         }
 
-        public void AssignCharacter(CharacterStateMachine owner, CharacterDisplay display)
+        public void AssignCharacter(CharacterStateMachine owner, DisplayModule display)
         {
             _owner = owner;
-            _display = display != null ? Option<CharacterDisplay>.Some(display) : Option<CharacterDisplay>.None;
+            _display = display != null ? Option<DisplayModule>.Some(display) : Option<DisplayModule>.None;
         }
 
-        public void AddStatus(StatusInstance statusInstance)
+        public void AddStatus([NotNull] StatusInstance statusInstance)
         {
             Option<EffectType> currentType = GetEffectType();
             if (currentType.IsSome)
@@ -124,7 +126,7 @@ namespace Core.Combat.Scripts.Behaviour.UI
         public void OnPointerEnter(PointerEventData eventData)
         {
             _isMouseOver = true;
-            if (_display.TrySome(out CharacterDisplay display) && GetDescription().TrySome(out string description))
+            if (_display.TrySome(out DisplayModule display) && GetDescription().TrySome(out string description))
                 display.ShowStatusTooltip(description);
         }
 
@@ -132,7 +134,7 @@ namespace Core.Combat.Scripts.Behaviour.UI
         {
             _isMouseOver = false;
             if (_owner.IsSome)
-                _owner.Value.StatusModule.HideStatusTooltip();
+                _owner.Value.StatusReceiverModule.HideStatusTooltip();
         }
 
         private void OnEnable()
@@ -146,9 +148,7 @@ namespace Core.Combat.Scripts.Behaviour.UI
             icon.DOKill();
 
             if (_isMouseOver && _owner.IsSome)
-            {
-                _owner.Value.StatusModule.HideStatusTooltip();
-            }
+                _owner.Value.StatusReceiverModule.HideStatusTooltip();
         }
     }
 }

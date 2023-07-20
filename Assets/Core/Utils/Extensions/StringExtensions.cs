@@ -1,13 +1,16 @@
 ﻿using System;
+using JetBrains.Annotations;
+using KGySoft.CoreLibraries;
 
 namespace Core.Utils.Extensions
 {
     public static class StringExtensions
     {
-        public static bool IsSome(this string input) => string.IsNullOrEmpty(input) == false;
-        public static bool IsNone(this string input) => string.IsNullOrEmpty(input);
+        public static bool IsSome([CanBeNull] this string input) => string.IsNullOrEmpty(input) == false;
+        public static bool IsNone([CanBeNull] this string input) => string.IsNullOrEmpty(input);
 
-        public static string ToAlphaNumeric(this string input)
+        [NotNull]
+        public static string ToAlphaNumeric([NotNull] this string input)
         {
             int j = 0;
             Span<char> output = stackalloc char[input.Length];
@@ -24,7 +27,8 @@ namespace Core.Utils.Extensions
             return output[..j].ToString();
         }
         
-        public static string ToAlphaNumericLower(this string input)
+        [NotNull]
+        public static string ToAlphaNumericLower([NotNull] this string input)
         {
             int j = 0;
             Span<char> output = stackalloc char[input.Length];
@@ -42,11 +46,10 @@ namespace Core.Utils.Extensions
             return output[..j].ToString();
         }
         
-        public static LineSplitEnumerator SplitLines(this string str)
-        {
+        public static LineSplitEnumerator SplitLines(this string str) =>
+
             // LineSplitEnumerator is a struct so there is no allocation here
-            return new LineSplitEnumerator(str.AsSpan());
-        }
+            new(str.AsSpan());
 
         // Must be a ref struct as it contains a ReadOnlySpan<char>
         public ref struct LineSplitEnumerator
@@ -121,5 +124,8 @@ namespace Core.Utils.Extensions
             // foreach (ReadOnlySpan<char> entry in str.SplitLines())
             public static implicit operator ReadOnlySpan<char>(LineSplitEntry entry) => entry.Line;
         }
+        
+        [NotNull]
+        public static string ToStringNonAlloc<T>(this T enumValue) where T : struct, Enum => Enum<T>.ToString(enumValue);
     }
 }

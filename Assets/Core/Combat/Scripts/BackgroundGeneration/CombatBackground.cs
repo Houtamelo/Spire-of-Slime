@@ -5,9 +5,9 @@ using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.BackgroundGeneration
 {
@@ -58,6 +58,7 @@ namespace Core.Combat.Scripts.BackgroundGeneration
         private Option<SpriteRenderer[]> _childRenderers;
         private Option<LightController[]> _childLights;
 
+        [NotNull]
         public BackgroundRecord GetRecord()
         {
             IBackgroundChild[] children = gameObject.GetComponentsInChildren<IBackgroundChild>(includeInactive: true);
@@ -74,8 +75,10 @@ namespace Core.Combat.Scripts.BackgroundGeneration
                 return;
             
             foreach (SpriteRenderer childRenderer in _childRenderers.Value)
+            {
                 if (childRenderer.gameObject.activeInHierarchy)
                     childRenderer.DOFade(endValue: alpha, duration);
+            }
         }
 
         public void SwitchLightsToSkillAnimation(float duration)
@@ -105,7 +108,7 @@ namespace Core.Combat.Scripts.BackgroundGeneration
             _childLights = GetComponentsInChildren<LightController>(includeInactive: true);
             gameObject.SetActive(true);
 
-            void Dive(Transform current)
+            void Dive([NotNull] Transform current)
             {
                 if (current.TryGetComponent(out IBackgroundChild backgroundChild))
                     backgroundChild.Generate();
@@ -127,7 +130,7 @@ namespace Core.Combat.Scripts.BackgroundGeneration
             gameObject.SetActive(true);
         }
 
-        public bool IsDataValid(BackgroundRecord data, StringBuilder errors)
+        public bool IsDataValid([NotNull] BackgroundRecord data, StringBuilder errors)
         {
             IBackgroundChild[] children = gameObject.GetComponentsInChildren<IBackgroundChild>(includeInactive: true);
             if (children.Length != data.ChildrenData.Length)

@@ -12,9 +12,7 @@ namespace Core.Game_Manager.Scripts.Tooltips
         private void Awake()
         {
             if (key.Key.IsNullOrEmpty())
-            {
                 Debug.LogWarning("TooltipDisplayer has no text key set!", context: this);
-            }
         }
 
         public void OnPointerEnter(PointerEventData eventData)

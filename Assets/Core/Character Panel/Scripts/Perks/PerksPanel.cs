@@ -1,14 +1,17 @@
 ﻿using System.Collections.Generic;
+using System.Text;
+using Core.Main_Characters.Ethel.Combat;
 using Core.Main_Characters.Nema.Combat;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections;
+using Core.Utils.Extensions;
 using Core.Utils.Patterns;
-using Data.Main_Characters.Ethel;
+using JetBrains.Annotations;
 using KGySoft.CoreLibraries;
 using ListPool;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Character_Panel.Scripts.Perks
@@ -17,6 +20,8 @@ namespace Core.Character_Panel.Scripts.Perks
     {
         private static readonly CleanString EthelPerkPoints = VariablesName.StatName(Ethel.GlobalKey, GeneralStat.PerkPoints);
         private static readonly CleanString NemaPerkPoints = VariablesName.StatName(Nema.GlobalKey, GeneralStat.PerkPoints);
+
+        private static readonly StringBuilder Builder = new();
         
         [SerializeField, Required, SceneObjectsOnly]
         private CanvasGroup ethelPanel;
@@ -49,7 +54,7 @@ namespace Core.Character_Panel.Scripts.Perks
         private void Start()
         {
             Save.BoolChanged += OnBoolChanged;
-            Save.FloatChanged += OnFloatChanged;
+            Save.IntChanged += OnIntChanged;
             characterMenu.SelectedCharacter.Changed += OnCharacterSelected;
             OnCharacterSelected(characterMenu.SelectedCharacter.AsOption());
             SetOpen(false);
@@ -58,7 +63,7 @@ namespace Core.Character_Panel.Scripts.Perks
         private void OnDestroy()
         {
             Save.BoolChanged -= OnBoolChanged;
-            Save.FloatChanged -= OnFloatChanged;
+            Save.IntChanged -= OnIntChanged;
             if (characterMenu != null)
                 characterMenu.SelectedCharacter.Changed -= OnCharacterSelected;
         }
@@ -70,14 +75,14 @@ namespace Core.Character_Panel.Scripts.Perks
                 CheckPerks();
         }
 
-        private void OnFloatChanged(CleanString variableName, float oldValue, float newValue)
+        private void OnIntChanged(CleanString variableName, int oldValue, int newValue)
         {
             Option<IReadonlyCharacterStats> character = characterMenu.SelectedCharacter.AsOption();
             if (character.TrySome(out IReadonlyCharacterStats stats) == false)
                 return;
                     
-            if (variableName == EthelPerkPoints && stats.Key == Ethel.GlobalKey || variableName == NemaPerkPoints && stats.Key == Nema.GlobalKey)
-                availablePointsTmp.text = $"Available Points: {newValue.ToString("0")}";
+            if ((variableName == EthelPerkPoints && stats.Key == Ethel.GlobalKey) || (variableName == NemaPerkPoints && stats.Key == Nema.GlobalKey))
+                availablePointsTmp.text = Builder.Override("Available Points: ", newValue.ToString("0")).ToString();
         }
 
         private void OnCharacterSelected(Option<IReadonlyCharacterStats> character)
@@ -128,8 +133,8 @@ namespace Core.Character_Panel.Scripts.Perks
             }
 
             IReadonlyCharacterStats stats = character.Value;
-            ValueListPool<CleanString> unlockedPerksAndSkills = stats.GetUnlockedPerksAndSkills(save);
-            ValueListPool<CleanString> activePerks = stats.GetEnabledPerks(save);
+            CustomValuePooledList<CleanString> unlockedPerksAndSkills = stats.GetUnlockedPerksAndSkills(save);
+            CustomValuePooledList<CleanString> activePerks = stats.GetEnabledPerks(save);
             if (stats.Key == Ethel.GlobalKey)
             {
                 foreach (PerkButton perkButton in _ethelPerkButtons)
@@ -157,7 +162,7 @@ namespace Core.Character_Panel.Scripts.Perks
                 CheckPerks();
         }
 
-        private static void SetCanvasGroup(CanvasGroup canvasGroup, bool active)
+        private static void SetCanvasGroup([NotNull] CanvasGroup canvasGroup, bool active)
         {
             canvasGroup.alpha = active ? 1 : 0;
             canvasGroup.interactable = active;

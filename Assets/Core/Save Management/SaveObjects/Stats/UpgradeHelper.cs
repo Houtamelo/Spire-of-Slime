@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Core.Utils.Extensions;
 using KGySoft.CoreLibraries;
+using Core.Utils.Collections.Extensions;
+using JetBrains.Annotations;
 
 namespace Core.Save_Management.SaveObjects
 {
@@ -10,86 +12,93 @@ namespace Core.Save_Management.SaveObjects
     {
         private const int MinPrimaryOptions = 2, MaxPrimaryOptions = 3;
         private const int MinSecondaryOptions = 3, MaxSecondaryOptions = 5;
+        
+        private static readonly PrimaryUpgrade[] AllPrimaryOptions = Enum<PrimaryUpgrade>.GetValues();
+        private static readonly SecondaryUpgrade[] AllSecondaryOptions = Enum<SecondaryUpgrade>.GetValues();
+        
+        private static readonly List<PrimaryUpgrade> ReusablePrimaryOptions = new(AllPrimaryOptions.Length);
+        private static readonly List<SecondaryUpgrade> ReusableSecondaryOptions = new(AllSecondaryOptions.Length);
 
-        public static float GetUpgradeIncrement(uint tier, PrimaryUpgrade upgradeType)
+        public static int GetUpgradeIncrement(int tier, PrimaryUpgrade upgradeType)
         {
             if (tier == 0)
                 return 0;
 
             double scale = Math.Pow(0.75, Math.Sqrt(tier)) + 0.25;
-            double value = scale * upgradeType switch
+
+            int multiplier = upgradeType switch
             {
-                PrimaryUpgrade.Accuracy   => 0.08,
-                PrimaryUpgrade.Critical   => 0.07,
-                PrimaryUpgrade.Dodge      => 0.08,
-                PrimaryUpgrade.Resilience => 0.08,
-                _                         => throw new ArgumentOutOfRangeException(nameof(upgradeType), upgradeType, null)
+                PrimaryUpgrade.Accuracy   => 8,
+                PrimaryUpgrade.Critical   => 7,
+                PrimaryUpgrade.Dodge      => 8,
+                PrimaryUpgrade.Resilience => 8,
+                _                         => throw new ArgumentOutOfRangeException(nameof(upgradeType), upgradeType, message: null)
             };
             
-            value = Math.Round(value, 2);
-            return (float) value;
+            return (int)(scale * multiplier);
         }
         
-        public static float GetUpgradeFull(uint tier, PrimaryUpgrade upgradeType)
+        public static int GetUpgradeFull(int tier, PrimaryUpgrade upgradeType)
         {
-            double sum = 0;
-            for (uint i = 0; i <= tier; i++)
+            int sum = 0;
+            for (int i = 0; i <= tier; i++)
                 sum += GetUpgradeIncrement(i, upgradeType);
 
-            return (float) sum;
+            return sum;
         }
 
-        public static float GetUpgradeIncrement(uint tier, SecondaryUpgrade upgradeType)
+        public static int GetUpgradeIncrement(int tier, SecondaryUpgrade upgradeType)
         {
             if (tier == 0)
                 return 0;
             
             double scale = Math.Pow(0.75, Math.Sqrt(tier)) + 0.25;
-            double value = scale * upgradeType switch
+
+            int multiplier = upgradeType switch
             {
-                SecondaryUpgrade.Composure         => 0.07,
-                SecondaryUpgrade.DebuffResistance  => 0.12,
-                SecondaryUpgrade.MoveResistance    => 0.12,
-                SecondaryUpgrade.PoisonResistance  => 0.12,
-                SecondaryUpgrade.StunRecoverySpeed => 0.12,
-                SecondaryUpgrade.PoisonApplyChance => 0.1,
-                SecondaryUpgrade.DebuffApplyChance => 0.1,
-                SecondaryUpgrade.MoveApplyChance   => 0.1,
+                SecondaryUpgrade.Composure         => 7,
+                SecondaryUpgrade.DebuffResistance  => 12,
+                SecondaryUpgrade.MoveResistance    => 12,
+                SecondaryUpgrade.PoisonResistance  => 12,
+                SecondaryUpgrade.StunMitigation    => 10,
+                SecondaryUpgrade.PoisonApplyChance => 10,
+                SecondaryUpgrade.DebuffApplyChance => 10,
+                SecondaryUpgrade.MoveApplyChance   => 10,
                 _                                  => throw new ArgumentOutOfRangeException(nameof(upgradeType), upgradeType, null)
             };
-            
-            value = Math.Round(value, 2);
-            return (float) value;
+
+            return (int)(scale * multiplier);
         }
         
-        public static float GetUpgradeFull(uint tier, SecondaryUpgrade upgradeType)
+        public static int GetUpgradeFull(int tier, SecondaryUpgrade upgradeType)
         {
-            double sum = 0;
-            for (uint i = 0; i <= tier; i++)
+            int sum = 0;
+            for (int i = 0; i <= tier; i++)
                 sum += GetUpgradeIncrement(i, upgradeType);
             
-            return (float) sum;
+            return sum;
         }
         
-        public static List<PrimaryUpgrade> GetPrimaryUpgradeOptions(uint currentTier, Dictionary<uint, List<PrimaryUpgrade>> toFill, System.Random randomizer)
+        public static PrimaryUpgrade[] GetPrimaryUpgradeOptions(int currentTier, [NotNull] Dictionary<int, PrimaryUpgrade[]> toFill, Random randomizer)
         {
-            for (uint i = 0; i < currentTier; i++)
+            for (int i = 0; i < currentTier; i++)
                 GenerateUpgrade(i);
 
             return GenerateUpgrade(currentTier);
 
-            List<PrimaryUpgrade> GenerateUpgrade(uint stat)
+            PrimaryUpgrade[] GenerateUpgrade(int stat)
             {
-                if (toFill.TryGetValue(stat, out List<PrimaryUpgrade> options))
+                if (toFill.TryGetValue(stat, out PrimaryUpgrade[] options))
                     return options;
 
-                List<PrimaryUpgrade> possibles = Enum<PrimaryUpgrade>.GetValues().ToList();
-                options = new List<PrimaryUpgrade>();
-                uint optionCount = (uint)randomizer.Next(MinPrimaryOptions, MaxPrimaryOptions + 1);
+                ReusablePrimaryOptions.Clear();
+                ReusablePrimaryOptions.Add(AllPrimaryOptions);
+                int optionCount = randomizer.Next(MinPrimaryOptions, MaxPrimaryOptions + 1);
+                options = new PrimaryUpgrade[optionCount];
                 for (int i = 0; i < optionCount; i++)
                 {
-                    int index = randomizer.Next(possibles.Count);
-                    options.Add(possibles.TakeAt(index));
+                    int index = randomizer.Next(ReusablePrimaryOptions.Count);
+                    options[i] = ReusablePrimaryOptions.TakeAt(index);
                 }
 
                 toFill[stat] = options;
@@ -97,26 +106,27 @@ namespace Core.Save_Management.SaveObjects
             }
         }
 
-        public static List<SecondaryUpgrade> GetSecondaryUpgradeOptions(uint currentStat, Dictionary<uint, List<SecondaryUpgrade>> toFill, System.Random randomizer)
+        public static SecondaryUpgrade[] GetSecondaryUpgradeOptions(int currentStat, [NotNull] Dictionary<int, SecondaryUpgrade[]> toFill, Random randomizer)
         {
-            for (uint i = 0; i < currentStat; i++)
+            for (int i = 0; i < currentStat; i++)
                 GenerateUpgrade(i);
 
             return GenerateUpgrade(currentStat);
 
-            List<SecondaryUpgrade> GenerateUpgrade(uint stat)
+            SecondaryUpgrade[] GenerateUpgrade(int stat)
             {
-                if (toFill.TryGetValue(stat, out List<SecondaryUpgrade> options))
+                if (toFill.TryGetValue(stat, out SecondaryUpgrade[] options))
                     return options;
 
-                List<SecondaryUpgrade> possibles = Enum.GetValues(typeof(SecondaryUpgrade)).Cast<SecondaryUpgrade>().ToList();
-                options = new List<SecondaryUpgrade>();
-                uint optionCount = (uint) randomizer.Next(MinSecondaryOptions, MaxSecondaryOptions + 1);
+                ReusableSecondaryOptions.Clear();
+                ReusableSecondaryOptions.Add(AllSecondaryOptions);
+                int optionCount = randomizer.Next(MinSecondaryOptions, MaxSecondaryOptions + 1);
+                options = new SecondaryUpgrade[optionCount];
+
                 for (int i = 0; i < optionCount; i++)
                 {
-                    int index = randomizer.Next(possibles.Count);
-                    options.Add(possibles[index]);
-                    possibles.RemoveAt(index);
+                    int index = randomizer.Next(ReusableSecondaryOptions.Count);
+                    options[i] = ReusableSecondaryOptions.TakeAt(index);
                 }
 
                 toFill[stat] = options;

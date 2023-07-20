@@ -57,26 +57,26 @@ namespace Core.Combat.Scripts.UI
 
         private void SpeedHandlerChanged(float value)
         {
-            if (value >= Speed3X)
+            switch (value)
             {
-                speed1XIndicator.enabled = false;
-                speed2XIndicator.enabled = false;
-                speed3XIndicator.enabled = true;
-                PlayerPrefs.SetInt(SpeedPlayerPref, 2);
-            }
-            else if (value >= Speed2X)
-            {
-                speed1XIndicator.enabled = false;
-                speed2XIndicator.enabled = true;
-                speed3XIndicator.enabled = false;
-                PlayerPrefs.SetInt(SpeedPlayerPref, 1);
-            }
-            else
-            {
-                speed1XIndicator.enabled = true;
-                speed2XIndicator.enabled = false;
-                speed3XIndicator.enabled = false;
-                PlayerPrefs.SetInt(SpeedPlayerPref, 0);
+                case >= Speed3X:
+                    speed1XIndicator.enabled = false;
+                    speed2XIndicator.enabled = false;
+                    speed3XIndicator.enabled = true;
+                    PlayerPrefs.SetInt(SpeedPlayerPref, 2);
+                    break;
+                case >= Speed2X:
+                    speed1XIndicator.enabled = false;
+                    speed2XIndicator.enabled = true;
+                    speed3XIndicator.enabled = false;
+                    PlayerPrefs.SetInt(SpeedPlayerPref, 1);
+                    break;
+                default:
+                    speed1XIndicator.enabled = true;
+                    speed2XIndicator.enabled = false;
+                    speed3XIndicator.enabled = false;
+                    PlayerPrefs.SetInt(SpeedPlayerPref, 0);
+                    break;
             }
         }
         

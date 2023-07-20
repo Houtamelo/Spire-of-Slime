@@ -2,7 +2,6 @@
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Utils.Patterns;
 using ListPool;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Skills.Action
 {
@@ -10,15 +9,19 @@ namespace Core.Combat.Scripts.Skills.Action
     {
         public readonly bool Hit;
         public bool Missed => Hit == false;
+        
         public readonly ISkill Skill;
+        
         public readonly CharacterStateMachine Caster;
         public readonly CharacterStateMachine Target;
-        public readonly Option<uint> DamageDealt;
+        
+        public readonly Option<int> DamageDealt;
         public readonly bool Critical;
+        
         private readonly Option<ListPool<StatusResult>> _statusResults;
-        public Option<ListPool<StatusResult>> StatusResults => Hit ? _statusResults : Option<ListPool<StatusResult>>.None;
+        public Option<ListPool<StatusResult>> StatusResults => Hit ? _statusResults : Option.None;
 
-        private ActionResult(bool success, ISkill skill, CharacterStateMachine caster, CharacterStateMachine target, Option<uint> damageDealt, bool critical, Option<ListPool<StatusResult>> statusResults)
+        private ActionResult(bool success, ISkill skill, CharacterStateMachine caster, CharacterStateMachine target, Option<int> damageDealt, bool critical, Option<ListPool<StatusResult>> statusResults)
         {
             Hit = success;
             Skill = skill;
@@ -27,26 +30,23 @@ namespace Core.Combat.Scripts.Skills.Action
             DamageDealt = damageDealt;
             Critical = critical;
             _statusResults = statusResults;
-            _notDisposed = true;
+            _allocated = true;
         }
         
-        public static ActionResult FromMiss(ISkill skill, CharacterStateMachine caster, CharacterStateMachine target) => new(success: false, skill, caster, target, damageDealt: Option.None, critical: false, Option<ListPool<StatusResult>>.None);
+        public static ActionResult FromMiss(ISkill skill, CharacterStateMachine caster, CharacterStateMachine target) 
+            => new(success: false, skill, caster, target, damageDealt: Option.None, critical: false, Option<ListPool<StatusResult>>.None);
         
-        public static ActionResult FromHit(ISkill skill, CharacterStateMachine caster, CharacterStateMachine target, Option<uint> damageDealt, bool crit, Option<ListPool<StatusResult>> statusResults)
+        public static ActionResult FromHit(ISkill skill, CharacterStateMachine caster, CharacterStateMachine target, Option<int> damageDealt, bool crit, Option<ListPool<StatusResult>> statusResults)
             => new(success: true, skill, caster, target, damageDealt, crit, statusResults);
 
-        private bool _notDisposed;
-        private bool Disposed
-        {
-            get => !_notDisposed;
-            set => _notDisposed = !value;
-        }
+        private bool _allocated;
+
         public void Dispose()
         {
-            if (Disposed)
+            if (_allocated == false)
                 return;
-            
-            Disposed = true;
+
+            _allocated = false;
             if (_statusResults.IsSome)
                 _statusResults.Value?.Dispose();
         }

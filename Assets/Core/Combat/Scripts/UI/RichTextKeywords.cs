@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine;
 // ReSharper disable ConditionalTernaryEqualBranch
 
@@ -11,8 +12,7 @@ namespace Core.Combat.Scripts.UI
     {
         public static readonly IReadOnlyDictionary<string, (Color, string)> Keywords;
 
-        static RichTextKeywords()
-        {
+        static RichTextKeywords() =>
             Keywords = new Dictionary<string, (Color, string)>
             {
                 [" damage "] = (ColorReferences.Damage, ColorUtility.ToHtmlStringRGBA(ColorReferences.Damage)),
@@ -52,20 +52,19 @@ namespace Core.Combat.Scripts.UI
                 [" recovery speed "] = (ColorReferences.Recovery, ColorUtility.ToHtmlStringRGBA(ColorReferences.Recovery)),
                 [" resilience "] = (ColorReferences.Resilience, ColorUtility.ToHtmlStringRGBA(ColorReferences.Resilience)),
                 [" riposte "] = (ColorReferences.Riposte, ColorUtility.ToHtmlStringRGBA(ColorReferences.Riposte)),
-                [" stun recovery speed "] = (ColorReferences.StunRecovery, ColorUtility.ToHtmlStringRGBA(ColorReferences.StunRecovery)),
-                [" stun recovery "] = (ColorReferences.StunRecovery, ColorUtility.ToHtmlStringRGBA(ColorReferences.StunRecovery)),
-                [" stun speed "] = (ColorReferences.StunRecovery, ColorUtility.ToHtmlStringRGBA(ColorReferences.StunRecovery)),
+                [" stun recovery speed "] = (ColorReferences.StunMitigation, ColorUtility.ToHtmlStringRGBA(ColorReferences.StunMitigation)),
+                [" stun recovery "] = (ColorReferences.StunMitigation, ColorUtility.ToHtmlStringRGBA(ColorReferences.StunMitigation)),
+                [" stun speed "] = (ColorReferences.StunMitigation, ColorUtility.ToHtmlStringRGBA(ColorReferences.StunMitigation)),
                 [" stun "] = (ColorReferences.Stun, ColorUtility.ToHtmlStringRGBA(ColorReferences.Stun)),
                 [" stunned "] = (ColorReferences.Stun, ColorUtility.ToHtmlStringRGBA(ColorReferences.Stun)),
                 [" stuns "] = (ColorReferences.Stun, ColorUtility.ToHtmlStringRGBA(ColorReferences.Stun)),
                 //[" temptation resistance "] = (ColorReferences.TemptationResistance, ColorUtility.ToHtmlStringRGBA(ColorReferences.TemptationResistance)),
                 //[" temptation "] = (ColorReferences.Temptation, ColorUtility.ToHtmlStringRGBA(ColorReferences.Temptation)),
             };
-        }
 
 #if UNITY_EDITOR
         /// <summary> Forced to use only in editor because it's slow, O(n^2) complexity </summary>
-        public static string InsertRichText(string input)
+        public static string InsertRichText([NotNull] string input)
         {
             string[] words = input.Split(' ');
             foreach ((string keyword, (_, string hex)) in Keywords)

@@ -14,19 +14,20 @@ using Core.Combat.Scripts.WinningCondition;
 using Core.Game_Manager.Scripts;
 using Core.Local_Map.Scripts;
 using Core.Local_Map.Scripts.PathCreating;
+using Core.Main_Characters.Ethel.Combat;
 using Core.Main_Characters.Nema.Combat;
 using Core.Main_Database.Local_Map;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Async;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
-using Data.Main_Characters.Ethel;
+using JetBrains.Annotations;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Combat.Scripts
@@ -97,7 +98,7 @@ namespace Core.Combat.Scripts
             {
                 TMP_Dropdown dropdown = allyDropdowns[i];
                 dropdown.ClearOptions();
-                List<string> options = allies.Select(ally => ally.CharacterName).ToList();
+                List<string> options = allies.Select(ally => ally.CharacterName.Key.ToString()).ToList();
                 options.Insert(0, "none");
                 dropdown.AddOptions(options);
                 int index = i;
@@ -110,7 +111,7 @@ namespace Core.Combat.Scripts
             {
                 TMP_Dropdown dropdown = enemyDropdowns[i];
                 dropdown.ClearOptions();
-                List<string> options = enemies.Select(enemy => enemy.CharacterName).ToList();
+                List<string> options = enemies.Select(enemy => enemy.CharacterName.Key.ToString()).ToList();
                 options.Insert(0, "none");
                 dropdown.AddOptions(options);
                 int index = i;
@@ -128,7 +129,7 @@ namespace Core.Combat.Scripts
             {
                 TMP_Dropdown dropdown = ethelSkillsDropdowns[i];
                 dropdown.ClearOptions();
-                List<string> options = ethelSkills.Select(skill => skill.DisplayName).ToList();
+                List<string> options = ethelSkills.Select(skill => skill.DisplayName.Key.ToString()).ToList();
                 options.Insert(0, "none");
                 dropdown.AddOptions(options);
                 int index = i;
@@ -141,7 +142,7 @@ namespace Core.Combat.Scripts
             {
                 TMP_Dropdown dropdown = nemaSkillsDropdowns[i];
                 dropdown.ClearOptions();
-                List<string> options = nemaSkills.Select(skill => skill.DisplayName).ToList();
+                List<string> options = nemaSkills.Select(skill => skill.DisplayName.Key.ToString()).ToList();
                 options.Insert(0, "none");
                 dropdown.AddOptions(options);
                 int index = i;
@@ -198,15 +199,13 @@ namespace Core.Combat.Scripts
                     return;
                 }
                 
-                CombatSetupInfo setupInfo = new(
-                                                selectedAllies.Select(ally => ((ICharacterScript)ally, CombatSetupInfo.RecoveryInfo.Default, 0f, bindToSave: true)).ToArray(),
+                CombatSetupInfo setupInfo = new(selectedAllies.Select(ally => ((ICharacterScript)ally, CombatSetupInfo.RecoveryInfo.Default, 0, bindToSave: true)).ToArray(),
                                                 selectedEnemies.Select(enemy => ((ICharacterScript)enemy, CombatSetupInfo.RecoveryInfo.Default)).ToArray(),
                                                 mistExists: mistToggle.isOn,
                                                 allowLust: lustToggle.isOn,
-                                                GeneralPaddingSettings.Default
-                                               );
+                                                GeneralPaddingSettings.Default);
 
-                new CoroutineWrapper(LoadScenesThenCombat(setupInfo, WinningConditionGenerator.Default, backgrounds[backgroundDropdown.value].Key, chosenEthelSkills, chosenNemaSkills, (uint)ethelLust.value, (uint)nemaLust.value),
+                new CoroutineWrapper(LoadScenesThenCombat(setupInfo, WinningConditionGenerator.Default, backgrounds[backgroundDropdown.value].Key, chosenEthelSkills, chosenNemaSkills, (int)ethelLust.value, (int)nemaLust.value),
                                      nameof(LoadScenesThenCombat), context: null, autoStart: true);
                 Destroy(gameObject);
             });
@@ -268,16 +267,16 @@ namespace Core.Combat.Scripts
                     return;
                 }
                 
-                new CoroutineWrapper(LoadScenesThenLocalMap(GeneratePathInfo(path), nodes, path, chosenEthelSkills, chosenNemaSkills, alliesOrder, (uint)ethelLust.value, (uint)nemaLust.value),
+                new CoroutineWrapper(LoadScenesThenLocalMap(GeneratePathInfo(path), nodes, path, chosenEthelSkills, chosenNemaSkills, alliesOrder, (int)ethelLust.value, (int)nemaLust.value),
                                      nameof(LoadScenesThenLocalMap), context: null, autoStart: true);
                 Destroy(gameObject);
             });
         }
 
-        private bool AreEthelAndNemaSkillsValid(out HashSet<ISkill> chosenEthelSkills, out HashSet<ISkill> chosenNemaSkills)
+        private bool AreEthelAndNemaSkillsValid([NotNull] out HashSet<ISkill> chosenEthelSkills, [NotNull] out HashSet<ISkill> chosenNemaSkills)
         {
-            chosenEthelSkills = new();
-            chosenNemaSkills = new();
+            chosenEthelSkills = new HashSet<ISkill>();
+            chosenNemaSkills = new HashSet<ISkill>();
             HashSet<ISkill> ethelSkillsReference = chosenEthelSkills;
             ethelSkillsDropdowns.DoForEach(dropdown =>
             {
@@ -304,7 +303,7 @@ namespace Core.Combat.Scripts
         }
 
         private static IEnumerator LoadScenesThenCombat(CombatSetupInfo setupInfo, WinningConditionGenerator winningConditionGenerator, CleanString backgroundKey,
-                                                        HashSet<ISkill> chosenEthelSkills, HashSet<ISkill> chosenNemaSkills, uint ethelLust, uint nemaLust)
+                                                        HashSet<ISkill> chosenEthelSkills, HashSet<ISkill> chosenNemaSkills, int ethelLust, int nemaLust)
         {
             SceneManager.LoadScene(SceneRef.GameManager.Name, LoadSceneMode.Additive);
             
@@ -369,7 +368,7 @@ namespace Core.Combat.Scripts
         }
 
         private static IEnumerator LoadScenesThenLocalMap(FullPathInfo generatePathInfo, PathBetweenNodesGenerator[] pathBetweenNodesGenerators, BothWays bothWays, HashSet<ISkill> chosenEthelSkills, HashSet<ISkill> chosenNemaSkills,
-                                                          List<CleanString> alliesOrder, uint ethelLust, uint nemaLust)
+                                                          List<CleanString> alliesOrder, int ethelLust, int nemaLust)
         {
             SceneManager.LoadScene(SceneRef.GameManager.Name, LoadSceneMode.Additive);
             

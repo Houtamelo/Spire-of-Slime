@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Interfaces;
+using Core.Utils.Collections;
 using Core.Utils.Patterns;
 using JetBrains.Annotations;
 using ListPool;
-using Utils.Patterns;
 
 namespace Core.Save_Management.SaveObjects
 {
@@ -14,70 +14,71 @@ namespace Core.Save_Management.SaveObjects
         CleanString Key { get; }
         ICharacterScript GetScript();
 
-        float Speed { get; }
-        uint DamageLower { get; }
-        uint DamageUpper { get; }
+        int Speed { get; }
+        int DamageLower { get; }
+        int DamageUpper { get; }
 
-        uint Stamina { get; }
-        float Resilience { get; }
+        int Stamina { get; }
+        int Resilience { get; }
 
-        uint Lust { get; }
-        float Composure { get; }
-        uint OrgasmLimit { get; }
-        uint OrgasmCount { get; }
-        ClampedPercentage Temptation { get; }
-        ClampedPercentage Corruption { get; }
+        int Lust { get; }
+        int Composure { get; }
+        int OrgasmLimit { get; }
+        int OrgasmCount { get; }
+        int Temptation { get; }
+        int Corruption { get; }
 
-        float Accuracy { get; }
-        float CriticalChance { get; }
-        float Dodge { get; }
+        int Accuracy { get; }
+        int CriticalChance { get; }
+        int Dodge { get; }
 
-        float PoisonResistance { get; }
-        float PoisonApplyChance { get; }
+        int PoisonResistance { get; }
+        int PoisonApplyChance { get; }
 
-        float DebuffResistance { get; }
-        float DebuffApplyChance { get; }
+        int DebuffResistance { get; }
+        int DebuffApplyChance { get; }
 
-        float MoveResistance { get; }
-        float MoveApplyChance { get; }
+        int MoveResistance { get; }
+        int MoveApplyChance { get; }
 
-        float StunRecoverySpeed { get; }
+        int StunMitigation { get; }
 
-        Dictionary<PrimaryUpgrade, uint> PrimaryUpgrades { get; }
-        Dictionary<SecondaryUpgrade, uint> SecondaryUpgrades { get; }
+        Dictionary<PrimaryUpgrade, int> PrimaryUpgrades { get; }
+        Dictionary<SecondaryUpgrade, int> SecondaryUpgrades { get; }
         
-        [MustUseReturnValue] ValueListPool<CleanString> GetUnlockedPerksAndSkills(Core.Save_Management.SaveObjects.Save save);
-        [MustUseReturnValue] ValueListPool<CleanString> GetUnlockedPerks(Core.Save_Management.SaveObjects.Save save);
-        [MustUseReturnValue] ValueListPool<CleanString> GetEnabledPerks(Core.Save_Management.SaveObjects.Save save);
+        [MustUseReturnValue] CustomValuePooledList<CleanString> GetUnlockedPerksAndSkills(Save save);
+        [MustUseReturnValue] CustomValuePooledList<CleanString> GetUnlockedPerks(Save save);
+        [MustUseReturnValue] CustomValuePooledList<CleanString> GetEnabledPerks(Save save);
         
-        bool IsPerkUnlocked(CleanString key, Core.Save_Management.SaveObjects.Save save);
-        bool IsSkillUnlocked(CleanString skillKey, Core.Save_Management.SaveObjects.Save save);
+        bool IsPerkUnlocked(CleanString key, Save save);
+        bool IsSkillUnlocked(CleanString skillKey, Save save);
         
-        uint AvailablePerkPoints { get; }
-        uint AvailablePrimaryPoints { get; }
-        uint AvailableSecondaryPoints { get; }
+        int AvailablePerkPoints { get; }
+        int AvailablePrimaryPoints { get; }
+        int AvailableSecondaryPoints { get; }
         
-        Dictionary<uint, List<PrimaryUpgrade>> PrimaryUpgradeOptions { get; }
-        Dictionary<uint, List<SecondaryUpgrade>> SecondaryUpgradeOptions { get; }
+        Dictionary<int, PrimaryUpgrade[]> PrimaryUpgradeOptions { get; }
+        Dictionary<int, SecondaryUpgrade[]> SecondaryUpgradeOptions { get; }
         
-        Dictionary<Race, uint> SexualExpByRace { get; }
+        Dictionary<Race, int> SexualExpByRace { get; }
         
         Random Randomizer { get; }
         IReadOnlySkillSet GetSkillSet();
         
-        float Experience { get; }
-        uint Level { get; }
+        int TotalExperience { get; }
+        int Level { get; }
 
-        public void SetValue(GeneralStat stat, float newValue);
-        float GetValue(GeneralStat stat);
-        (uint lower, uint upper) GetDamage();
-        float GetValue(PrimaryUpgrade upgrade);
-        float GetValue(SecondaryUpgrade upgrade);
-
-        uint GetUsedPrimaryPoints();
-        uint GetUsedSecondaryPoints();
+        public void SetValue(GeneralStat stat, int newValue);
         
-        List<PrimaryUpgrade> GetPrimaryUpgradeOptions(uint currentTier);
-        List<SecondaryUpgrade> GetSecondaryUpgradeOptions(uint currentTier);
+        int GetValue(GeneralStat stat);
+        (int lower, int upper) GetDamage();
+        int GetValue(PrimaryUpgrade upgrade);
+        int GetValue(SecondaryUpgrade upgrade);
+
+        int GetUsedPrimaryPoints();
+        int GetUsedSecondaryPoints();
+        
+        ReadOnlySpan<PrimaryUpgrade> GetPrimaryUpgradeOptions(int currentTier);
+        ReadOnlySpan<SecondaryUpgrade> GetSecondaryUpgradeOptions(int currentTier);
     }
 }

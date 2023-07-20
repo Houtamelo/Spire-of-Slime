@@ -42,7 +42,7 @@ namespace Core.World_Map.Scripts
         {
             unchecked
             {
-                return Origin.GetHashCode() ^ 50 * Destination.GetHashCode() ^ 5;
+                return Origin.GetHashCode() ^ (50 * Destination.GetHashCode()) ^ 5;
             }
         }
 
@@ -52,9 +52,6 @@ namespace Core.World_Map.Scripts
         public static implicit operator (LocationEnum, LocationEnum)(OneWay singleWay) => (singleWay.Origin, singleWay.Destination);
         public static implicit operator OneWay((LocationEnum, LocationEnum) tuple) => new(tuple.Item1, tuple.Item2);
 
-        public override string ToString()
-        {
-            return $"{Enum<LocationEnum>.ToString(Origin)} -> {Enum<LocationEnum>.ToString(Destination)}";
-        }
+        public override string ToString() => $"{Enum<LocationEnum>.ToString(Origin)} -> {Enum<LocationEnum>.ToString(Destination)}";
     }
 }

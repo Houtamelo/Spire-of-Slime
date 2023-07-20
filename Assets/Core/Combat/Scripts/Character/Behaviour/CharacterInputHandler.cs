@@ -3,14 +3,13 @@ using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Behaviour
 {
     public sealed class CharacterInputHandler : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         [SerializeField, Required]
-        private CharacterDisplay owner;
+        private DisplayModule owner;
         
         public bool IsMouseOver { get; private set; }
         private Option<CombatManager> _combatManager;

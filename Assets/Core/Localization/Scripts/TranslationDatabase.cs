@@ -12,6 +12,7 @@ using KGySoft.CoreLibraries;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
+using Core.Utils.Collections.Extensions;
 
 namespace Core.Localization.Scripts
 {
@@ -48,7 +49,7 @@ namespace Core.Localization.Scripts
                 return translation;
             
             Debug.LogWarning($"Translation for key: {key} in language: {language} not found.");
-            return new TranslationResult { Text = string.Empty };
+            return TranslationResult.Empty;
         }
 
         public void Initialize()

@@ -1,13 +1,15 @@
-﻿using Core.Combat.Scripts.Interfaces;
+﻿using System;
+using Core.Combat.Scripts.Interfaces;
 using Core.Save_Management;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.UI
 {
@@ -32,7 +34,7 @@ namespace Core.Combat.Scripts.UI
             _levelUpTween.KillIfActive();
         }
 
-        public void SetCharacter(ICharacterScript script, float startExp)
+        public void SetCharacter([NotNull] ICharacterScript script, int startExp)
         {
             gameObject.SetActive(true);
             _levelUpTween.KillIfActive();
@@ -51,16 +53,16 @@ namespace Core.Combat.Scripts.UI
             Option<Color> backgroundColor = script.GetPortraitBackgroundColor;
             background.color = backgroundColor.IsSome ? backgroundColor.Value : Color.black;
             
-            float percentage = ExperienceCalculator.GetExperiencePercentage(startExp);
-            slider.value = percentage;
+            double percentage = ExperienceCalculator.GetExperiencePercentage(startExp);
+            slider.value = (float) percentage;
         }
         
         /// <returns> If Character leveled up </returns>
-        public bool SetProgress(float startExp, float currentExp, float progress)
+        public bool SetProgress(int startExp, int currentExp, float progress)
         {
             float oldPercentage = slider.value;
-            float newPercentage = ExperienceCalculator.GetExperiencePercentage(Mathf.Lerp(startExp, currentExp, progress));
-            slider.value = newPercentage;
+            double newPercentage = ExperienceCalculator.GetExperiencePercentage(Mathf.Lerp(startExp, currentExp, progress).FloorToInt());
+            slider.value = (float)newPercentage;
             if (newPercentage >= oldPercentage || oldPercentage is >= 1f or < 0f || levelUpTmp.gameObject.activeSelf)
                 return false;
             

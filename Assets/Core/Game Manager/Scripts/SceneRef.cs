@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using Ardalis.SmartEnum;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -20,8 +21,8 @@ namespace Core.Game_Manager.Scripts
         public static readonly SceneRef CharacterPanel = new(enumName: "Scene_CharacterPanel", value: 11);
         private SceneRef(string enumName, int value) : base(name: enumName, value: value){}
 
-        public static implicit operator string(SceneRef name) => name.Name;
-        public static implicit operator Scene(SceneRef name) => SceneManager.GetSceneByName(name.Name);
+        public static implicit operator string([NotNull] SceneRef name) => name.Name;
+        public static implicit operator Scene([NotNull] SceneRef name) => SceneManager.GetSceneByName(name.Name);
 
         public void SetObjectsActive(bool active)
         {

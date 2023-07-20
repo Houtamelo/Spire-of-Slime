@@ -11,13 +11,15 @@ using Core.Combat.Scripts.Skills.Action;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 using ListPool;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
 {
     public class Grudge : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             GrudgeInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -25,7 +27,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
         }
     }
     
-    public record GrudgeRecord(CleanString Key, float CurrentModifier) : PerkRecord(Key)
+    public record GrudgeRecord(CleanString Key, int CurrentModifier) : PerkRecord(Key)
     {
         public override bool IsDataValid(StringBuilder errors, ICollection<CharacterRecord> allCharacters)
         {
@@ -38,7 +40,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             GrudgeInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -46,22 +49,16 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
         }
     }
 
-    public class GrudgeInstance : PerkInstance, IBaseFloatAttributeModifier, IActionCompletedListener
+    public class GrudgeInstance : PerkInstance, IBaseAttributeModifier, IActionCompletedListener
     {
-        public string SharedId => nameof(GrudgeInstance);
-        public int Priority => 0;
+        private const int MaxModifier = 30;
+        private int _currentModifier;
 
-        private const float MaxModifier = 0.3f;
-        private float _currentModifier;
-        
         public GrudgeInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public GrudgeInstance(CharacterStateMachine owner, GrudgeRecord record) : base(owner, record)
-        {
-            _currentModifier = record.CurrentModifier;
-        }
+
+        public GrudgeInstance(CharacterStateMachine owner, [NotNull] GrudgeRecord record) : base(owner, record) => _currentModifier = record.CurrentModifier;
 
         protected override void OnSubscribe()
         {
@@ -75,9 +72,10 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
             Owner.StatsModule.UnsubscribePower(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new GrudgeRecord(Key, _currentModifier);
 
-        public void OnActionCompleted(ListPool<ActionResult> results)
+        public void OnActionCompleted([NotNull] ListPool<ActionResult> results)
         {
             Span<ActionResult> spanResults = results.AsSpan();
             bool anyValid = false;
@@ -86,7 +84,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
             for (int index = 0; index < results.Count; index++)
             {
                 ref ActionResult result = ref spanResults[index];
-                if (result.Target == Owner || result.Skill.AllowAllies)
+                if (result.Target == Owner || result.Skill.IsPositive)
                     continue;
 
                 targetCount++;
@@ -99,12 +97,16 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
             if (anyValid == false || targetCount == 0)
                 return;
             
-            _currentModifier = (float)failCount / targetCount * MaxModifier;
+            _currentModifier = (failCount * MaxModifier) / targetCount;
         }
 
-        public void Modify(ref float value, CharacterStateMachine self)
+        public void Modify(ref int value, CharacterStateMachine self)
         {
             value += _currentModifier;
         }
+
+        [NotNull]
+        public string SharedId => nameof(GrudgeInstance);
+        public int Priority => 0;
     }
 }

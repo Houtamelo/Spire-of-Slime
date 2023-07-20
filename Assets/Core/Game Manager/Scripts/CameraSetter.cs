@@ -29,9 +29,7 @@ namespace Core.Game_Manager.Scripts
                 if (sceneCamera == null)
                     Debug.Log(message: $"Could not find camera of {name}", context: this);
                 else
-                {
                     UnityEditor.EditorUtility.SetDirty(this);
-                }
             }
         }
         #endif

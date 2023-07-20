@@ -4,7 +4,6 @@ using Core.Combat.Scripts.Effects;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Utils.Patterns;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Skills.Action
 {
@@ -35,16 +34,11 @@ namespace Core.Combat.Scripts.Skills.Action
         public static StatusResult Success(CharacterStateMachine caster, CharacterStateMachine target, StatusInstance statusInstance, bool generatesInstance, EffectType effectType) 
             => new(caster, target, success: true, statusInstance: statusInstance, generatesInstance: generatesInstance, effectType);
 
-        public bool Equals(StatusResult other)
-        {
-            return Equals(Caster, other.Caster) && Equals(Target, other.Target) && IsSuccess == other.IsSuccess && Equals(_statusInstance, other._statusInstance)
-                   && _generatesInstance == other._generatesInstance && EffectType == other.EffectType;
-        }
+        public bool Equals(StatusResult other) =>
+            Equals(Caster, other.Caster) && Equals(Target, other.Target) && IsSuccess == other.IsSuccess && Equals(_statusInstance, other._statusInstance)
+         && _generatesInstance == other._generatesInstance && EffectType == other.EffectType;
 
-        public override bool Equals(object obj)
-        {
-            return obj is StatusResult other && Equals(other);
-        }
+        public override bool Equals(object obj) => obj is StatusResult other && Equals(other);
 
         public override int GetHashCode()
         {
@@ -60,14 +54,8 @@ namespace Core.Combat.Scripts.Skills.Action
             }
         }
 
-        public static bool operator ==(StatusResult left, StatusResult right)
-        {
-            return left.Equals(right);
-        }
+        public static bool operator ==(StatusResult left, StatusResult right) => left.Equals(right);
 
-        public static bool operator !=(StatusResult left, StatusResult right)
-        {
-            return !left.Equals(right);
-        }
+        public static bool operator !=(StatusResult left, StatusResult right) => !left.Equals(right);
     }
 }

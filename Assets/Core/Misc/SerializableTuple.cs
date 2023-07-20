@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine;
 
 // ReSharper disable NonReadonlyMemberInGetHashCode
@@ -48,14 +49,11 @@ namespace Core.Misc
             EqualityComparer<T1> comparer1 = EqualityComparer<T1>.Default;
             EqualityComparer<T2> comparer2 = EqualityComparer<T2>.Default;
             int h0 = comparer1.GetHashCode(item1);
-            h0 = (h0 << 5) + h0 ^ comparer2.GetHashCode(item2);
+            h0 = ((h0 << 5) + h0) ^ comparer2.GetHashCode(item2);
             return h0;
         }
 
-        public override string ToString()
-        {
-            return $"({item1}, {item2})";
-        }
+        public override string ToString() => $"({item1}, {item2})";
 
         public void Deconstruct(out T1 ctxitem1, out T2 ctxItem2)
         {
@@ -63,7 +61,8 @@ namespace Core.Misc
             ctxItem2 = item2;
         }
 
-        public static implicit operator (T1,T2) (SerializableTuple<T1,T2> tuple) => (tuple.item1, tuple.item2);
+        public static implicit operator (T1,T2) ([NotNull] SerializableTuple<T1,T2> tuple) => (tuple.item1, tuple.item2);
+        [NotNull]
         public static implicit operator SerializableTuple<T1,T2> ((T1,T2) tuple) => new(tuple.Item1, tuple.Item2);
         
         public (T1, T2) ToValue() => (item1, item2);
@@ -120,16 +119,13 @@ namespace Core.Misc
 
             int h0;
             h0 = comparer1.GetHashCode(item1);
-            h0 = (h0 << 5) + h0 ^ comparer2.GetHashCode(item2);
-            h0 = (h0 << 5) + h0 ^ comparer3.GetHashCode(item3);
+            h0 = ((h0 << 5) + h0) ^ comparer2.GetHashCode(item2);
+            h0 = ((h0 << 5) + h0) ^ comparer3.GetHashCode(item3);
             return h0;
         }
 
-        public override string ToString()
-        {
-            return $"({item1}, {item2}, {item3})";
-        }
-        
+        public override string ToString() => $"({item1}, {item2}, {item3})";
+
         public void Deconstruct(out T1 ctxitem1, out T2 ctxItem2, out T3 ctxItem3)
         {
             ctxitem1 = item1;
@@ -137,7 +133,8 @@ namespace Core.Misc
             ctxItem3 = item3;
         }
         
-        public static implicit operator (T1,T2,T3) (SerializableTuple<T1,T2,T3> tuple) => (tuple.item1, tuple.item2, tuple.item3);
+        public static implicit operator (T1,T2,T3) ([NotNull] SerializableTuple<T1,T2,T3> tuple) => (tuple.item1, tuple.item2, tuple.item3);
+        [NotNull]
         public static implicit operator SerializableTuple<T1,T2,T3> ((T1,T2,T3) tuple) => new(tuple.Item1, tuple.Item2, tuple.Item3);
     }
 
@@ -199,18 +196,15 @@ namespace Core.Misc
 
             int h0, h1;
             h0 = comparer1.GetHashCode(item1);
-            h0 = (h0 << 5) + h0 ^ comparer2.GetHashCode(item2);
+            h0 = ((h0 << 5) + h0) ^ comparer2.GetHashCode(item2);
             h1 = comparer3.GetHashCode(item3);
-            h1 = (h1 << 5) + h1 ^ comparer4.GetHashCode(item4);
-            h0 = (h0 << 5) + h0 ^ h1;
+            h1 = ((h1 << 5) + h1) ^ comparer4.GetHashCode(item4);
+            h0 = ((h0 << 5) + h0) ^ h1;
             return h0;
         }
 
-        public override string ToString()
-        {
-            return $"({item1}, {item2}, {item3}, {item4})";
-        }
-        
+        public override string ToString() => $"({item1}, {item2}, {item3}, {item4})";
+
         public void Deconstruct(out T1 ctxitem1, out T2 ctxItem2, out T3 ctxItem3, out T4 ctxItem4)
         {
             ctxitem1 = item1;
@@ -219,7 +213,8 @@ namespace Core.Misc
             ctxItem4 = item4;
         }
         
-        public static implicit operator (T1,T2,T3,T4) (SerializableTuple<T1,T2,T3,T4> tuple) => (tuple.item1, tuple.item2, tuple.item3, tuple.item4);
+        public static implicit operator (T1,T2,T3,T4) ([NotNull] SerializableTuple<T1,T2,T3,T4> tuple) => (tuple.item1, tuple.item2, tuple.item3, tuple.item4);
+        [NotNull]
         public static implicit operator SerializableTuple<T1,T2,T3,T4> ((T1,T2,T3,T4) tuple) => new(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4);
     }
 }

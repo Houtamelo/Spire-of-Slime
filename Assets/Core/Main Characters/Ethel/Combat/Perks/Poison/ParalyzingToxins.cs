@@ -11,13 +11,15 @@ using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Poison
 {
     public class ParalyzingToxins : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             ParalyzingToxinsInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -38,7 +40,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Poison
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             ParalyzingToxinsInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -50,7 +53,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Poison
     {
         private readonly Action<CharacterStateMachine> _onCharacterSetup;
 
-        public ParalyzingToxinsInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
+        public ParalyzingToxinsInstance([NotNull] CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
             _onCharacterSetup = OnCharacterSetup;
             if (owner.Display.IsNone)
@@ -60,11 +63,13 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Poison
             }
             
             foreach (CharacterStateMachine character in owner.Display.Value.CombatManager.Characters.GetAllFixed())
+            {
                 if (character.StateEvaluator.PureEvaluate() is not CharacterState.Defeated and not CharacterState.Corpse)
                     character.StatsModule.SubscribeSpeed(new ParalyzingToxinsModifier(owner), allowDuplicates: false);
+            }
         }
         
-        public ParalyzingToxinsInstance(CharacterStateMachine owner, ParalyzingToxinsRecord record) : base(owner, record)
+        public ParalyzingToxinsInstance([NotNull] CharacterStateMachine owner, [NotNull] ParalyzingToxinsRecord record) : base(owner, record)
         {
             _onCharacterSetup = OnCharacterSetup;
             if (owner.Display.IsNone)
@@ -74,8 +79,10 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Poison
             }
             
             foreach (CharacterStateMachine character in owner.Display.Value.CombatManager.Characters.GetAllFixed())
+            {
                 if (character.StateEvaluator.PureEvaluate() is not CharacterState.Defeated and not CharacterState.Corpse)
                     character.StatsModule.SubscribeSpeed(new ParalyzingToxinsModifier(owner), allowDuplicates: false);
+            }
         }
 
         protected override void OnSubscribe()
@@ -90,40 +97,42 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Poison
                 Owner.Display.Value.CombatManager.Characters.CharacterSetup -= _onCharacterSetup;
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new ParalyzingToxinsRecord(Key);
 
-        private void OnCharacterSetup(CharacterStateMachine character)
+        private void OnCharacterSetup([NotNull] CharacterStateMachine character)
         {
             character.StatsModule.SubscribeSpeed(new ParalyzingToxinsModifier(Owner), allowDuplicates: false);
         }
     }
 
-    public class ParalyzingToxinsModifier : IBaseFloatAttributeModifier
+    public class ParalyzingToxinsModifier : IBaseAttributeModifier
     {
-        public int Priority => 0;
-        public string SharedId => nameof(ParalyzingToxinsModifier);
-        private const float MultiplierPerPoisonCount = 0.04f;
-        private const float MaxReduction = 0.3f;
-        
+        private const int MultiplierPerPoisonCount = 4;
+        private const int MaxReduction = 30;
+
         private readonly CharacterStateMachine _caster;
 
-        public ParalyzingToxinsModifier(CharacterStateMachine caster)
-        {
-            _caster = caster;
-        }
+        public ParalyzingToxinsModifier(CharacterStateMachine caster) => _caster = caster;
 
-        public void Modify(ref float value, CharacterStateMachine self)
+        public void Modify(ref int value, [NotNull] CharacterStateMachine self)
         {
             if (self.PositionHandler.IsLeftSide == _caster.PositionHandler.IsLeftSide)
                 return;
             
-            uint poisonCount = 0;
-            foreach (StatusInstance statusInstance in self.StatusModule.GetAll)
+            int poisonCount = 0;
+            foreach (StatusInstance statusInstance in self.StatusReceiverModule.GetAll)
+            {
                 if (statusInstance is Core.Combat.Scripts.Effects.Types.Poison.Poison poison)
-                    poisonCount += poison.DamagePerTime;
+                    poisonCount += poison.DamagePerSecond;
+            }
 
-            float speedReduction = Mathf.Clamp(poisonCount * MultiplierPerPoisonCount, 0, MaxReduction);
+            int speedReduction = Mathf.Clamp(poisonCount * MultiplierPerPoisonCount, 0, MaxReduction);
             value -= speedReduction;
         }
+
+        public int Priority => 0;
+        [NotNull]
+        public string SharedId => nameof(ParalyzingToxinsModifier);
     }
 }

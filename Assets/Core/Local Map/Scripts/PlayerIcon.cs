@@ -1,5 +1,6 @@
 ﻿using Core.Utils.Extensions;
 using DG.Tweening;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Core.Local_Map.Scripts
@@ -10,14 +11,14 @@ namespace Core.Local_Map.Scripts
         
         private Tween _tween;
 
-        public Tween GoToCell(HexagonObject.Cell cell)
+        public Tween GoToCell([NotNull] HexagonObject.Cell cell)
         {
             _tween.KillIfActive();
             Vector3 destination = cell.transform.position;
             return transform.DOMove(destination, Duration);
         }
 
-        public void GoToCellImmediate(HexagonObject.Cell cell)
+        public void GoToCellImmediate([NotNull] HexagonObject.Cell cell)
         {
             _tween.KillIfActive();
             Vector3 destination = cell.transform.position;

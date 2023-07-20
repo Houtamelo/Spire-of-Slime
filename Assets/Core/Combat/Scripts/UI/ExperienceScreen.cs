@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Core.Combat.Scripts.Interfaces;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
@@ -34,8 +36,8 @@ namespace Core.Combat.Scripts.UI
         [SerializeField, Required]
         private AudioSource continueSound;
         
-        private IReadOnlyList<(ICharacterScript script, float startExp, float currentExp)> _allies;
-        private float _totalEarnedExp;
+        private IReadOnlyList<(ICharacterScript script, int startExp, int currentExp)> _allies;
+        private int _totalEarnedExp;
         private Sequence _sequence;
         private Action _onContinueClicked;
 
@@ -49,9 +51,9 @@ namespace Core.Combat.Scripts.UI
 
                 for (int i = 0; i < _allies.Count; i++)
                 {
-                    (_, float startExp, float currentExp) = _allies[i];
+                    (_, int startExp, int currentExp) = _allies[i];
                     ExperienceScreenCharacterUI characterUI = charactersUI[i];
-                    characterUI.SetProgress(startExp, currentExp, 1f);
+                    characterUI.SetProgress(startExp, currentExp, progress: 1.0f);
                 }
                 
                 continueSound.Play();
@@ -64,15 +66,13 @@ namespace Core.Combat.Scripts.UI
             _sequence.KillIfActive();
         }
 
-        public void Play(IReadOnlyList<(ICharacterScript script, float startExp, float currentExp)> allies, Action onContinueClicked)
+        public void Play([NotNull] List<(ICharacterScript script, int startExp, int currentExp)> allies, Action onContinueClicked)
         {
             _sequence.KillIfActive();
             Debug.Assert(allies.Count <= 4, "ExperienceScreen can only handle up to 4 allies", context: this);
 
             if (_onContinueClicked != null)
-            {
                 Debug.LogWarning("ExperienceScreen is already playing, this is probably a bug, however things might work normally", context: this);
-            }
 
             canvasGroup.alpha = 0f;
             canvasGroup.interactable = false;
@@ -82,12 +82,12 @@ namespace Core.Combat.Scripts.UI
             _onContinueClicked = onContinueClicked;
             
             _totalEarnedExp = allies.Sum(tuple => tuple.currentExp - tuple.startExp);
-            experienceText.text = (_totalEarnedExp * 100f).ToString("000");
+            experienceText.text = _totalEarnedExp.ToString("000");
 
             int index = 0;
             for (; index < allies.Count; index++)
             {
-                (ICharacterScript script, float startExp, _) = allies[index];
+                (ICharacterScript script, int startExp, _) = allies[index];
                 ExperienceScreenCharacterUI characterUI = charactersUI[index];
                 characterUI.SetCharacter(script, startExp);
             }
@@ -100,7 +100,7 @@ namespace Core.Combat.Scripts.UI
             _sequence.AppendCallback(() => canvasGroup.interactable = true);
             _sequence.AppendInterval(0.5f);
             _sequence.AppendCallback(experienceSound.Play);
-            _sequence.Append(DOVirtual.Float(from: 0f, to: 1f, duration: 2f + _totalEarnedExp * 0.5f, OnVirtualFloat));
+            _sequence.Append(DOVirtual.Float(from: 0f, to: 1f, duration: 2f + (_totalEarnedExp * 0.005f), OnVirtualFloat));
             _sequence.AppendCallback(experienceSound.Stop);
         }
 
@@ -109,7 +109,7 @@ namespace Core.Combat.Scripts.UI
             bool levelUpOnThisFrame = false;
             for (int i = 0; i < _allies.Count; i++)
             {
-                (_, float startExp, float currentExp) = _allies[i];
+                (_, int startExp, int currentExp) = _allies[i];
                 ExperienceScreenCharacterUI characterUI = charactersUI[i];
                 levelUpOnThisFrame |= characterUI.SetProgress(startExp, currentExp, progress);
             }
@@ -117,7 +117,7 @@ namespace Core.Combat.Scripts.UI
             if (levelUpOnThisFrame)
                 levelUpSound.Play();
 
-            experienceText.text = (Mathf.Lerp(_totalEarnedExp, 0f, progress) * 100f).ToString("000");
+            experienceText.text = (_totalEarnedExp * progress).FloorToInt().ToString("0");
         }
     }
 }

@@ -21,12 +21,12 @@ using Core.Utils.Patterns;
 using Core.Visual_Novel.Scripts;
 using Core.World_Map.Scripts;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Game_Manager.Scripts
@@ -123,7 +123,7 @@ namespace Core.Game_Manager.Scripts
         }
 #endif
         
-        private void LoadScene(SceneRef sceneName)
+        private void LoadScene([NotNull] SceneRef sceneName)
         {
             Scene scene = SceneManager.GetSceneByName(sceneName.Name);
             if (scene.IsValid() && scene.isLoaded)
@@ -136,7 +136,7 @@ namespace Core.Game_Manager.Scripts
             GC.Collect();
         }
 
-        public Option<CoroutineWrapper> UnloadScene(SceneRef sceneName)
+        public Option<CoroutineWrapper> UnloadScene([NotNull] SceneRef sceneName)
         {
             Scene scene = SceneManager.GetSceneByName(sceneName.Name);
             if (!scene.IsValid() || !scene.isLoaded)
@@ -148,12 +148,13 @@ namespace Core.Game_Manager.Scripts
             return Option<CoroutineWrapper>.Some(value: routine);
         }
 
-        private static IEnumerator WaitForHandle(AsyncOperation handle)
+        private static IEnumerator WaitForHandle([NotNull] AsyncOperation handle)
         {
             while (!handle.isDone)
                 yield return null;
         }
         
+        [NotNull]
         public CoroutineWrapper WorldMapToLocalMap(WorldPath worldPath, in FullPathInfo fullPathInfo, LocationEnum origin, LocationEnum destination)
         {
             StopMajorRoutine();
@@ -171,7 +172,7 @@ namespace Core.Game_Manager.Scripts
 
             SceneRef.WorldMap.SetObjectsActive(false);
             if (Save.AssertInstance(out Save save))
-                save.SetNemaExhaustion(0f);
+                save.SetNemaExhaustion(newValue: 0);
             
             yield return UnLoadMutuallyExclusiveScenes(SceneRef.LocalMap);
 
@@ -194,6 +195,7 @@ namespace Core.Game_Manager.Scripts
             yield return fadePanel.FadeDown().WaitForCompletion();
         }
 
+        [NotNull]
         private CoroutineWrapper UnLoadMutuallyExclusiveScenes(SceneRef origin)
         {
             CoroutineWrapper routine = new(UnLoadMutuallyExclusiveScenesRoutine(origin: origin), routineName: nameof(UnLoadMutuallyExclusiveScenesRoutine));
@@ -211,6 +213,7 @@ namespace Core.Game_Manager.Scripts
             }
         }
 
+        [NotNull]
         public CoroutineWrapper LocalMapToCombat(CombatSetupInfo setupInfo, CombatTracker tracker, WinningConditionGenerator winningConditionGenerator, CleanString backgroundKey)
         {
             StopMajorRoutine();
@@ -235,6 +238,7 @@ namespace Core.Game_Manager.Scripts
             yield return fadePanel.FadeDown().WaitForCompletion();
         }
         
+        [NotNull]
         public CoroutineWrapper PlayerWonCombatOnLocalMap()
         {
             StopMajorRoutine();
@@ -257,6 +261,7 @@ namespace Core.Game_Manager.Scripts
             yield return fadePanel.FadeDown().WaitForCompletion();
         }
 
+        [NotNull]
         public CoroutineWrapper PlayerLostCombatOnLocalMap()
         {
             StopMajorRoutine();
@@ -288,6 +293,7 @@ namespace Core.Game_Manager.Scripts
             yield return fadePanel.FadeDown().WaitForCompletion();
         }
 
+        [NotNull]
         public CoroutineWrapper VisualNovelToCombat(CombatSetupInfo combatSetupInfo, CombatTracker combatFlag, WinningConditionGenerator winningConditionGenerator, CleanString backgroundKey, MusicController musicController)
         {
             StopMajorRoutine();
@@ -312,6 +318,7 @@ namespace Core.Game_Manager.Scripts
             yield return fadePanel.FadeDown().WaitForCompletion();
         }
         
+        [NotNull]
         public CoroutineWrapper VisualNovelToWorldmap()
         {
             StopMajorRoutine();
@@ -334,6 +341,7 @@ namespace Core.Game_Manager.Scripts
             yield return fadePanel.FadeDown().WaitForCompletion();
         }
 
+        [NotNull]
         public CoroutineWrapper LocalMapToWorldMap(LocationEnum location)
         {
             StopMajorRoutine();
@@ -378,6 +386,7 @@ namespace Core.Game_Manager.Scripts
             yield return fadePanel.FadeDown().WaitForCompletion();
         }
 
+        [NotNull]
         public CoroutineWrapper NewGameFromMainMenu(string saveName)
         {
             Save.StartNewGame(name: saveName);
@@ -402,6 +411,7 @@ namespace Core.Game_Manager.Scripts
             yield return fadePanel.FadeDown().WaitForCompletion();
         }
 
+        [NotNull]
         public CoroutineWrapper LoadSave(SaveRecord record)
         {
             StopMajorRoutine();
@@ -410,7 +420,7 @@ namespace Core.Game_Manager.Scripts
             return _majorCoroutine;
         }
 
-        private IEnumerator LoadSaveRoutine(SaveRecord record)
+        private IEnumerator LoadSaveRoutine([NotNull] SaveRecord record)
         {
             Result<Save> save = Save.FromRecord(record);
             if (save.IsErr)
@@ -542,10 +552,7 @@ namespace Core.Game_Manager.Scripts
             yield return fadePanel.FadeDown().WaitForCompletion();
         }
 
-        public Coroutine PauseMenuToMainMenu()
-        {
-            return StartCoroutine(PauseMenuToMainMenuRoutine());
-        }
+        public Coroutine PauseMenuToMainMenu() => StartCoroutine(PauseMenuToMainMenuRoutine());
 
         private IEnumerator PauseMenuToMainMenuRoutine()
         {
@@ -589,7 +596,7 @@ namespace Core.Game_Manager.Scripts
             }
         }
 
-        private void RegisterMinorRoutine(CoroutineWrapper wrapper)
+        private void RegisterMinorRoutine([NotNull] CoroutineWrapper wrapper)
         {
             _minorCoroutines.Add(wrapper);
             wrapper.Finished += MinorRoutineFinished;
@@ -606,6 +613,7 @@ namespace Core.Game_Manager.Scripts
                 coroutine.ForceFinish();
         }
 
+        [NotNull]
         public CoroutineWrapper VisualNovelToLocalMap()
         {
             StopMajorRoutine();
@@ -632,6 +640,7 @@ namespace Core.Game_Manager.Scripts
             yield return fadePanel.FadeDown().WaitForCompletion();
         }
 
+        [NotNull]
         public CoroutineWrapper ToMainMenuExclusive()
         {
             StopMajorRoutine();
@@ -651,6 +660,7 @@ namespace Core.Game_Manager.Scripts
             yield return fadePanel.FadeDown().WaitForCompletion();
         }
 
+        [NotNull]
         public CoroutineWrapper CombatToVisualNovel(string visualNovelScene)
         {
             StopMajorRoutine();

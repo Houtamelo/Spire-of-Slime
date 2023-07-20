@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using JetBrains.Annotations;
+using UnityEngine;
 
 namespace Core.Utils.Editor
 {
@@ -32,7 +33,7 @@ namespace Core.Utils.Editor
             Debug.Log(string.Format(format: "Searched {0} GameObjects, {1} components, found {2} missing", arg0: _goCount, arg1: _componentsCount, arg2: _missingCount));
         }
  
-        private static void FindInGo(GameObject g)
+        private static void FindInGo([NotNull] GameObject g)
         {
             _goCount++;
             Component[] components = g.GetComponents<Component>();

@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Core.Utils.Handlers
@@ -15,13 +16,13 @@ namespace Core.Utils.Handlers
 			Event?.Invoke(value);
         }
         
-        public static bool operator >(IntHandler handler, int value) => handler.Value > value;
-        public static bool operator <(IntHandler handler, int value) => handler.Value < value;
-        public static int operator +(IntHandler handler) => handler.Value;
-        public static int operator -(IntHandler handler) => -handler.Value;
-        public static int operator /(IntHandler handler, IntHandler handler1) => handler.Value / handler1.Value;
-        public static int operator *(IntHandler handler, IntHandler handler1) => handler.Value * handler1.Value;
-        public static bool operator <=(IntHandler handler, int value) => handler.Value <= value;
-        public static bool operator >=(IntHandler handler, int value) => handler.Value >= value;
+        public static bool operator >([NotNull] IntHandler handler, int value) => handler.Value > value;
+        public static bool operator <([NotNull] IntHandler handler, int value) => handler.Value < value;
+        public static int operator +([NotNull] IntHandler handler) => handler.Value;
+        public static int operator -([NotNull] IntHandler handler) => -handler.Value;
+        public static int operator /([NotNull] IntHandler handler, [NotNull] IntHandler handler1) => handler.Value / handler1.Value;
+        public static int operator *([NotNull] IntHandler handler, [NotNull] IntHandler handler1) => handler.Value * handler1.Value;
+        public static bool operator <=([NotNull] IntHandler handler, int value) => handler.Value <= value;
+        public static bool operator >=([NotNull] IntHandler handler, int value) => handler.Value >= value;
     }
 }

@@ -11,14 +11,18 @@ using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 using ListPool;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Poison
 {
     public class PoisonCoating : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             PoisonCoatingInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -39,7 +43,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Poison
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             PoisonCoatingInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -49,15 +54,13 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Poison
 
     public class PoisonCoatingInstance : PerkInstance, ISkillModifier
     {
-        public string SharedId => nameof(PoisonCoatingInstance);
-        public int Priority => 0;
-        private static readonly BuffOrDebuffScript Debuff = new(false, 5, 1f, CombatStat.PoisonResistance, -0.4f);
+        private static readonly BuffOrDebuffScript Debuff = new(Permanent: false, TSpan.FromSeconds(5), BaseApplyChance: 100, CombatStat.PoisonResistance, BaseDelta: -40);
 
         public PoisonCoatingInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public PoisonCoatingInstance(CharacterStateMachine owner, PoisonCoatingRecord record) : base(owner, record)
+
+        public PoisonCoatingInstance(CharacterStateMachine owner, [NotNull] PoisonCoatingRecord record) : base(owner, record)
         {
         }
 
@@ -71,6 +74,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Poison
             Owner.SkillModule.SkillModifiers.Remove(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new PoisonCoatingRecord(Key);
 
         public void Modify(ref SkillStruct skillStruct)
@@ -79,8 +83,12 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Poison
             if (key != EthelSkills.Clash && key != EthelSkills.Sever && key != EthelSkills.Pierce)
                 return;
             
-            ref ValueListPool<IActualStatusScript> targetEffects = ref skillStruct.TargetEffects;
+            ref CustomValuePooledList<IActualStatusScript> targetEffects = ref skillStruct.TargetEffects;
             targetEffects.Add(Debuff);
         }
+
+        [NotNull]
+        public string SharedId => nameof(PoisonCoatingInstance);
+        public int Priority => 0;
     }
 }

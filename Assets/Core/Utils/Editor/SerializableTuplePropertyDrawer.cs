@@ -1,4 +1,5 @@
 ﻿using Core.Misc;
+using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ namespace Core.Utils.Editor
     {
         private const float Spacing = 10f;
         
-        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        public override void OnGUI(Rect position, [NotNull] SerializedProperty property, GUIContent label)
         {
             // Draw both properties on the same line as the label, the properties are called "item1" and "item2"
             
@@ -35,7 +36,7 @@ namespace Core.Utils.Editor
             EditorGUI.EndProperty();
         }
 
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        public override float GetPropertyHeight([CanBeNull] SerializedProperty property, GUIContent label)
         {
             if (property == null)
                 return EditorGUI.GetPropertyHeight(SerializedPropertyType.Generic, GUIContent.none);

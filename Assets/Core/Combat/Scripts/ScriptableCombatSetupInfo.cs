@@ -4,10 +4,11 @@ using Core.Audio.Scripts.MusicControllers;
 using Core.Combat.Scripts.BackgroundGeneration;
 using Core.Combat.Scripts.Interfaces;
 using Core.Combat.Scripts.WinningCondition;
+using Core.Main_Characters.Ethel.Combat;
 using Core.Main_Characters.Nema.Combat;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
-using Data.Main_Characters.Ethel;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -29,19 +30,23 @@ namespace Core.Combat.Scripts
         
         [SerializeField, Required, ShowIf(nameof(useCustomNemaScript))] 
         private SerializedCharacterInfo serializedNemaScript;
-        
-        [FormerlySerializedAs("serializedWinningCondition"),SerializeField]
+
+        [SerializeField, Required]
         private WinningConditionGenerator winningConditionGenerator;
+
         public WinningConditionGenerator WinningConditionGenerator => winningConditionGenerator;
 
-        [field: SerializeField]
-        public SerializedCharacterInfo[] Enemies { get; private set; }
-        
-        [field: SerializeField] 
-        public CombatBackground BackgroundPrefab { get; private set; }
-        
-        [field: SerializeField]
-        public bool MistExists { get; private set; }
+        [SerializeField]
+        private SerializedCharacterInfo[] enemies;
+        public SerializedCharacterInfo[] Enemies => enemies;
+
+        [SerializeField, Required]
+        private CombatBackground backgroundPrefab;
+        public CombatBackground BackgroundPrefab => backgroundPrefab;
+
+        [SerializeField]
+        private bool mistExists;
+        public bool MistExists => mistExists;
 
         [SerializeField]
         private bool allowLust;
@@ -53,10 +58,10 @@ namespace Core.Combat.Scripts
         private MusicController musicController;
         public MusicController MusicController => musicController;
 
-        private (ICharacterScript script, CombatSetupInfo.RecoveryInfo recovery, float startExp, bool bindToSave) GetEthel()
+        private (ICharacterScript script, CombatSetupInfo.RecoveryInfo recovery, int startExp, bool bindToSave) GetEthel()
         {
             Save save = Save.Current;
-            float startExp = save != null ? save.EthelStats.Experience : 0f;
+            int startExp = save != null ? save.EthelStats.TotalExperience : 0;
 
             if (useCustomEthelScript)
             {
@@ -67,10 +72,10 @@ namespace Core.Combat.Scripts
             return (save != null ? save.EthelScript : CharacterDatabase.DefaultEthel, CombatSetupInfo.RecoveryInfo.Default, startExp, bindToSave: true);
         }
 
-        private (ICharacterScript script, CombatSetupInfo.RecoveryInfo recovery, float startExp, bool bindToSave) GetNema()
+        private (ICharacterScript script, CombatSetupInfo.RecoveryInfo recovery, int startExp, bool bindToSave) GetNema()
         {
             Save save = Save.Current;
-            float startExp = save != null ? save.NemaStats.Experience : 0f;
+            int startExp = save != null ? save.NemaStats.TotalExperience : 0;
 
             if (useCustomNemaScript)
             {
@@ -81,17 +86,18 @@ namespace Core.Combat.Scripts
             return (save != null ? save.NemaScript : CharacterDatabase.DefaultNema, CombatSetupInfo.RecoveryInfo.Default, startExp, bindToSave: true);
         }
 
+        [NotNull]
         public string Key => name;
 
         public CombatSetupInfo ToStruct()
         {
             Save save = Save.Current;
             if (save == null)
-                return new CombatSetupInfo(allies: new[] { GetEthel(), GetNema() },
-                                           Enemies.Select(enemy => enemy.ToStruct()).Select(enemy => ((ICharacterScript)enemy.script, enemy.info)).ToArray(), MistExists, allowLust, paddingSettings);
+                return new CombatSetupInfo(allies: new[] { GetEthel(), GetNema() }, Enemies.Select(enemy => enemy.ToStruct()).Select(enemy => ((ICharacterScript)enemy.script, enemy.info)).ToArray(),
+                                           MistExists, allowLust, paddingSettings);
 
             IReadOnlyList<(IReadonlyCharacterStats stats, bool bindToSave)> alliesOrder = save.GetCombatOrderAsStats();
-            List<(ICharacterScript, CombatSetupInfo.RecoveryInfo, float expAtStart, bool bindToSave)> allies = new(alliesOrder.Count);
+            List<(ICharacterScript, CombatSetupInfo.RecoveryInfo, int expAtStart, bool bindToSave)> allies = new(alliesOrder.Count);
             foreach ((IReadonlyCharacterStats stats, bool bindToSave) in alliesOrder)
             {
                 ICharacterScript script;
@@ -112,7 +118,7 @@ namespace Core.Combat.Scripts
                     recovery = CombatSetupInfo.RecoveryInfo.Default;
                 }
                 
-                allies.Add((script, recovery, stats.Experience, bindToSave));
+                allies.Add((script, recovery, stats.TotalExperience, bindToSave));
             }
             
             return new CombatSetupInfo(allies.ToArray(), Enemies.Select(enemy => enemy.ToStruct()).Select(enemy => ((ICharacterScript)enemy.script, enemy.info)).ToArray(), MistExists, allowLust, paddingSettings);

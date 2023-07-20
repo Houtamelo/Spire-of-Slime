@@ -1,4 +1,5 @@
-﻿using Core.Utils.Extensions;
+﻿using System.Text;
+using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using DG.Tweening;
 using Sirenix.OdinInspector;
@@ -6,13 +7,13 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Behaviour.UI
 {
     public class TemptationBar : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        private static float BarFillLerpDuration => CharacterDisplay.BarsFillLerpDuration;
+        private static float BarFillLerpDuration => DisplayModule.BarsFillLerpDuration;
+        private static readonly StringBuilder Builder = new();
 
         [SerializeField, Required]
         private Image bar;
@@ -21,9 +22,9 @@ namespace Core.Combat.Scripts.Behaviour.UI
         private TMP_Text tmp;
         
         private Tween _tween;
-        private Option<ClampedPercentage> _cachedTemptation = Option.None;
+        private Option<int> _cachedTemptation = Option.None;
         
-        public void Set(bool active, ClampedPercentage temptation)
+        public void Set(bool active, int temptation)
         {
             gameObject.SetActive(active);
             if (active == false)
@@ -32,12 +33,12 @@ namespace Core.Combat.Scripts.Behaviour.UI
                 return;
             }
             
-            if (_cachedTemptation.TrySome(out ClampedPercentage cached) && cached == temptation)
+            if (_cachedTemptation.TrySome(out int cached) && cached == temptation)
                 return;
 
             _tween.KillIfActive();
-            _cachedTemptation = Option<ClampedPercentage>.Some(temptation);
-            tmp.text = temptation.ToString();
+            _cachedTemptation = Option<int>.Some(temptation);
+            tmp.text = Builder.Override(temptation.ToString(), "/100").ToString();
 
             _tween = bar.DOFillAmount(endValue: temptation, duration: BarFillLerpDuration);
         }

@@ -1,36 +1,39 @@
-﻿using Core.Combat.Scripts.Behaviour;
+﻿using System;
+using System.Collections.Generic;
+using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Utils.Collections;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 using ListPool;
 
 namespace Core.Combat.Scripts.Skills
 {
     public ref struct ChargeStruct
     {
+        private static readonly List<CharacterStateMachine> ReusableTargetList = new(capacity: 4);
+        
         public ISkill Skill { get; }
         public CharacterStateMachine Caster { get; }
-        public ValueListPool<TargetProperties> TargetsProperties;
-        public float Charge;
 
-        public ChargeStruct(ISkill skill, CharacterStateMachine caster, CharacterStateMachine firstTarget)
+        public TSpan Charge;
+        public CustomValuePooledList<TargetProperties> TargetsProperties;
+
+        public ChargeStruct([NotNull] ISkill skill, CharacterStateMachine caster, CharacterStateMachine firstTarget)
         {
             Skill = skill;
             Caster = caster;
-            
-            TargetResolver targetResolver = new(skill, caster, firstTarget);
-            using ValueListPool<CharacterStateMachine> targets = targetResolver.GetTargetList();
-            {
-                int count = targets.Count;
-                ValueListPool<TargetProperties> targetProperties = new(count);
-                for (int index = 0; index < count; index++)
-                {
-                    CharacterStateMachine target = targets[index];
-                    targetProperties.Add(new TargetProperties(target, skill));
-                }
 
-                TargetsProperties = targetProperties;
-            }
+            TargetResolver targetResolver = new(skill, caster, firstTarget);
+            ReusableTargetList.Clear();
+            targetResolver.FillTargetList(ReusableTargetList);
+            int count = ReusableTargetList.Count;
             
-            Charge = skill.BaseCharge;
+            TargetsProperties = new CustomValuePooledList<TargetProperties>(count);
+            for (int index = 0; index < count; index++)
+                TargetsProperties.Add(new TargetProperties(ReusableTargetList[index], skill));
+
+            Charge = skill.Charge;
             _unDisposed = true;
         }
 

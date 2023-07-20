@@ -87,17 +87,11 @@ namespace Core.Local_Map.Scripts.Coordinates
 			float zDiff = Math.Abs(value: rz - z);
 
 			if ( xDiff > yDiff && xDiff > zDiff )
-			{
 				rx = -ry - rz;
-			}
 			else if ( yDiff > zDiff )
-			{
 				ry = -rx - rz;
-			}
 			else
-			{
 				rz = -rx - ry;
-			}
 
 			return new Cubic( q: rx, r: ry, s: rz );
 		}
@@ -111,15 +105,14 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// scaled.</param>
 		/// <returns>A new FloatCubic representing the new floating hex position.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public FloatCubic Scale( float factor )
-		{
-			return new FloatCubic(
+		public FloatCubic Scale( float factor ) =>
+			new
+				(
 				x: x * factor,
 				y: y * factor,
 				z: z * factor
-			);
-		}
+				);
 
-		#endregion
+#endregion
 	}
 }

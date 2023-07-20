@@ -8,13 +8,15 @@ using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Tank
 {
     public class Spikeful : PerkScriptable 
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             SpikefulInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -35,7 +37,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Tank
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             SpikefulInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -43,39 +46,41 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Tank
         }
     }
     
-    public class SpikefulInstance : PerkInstance, IBaseFloatAttributeModifier
+    public class SpikefulInstance : PerkInstance, IBaseAttributeModifier
     {
-        public int Priority => 0;
-        public string SharedId => nameof(SpikefulInstance);
-        private const float MaxValue = 0.3f;
-        private const float ResilienceMultiplier = 1;
-        
+        private const int MaxValue = 30;
+
         public SpikefulInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public SpikefulInstance(CharacterStateMachine owner, SpikefulRecord record) : base(owner, record)
+
+        public SpikefulInstance(CharacterStateMachine owner, [NotNull] SpikefulRecord record) : base(owner, record)
         {
         }
-        
+
         protected override void OnSubscribe()
         {
-            Owner.StatsModule.SubscribePower(this, allowDuplicates: false);
+            Owner.StatsModule.SubscribePower(modifier: this, allowDuplicates: false);
         }
 
         protected override void OnUnsubscribe()
         {
-            Owner.StatsModule.UnsubscribePower(this);
+            Owner.StatsModule.UnsubscribePower(modifier: this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new SpikefulRecord(Key);
 
-        public void Modify(ref float value, CharacterStateMachine self)
+        public void Modify(ref int value, [NotNull] CharacterStateMachine self)
         {
             if (self.StaminaModule.IsNone)
                 return;
             
-            value += Mathf.Clamp(self.StaminaModule.Value.BaseResilience * ResilienceMultiplier, 0, MaxValue);
+            value += Mathf.Clamp(self.StaminaModule.Value.BaseResilience, 0, MaxValue);
         }
+
+        public int Priority => 0;
+        [NotNull]
+        public string SharedId => nameof(SpikefulInstance);
     }
 }

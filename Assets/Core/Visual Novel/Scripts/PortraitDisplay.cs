@@ -2,10 +2,11 @@
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Patterns;
+
 // ReSharper disable Unity.InefficientPropertyAccess
 
 namespace Core.Visual_Novel.Scripts
@@ -179,12 +180,12 @@ namespace Core.Visual_Novel.Scripts
             }
         }
 
-        private void CheckIfShouldFlip(Transform portraitTransform, bool isNewPortraitLeftSide)
+        private void CheckIfShouldFlip([NotNull] Transform portraitTransform, bool isNewPortraitLeftSide)
         {
             portraitTransform.eulerAngles = isLeftSide == isNewPortraitLeftSide ? Vector3.zero : new Vector3(0, 180, 0);
         }
 
-        private void HidePortrait(Image portrait)
+        private void HidePortrait([NotNull] Image portrait)
         {
             portrait.transform.position = backupPosition;
             portrait.color = ClearWhite;

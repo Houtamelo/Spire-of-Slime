@@ -58,9 +58,7 @@ namespace UI
             OnPointerExit(null);
 
             if (targetGraphic.raycastTarget == false)
-            {
                 Debug.LogWarning($"Target graphic raycast target is disabled on {name}", context: this);
-            }
         }
         
 #endif

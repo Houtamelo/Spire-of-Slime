@@ -13,13 +13,14 @@ using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
-using Utils.Patterns;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
 {
     public class WhatDoesntKillYou : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             WhatDoesntKillYouInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -40,7 +41,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             WhatDoesntKillYouInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -50,15 +52,14 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
     
     public class WhatDoesntKillYouInstance : PerkInstance, IStatusReceivedListener
     {
-        private const float ApplyChance = 1f;
-        private static readonly BuffOrDebuffScript Buff = new(false, default, ApplyChance, default, default);
-        
+        private const int ApplyChance = 100;
+        private static readonly BuffOrDebuffScript Buff = new(Permanent: false, BaseDuration: default, ApplyChance, Stat: default, BaseDelta: default);
 
         public WhatDoesntKillYouInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
         
-        public WhatDoesntKillYouInstance(CharacterStateMachine owner, WhatDoesntKillYouRecord record) : base(owner, record)
+        public WhatDoesntKillYouInstance(CharacterStateMachine owner, [NotNull] WhatDoesntKillYouRecord record) : base(owner, record)
         {
         }
 
@@ -66,6 +67,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
 
         protected override void OnUnsubscribe() => Owner.Events.StatusReceivedListeners.Remove(this);
 
+        [NotNull]
         public override PerkRecord GetRecord() => new WhatDoesntKillYouRecord(Key);
 
         private bool _recursionLock;
@@ -83,10 +85,10 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
             CombatStat debuffedStat = buffOrDebuff.Attribute;
             CombatStat statToApply = CombatUtils.GetRandomCombatStatExcept(debuffedStat);
 
-            BuffOrDebuffToApply buffToApply = (BuffOrDebuffToApply)Buff.GetStatusToApply(Owner, Owner, false, null);
+            BuffOrDebuffToApply buffToApply = (BuffOrDebuffToApply)Buff.GetStatusToApply(caster: Owner, target: Owner, crit: false, skill: null);
             buffToApply.Stat = statToApply;
             buffToApply.Duration = buffOrDebuff.Duration;
-            buffToApply.Delta = -1 * buffOrDebuff.Delta;
+            buffToApply.Delta = -1 * buffOrDebuff.GetDelta;
 
             BuffOrDebuffScript.ProcessModifiersAndTryApply(buffToApply);
             _recursionLock = false;

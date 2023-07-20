@@ -22,9 +22,8 @@ namespace UI
             get
             {
                 if (ReferenceEquals(rectTransform, null))
-                {
                     rectTransform = GetComponent<RectTransform>();
-                }
+
                 return rectTransform;
             }
         }

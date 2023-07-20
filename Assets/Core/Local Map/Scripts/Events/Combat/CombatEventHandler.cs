@@ -8,17 +8,18 @@ using Core.Save_Management.SaveObjects;
 using Core.Utils.Async;
 using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
+using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Local_Map.Scripts.Events.Combat
 {
     public static class CombatEventHandler
     {
-        public static CoroutineWrapper HandleCombat(TileInfo tileInfo, in Option<float> multiplier, in Option<(CombatSetupInfo setupInfo, WinningConditionGenerator winningConditionGenerator, string backgroundKey)> combatInfo) 
+        [NotNull]
+        public static CoroutineWrapper HandleCombat([NotNull] TileInfo tileInfo, in Option<float> multiplier, in Option<(CombatSetupInfo setupInfo, WinningConditionGenerator winningConditionGenerator, string backgroundKey)> combatInfo) 
             => new(CombatRoutine(tileInfo, multiplier, combatInfo), nameof(CombatRoutine), context: null, autoStart: true);
 
-        private static IEnumerator CombatRoutine(TileInfo tileInfo, Option<float> multiplierOption, Option<(CombatSetupInfo setupInfo, WinningConditionGenerator winningConditionGenerator, string backgroundKey)> combatInfoOption)
+        private static IEnumerator CombatRoutine([NotNull] TileInfo tileInfo, Option<float> multiplierOption, Option<(CombatSetupInfo setupInfo, WinningConditionGenerator winningConditionGenerator, string backgroundKey)> combatInfoOption)
         {
             float multiplier;
             if (multiplierOption.IsNone)
@@ -27,7 +28,9 @@ namespace Core.Local_Map.Scripts.Events.Combat
                 multiplier = 1;
             }
             else
+            {
                 multiplier = multiplierOption.Value;
+            }
 
             if (tileInfo.Type == TileType.WorldLocation)
             {

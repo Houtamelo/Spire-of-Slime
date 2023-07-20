@@ -8,7 +8,10 @@ using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 using ListPool;
 using UnityEngine;
 
@@ -16,7 +19,8 @@ namespace Core.Main_Characters.Nema.Combat.Perks.AoE
 {
     public class Loneliness : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             LonelinessInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -37,7 +41,8 @@ namespace Core.Main_Characters.Nema.Combat.Perks.AoE
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             LonelinessInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -47,15 +52,13 @@ namespace Core.Main_Characters.Nema.Combat.Perks.AoE
     
     public class LonelinessInstance : PerkInstance, IChargeModifier
     {
-        private const float ChargeModifierPerMissingTarget = 0.2f;
-        public string SharedId => nameof(LonelinessInstance);
-        public int Priority => 998;
+        private const double ChargeModifierPerMissingTarget = 0.2;
 
         public LonelinessInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public LonelinessInstance(CharacterStateMachine owner, LonelinessRecord record) : base(owner, record)
+
+        public LonelinessInstance(CharacterStateMachine owner, [NotNull] LonelinessRecord record) : base(owner, record)
         {
         }
 
@@ -69,19 +72,20 @@ namespace Core.Main_Characters.Nema.Combat.Perks.AoE
             Owner.SkillModule.ChargeModifiers.Remove(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new LonelinessRecord(Key);
 
         public void Modify(ref ChargeStruct chargeStruct)
         {
             const int expectedTargetCount = 4;
-            ref ValueListPool<TargetProperties> targets = ref chargeStruct.TargetsProperties;
+            ref CustomValuePooledList<TargetProperties> targets = ref chargeStruct.TargetsProperties;
             int targetCount = targets.Count;
-            ref float charge = ref chargeStruct.Charge;
-            charge *= 1 - ChargeModifierPerMissingTarget * (expectedTargetCount - targetCount);
-            
-#if UNITY_EDITOR
-            Debug.Assert(chargeStruct.Charge == charge, $"ChargeStruct charge is not equal to charge variable. ChargeStruct: {chargeStruct.Charge}, charge: {charge}");
-#endif
+            ref TSpan charge = ref chargeStruct.Charge;
+            charge.Multiply(1 - (ChargeModifierPerMissingTarget * (expectedTargetCount - targetCount)));
         }
+
+        [NotNull]
+        public string SharedId => nameof(LonelinessInstance);
+        public int Priority => 998;
     }
 }

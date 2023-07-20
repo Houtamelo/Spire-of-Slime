@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.Serialization;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -19,7 +20,8 @@ namespace Core.Save_Management.SaveObjects
             _sanitized = true;
         }
 
-        private static string Sanitize(string input)
+        [NotNull]
+        private static string Sanitize([CanBeNull] string input)
         {
             if (string.IsNullOrEmpty(input))
                 return string.Empty;
@@ -101,8 +103,10 @@ namespace Core.Save_Management.SaveObjects
             
             ReadOnlySpan<char> otherSpan = otherPivot[..j];
             for (int i = 0; i < otherSpan.Length; i++)
+            {
                 if (selfSpan[i] != otherSpan[i])
                     return false;
+            }
 
             return true;
         }
@@ -168,8 +172,10 @@ namespace Core.Save_Management.SaveObjects
                 return false;
 
             for (int i = 0; i < otherSpan.Length; i++)
+            {
                 if (selfSpan[i] != otherSpan[i])
                     return false;
+            }
 
             return true;
         }
@@ -183,11 +189,11 @@ namespace Core.Save_Management.SaveObjects
         public static bool operator ==(CleanString left, CleanString right) => left.Equals(right);
         public static bool operator !=(CleanString left, CleanString right) => !left.Equals(right);
         
-        public static bool operator ==(CleanString left, string right) => left.Equals(right);
-        public static bool operator !=(CleanString left, string right) => !left.Equals(right);
+        public static bool operator ==(CleanString left, [CanBeNull] string right) => left.Equals(right);
+        public static bool operator !=(CleanString left, [CanBeNull] string right) => !left.Equals(right);
         
-        public static bool operator ==(string left, CleanString right) => right.Equals(left);
-        public static bool operator !=(string left, CleanString right) => !right.Equals(left);
+        public static bool operator ==([CanBeNull] string left, CleanString right) => right.Equals(left);
+        public static bool operator !=([CanBeNull] string left, CleanString right) => !right.Equals(left);
         
         public static implicit operator CleanString(string value) => new(value);
 
@@ -208,8 +214,10 @@ namespace Core.Save_Management.SaveObjects
                 return false;
 
             for (int i = 0; i < otherSpan.Length; i++)
+            {
                 if (selfSpan[i] != otherSpan[i])
                     return false;
+            }
 
             return true;
         }

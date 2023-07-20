@@ -1,130 +1,151 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Action.Overlay;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Localization.Scripts;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
 using DG.Tweening;
 using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
+
 // ReSharper disable Unity.RedundantHideInInspectorAttribute
 // ReSharper disable UseArrayEmptyMethod
 
 namespace Core.Combat.Scripts.Skills
 {
-    [CreateAssetMenu(menuName = "Database/Combat/Skill File", fileName = "skill_character-name_skill-name")]
+    [CreateAssetMenu(menuName = "Database/Combat/Skill File", fileName = "skill_character-name_skill-name"),
+     SuppressMessage("ReSharper", "ArgumentsStyleLiteral")]
     public class SkillScriptable : ScriptableObject, ISkill
     {
         public CleanString Key => name;
-        
-        [field: SerializeField] 
-        public string DisplayName { get; private set; }
-        
-        [field: SerializeField, HideInInspector]
-        public string FlavorText { get; private set; }
-        
-        [field: SerializeField, PropertyRange(0, 4f), LabelText("Charge"), PropertyOrder(1)]
-        public float BaseCharge { get; private set; }
-        
-        [field: SerializeField, PropertyRange(0, 4f), LabelText("Recovery"), PropertyOrder(2)]
-        public float BaseRecovery { get; private set; }
 
-        [SerializeField, PropertyOrder(3)]
+        [SerializeField]
+        private LocalizedText displayName;
+        public LocalizedText DisplayName => displayName;
+        
+        [SerializeField, HideInInspector]
+        private LocalizedText flavorText;
+        public LocalizedText FlavorText => flavorText;
+
+        [SerializeField]
+        private TSpan charge;
+        public TSpan Charge => charge;
+        
+        [SerializeField]
+        private TSpan recovery = TSpan.FromSeconds(1);
+        public TSpan Recovery => recovery;
+
+        [SerializeField]
         private bool canMiss = true;
         
-        [field: SerializeField, SuffixLabel("%"), PropertyRange(-50, 200), LabelText("Accuracy"), PropertyOrder(4), ShowIf(nameof(canMiss))]
-        private int serializedAccuracy;
-        public Option<float> BaseAccuracy => canMiss ? serializedAccuracy / 100f : Option<float>.None;
+        [SerializeField, Range(-50, 200), ShowIf(nameof(canMiss))]
+        private int accuracy;
+        public Option<int> Accuracy => canMiss ? accuracy : Option.None;
         
-        [SerializeField, PropertyOrder(5)]
+        [SerializeField]
         private bool dealsDamage;
         
-        [field: SerializeField, SuffixLabel("%"), PropertyRange(0, 300), LabelText("Damage Multiplier"), PropertyOrder(6), ShowIf(nameof(dealsDamage))]
-        private int serializedDamageMultiplier;
-        public Option<float> BaseDamageMultiplier => dealsDamage ? serializedDamageMultiplier / 100f : Option<float>.None;
+        [SerializeField, Range(0, 300), ShowIf(nameof(dealsDamage))]
+        private int power;
+        public Option<int> Power => dealsDamage ? power : Option.None;
 
-        [field: SerializeField, PropertyOrder(7)]
-        private bool CanCrit { get; set; }
+        [SerializeField]
+        private bool canCrit;
+        private bool CanCrit => canCrit;
 
-        [field: SerializeField, SuffixLabel("%"), PropertyRange(-50, 300), ShowIf(nameof(CanCrit)), LabelText("Critical Chance"), PropertyOrder(8)]
-        private int serializedCriticalChance;
-        public Option<float> BaseCriticalChance => CanCrit ? serializedCriticalChance / 100f : Option<float>.None;
+        [SerializeField, Range(-50, 300), ShowIf(nameof(CanCrit))]
+        private int criticalChance;
+        public Option<int> CriticalChance => CanCrit ? criticalChance : Option.None;
         
-        [field: SerializeField, SuffixLabel("%"), PropertyRange(0, 300), ShowIf(nameof(CanCrit)), LabelText("Resilience Piercing"), PropertyOrder(9), ShowIf(nameof(dealsDamage))]
-        private int serializedResiliencePiercing;
-        public Option<float> BaseResiliencePiercing => dealsDamage ? serializedResiliencePiercing / 100f : Option<float>.None;
+        [SerializeField, Range(0, 300), ShowIf(nameof(CanCrit)), ShowIf(nameof(dealsDamage))]
+        private int resilienceReduction;
+        public Option<int> ResilienceReduction => dealsDamage ? resilienceReduction : Option.None;
 
-        [field: SerializeField, PropertyOrder(10)]
-        public PositionSetup CastingPositions { get; private set; }
+        [SerializeField]
+        private PositionSetup castingPositions;
+        public PositionSetup CastingPositions => castingPositions;
         
-        [field: SerializeField, PropertyOrder(11)]
-        public PositionSetup TargetPositions { get; private set; }
+        [SerializeField]
+        private PositionSetup targetPositions;
+        public PositionSetup TargetPositions => targetPositions;
         
-        [field: SerializeField, PropertyOrder(12)]
-        public bool MultiTarget { get; private set; }
+        [SerializeField]
+        private bool multiTarget;
+        public bool MultiTarget => multiTarget;
+
+        [SerializeField]
+        private bool isPositive;
+        public bool IsPositive => isPositive;
         
-        [field: SerializeField, PropertyOrder(13)]
-        public bool AllowAllies { get; private set; }
-        
-        [field: SerializeField, PropertyOrder(-1), UsedImplicitly]
+        [SerializeField, UsedImplicitly]
         private bool hasIcons;
         
-        [field: SerializeField, ShowIf(nameof(hasIcons))]
-        public Sprite IconBackground { get; private set; }
+        [SerializeField, ShowIf(nameof(hasIcons))]
+        private Sprite iconBackground;
+        public Sprite IconBackground => iconBackground;
         
-        [field: SerializeField, ShowIf(nameof(hasIcons))]
-        public Sprite IconBaseSprite { get; private set; }
+        [SerializeField, ShowIf(nameof(hasIcons))]
+        private Sprite iconBaseSprite;
+        public Sprite IconBaseSprite => iconBaseSprite;
         
-        [field: SerializeField, ShowIf(nameof(hasIcons))]
-        public Sprite IconBaseFx { get; private set; }
+        [SerializeField, ShowIf(nameof(hasIcons))]
+        private Sprite iconBaseFx;
+        public Sprite IconBaseFx => iconBaseFx;
         
-        [field: SerializeField, ShowIf(nameof(hasIcons))] 
-        public Sprite IconHighlightedSprite { get; private set; }
+        [SerializeField, ShowIf(nameof(hasIcons))]
+        private Sprite iconHighlightedSprite;
+        public Sprite IconHighlightedSprite => iconHighlightedSprite;
         
-        [field: SerializeField, ShowIf(nameof(hasIcons))]
-        public Sprite IconHighlightedFx { get; private set; }
+        [SerializeField, ShowIf(nameof(hasIcons))]
+        private Sprite iconHighlightedFx;
+        public Sprite IconHighlightedFx => iconHighlightedFx;
 
         [SerializeField]
         private SkillAnimationType animationType;
         public SkillAnimationType AnimationType => animationType;
 
-        [field: SerializeField, ShowIf(nameof(ShowParameter))]
-        public string AnimationParameter { get; private set; }
+        [SerializeField, ShowIf(nameof(IsStandard))]
+        private string animationParameter;
+        public string AnimationParameter => animationParameter;
 
-        [SerializeField, ShowIf(nameof(ShowOverlayPrefab))]
+        private bool IsStandard => animationType == SkillAnimationType.Standard;
+
+        [SerializeField, ShowIf(nameof(IsOverlay)), Required]
         private OverlayAnimator overlayPrefab;
 
-        private bool ShowParameter => animationType == SkillAnimationType.Standard;
-        private bool ShowOverlayPrefab => animationType == SkillAnimationType.Overlay;
+        private bool IsOverlay => animationType == SkillAnimationType.Overlay;
 
-        public IActionSequence CreateActionSequence(PlannedSkill plan, CombatManager combatManager)
-        {
-            return animationType switch
+        [JetBrains.Annotations.NotNull]
+        public IActionSequence CreateActionSequence(PlannedSkill plan, CombatManager combatManager) =>
+            animationType switch
             {
                 SkillAnimationType.Standard => new DefaultActionSequence(plan, combatManager),
                 SkillAnimationType.Overlay  => new OverlayActionSequence(plan, combatManager, overlayPrefab),
                 _                           => throw new ArgumentOutOfRangeException(nameof(animationType), animationType, null)
             };
-        }
 
         public Sequence Announce(Announcer announcer, PlannedSkill plan, float startDuration, float popDuration, float speed) 
             => overlayPrefab.Announce(announcer, plan, startDuration, popDuration, speed);
 
-        [field: SerializeField, ShowIf(nameof(ShowMovement)), PropertyRange(-10, 10), InfoBox("Positive means outwards center of screen, negative means towards center.")]
-        public float CasterMovement { get; private set; }
+        [SerializeField, ShowIf(nameof(ShowMovement)), Range(-10, 10), InfoBox("Positive means outwards center of screen, negative means towards center.")]
+        private float casterMovement;
+        public float CasterMovement => casterMovement;
         
         [SerializeField, ShowIf(nameof(ShowMovement))]
         private AnimationCurve casterAnimationCurve = AnimationCurve.Linear(timeStart: 0, valueStart: 0, timeEnd: 1, valueEnd: 1);
         public AnimationCurve CasterAnimationCurve => casterAnimationCurve;
-        
-        [field: SerializeField, ShowIf(nameof(ShowMovement)), PropertyRange(-10, 10)]
-        public float TargetMovement { get; private set; }
+
+        [SerializeField, ShowIf(nameof(ShowMovement)), Range(-10, 10)]
+        private float targetMovement;
+        public float TargetMovement => targetMovement;
         
         [SerializeField, ShowIf(nameof(ShowMovement))]
         private AnimationCurve targetAnimationCurve = AnimationCurve.Linear(timeStart: 0, valueStart: 0, timeEnd: 1, valueEnd: 1);
@@ -143,54 +164,62 @@ namespace Core.Combat.Scripts.Skills
 
         [SerializeField] 
         private SerializedStatusScript[] targetEffects = new SerializedStatusScript[0];
-        public IReadOnlyList<IBaseStatusScript> TargetEffects => targetEffects;
+        public ReadOnlySpan<IBaseStatusScript> TargetEffects => targetEffects;
         
         [SerializeField]
         private SerializedStatusScript[] casterEffects = new SerializedStatusScript[0];
-        public IReadOnlyList<IBaseStatusScript> CasterEffects => casterEffects;
+        public ReadOnlySpan<IBaseStatusScript> CasterEffects => casterEffects;
         
         [SerializeField]
         private CustomStatScriptable[] customStats = new CustomStatScriptable[0];
-        public IReadOnlyList<ICustomSkillStat> CustomStats => customStats;
+        public ReadOnlySpan<ICustomSkillStat> CustomStats => customStats;
 
-        [field: SerializeField, OnStateUpdate(nameof(OnTargetTypeChanged))] 
-        public TargetType TargetType { get; private set; }
+        [SerializeField, OnStateUpdate(nameof(OnTargetTypeChanged))]
+        private TargetType targetType;
+        public TargetType TargetType => targetType;
         
         [SerializeField]
         private bool hasLimitedUses;
         
         [SerializeField, ShowIf(nameof(hasLimitedUses))]
-        private uint limitedUseCount;
-        public Option<uint> GetMaxUseCount => hasLimitedUses ? Option<uint>.Some(limitedUseCount) : Option.None;
+        private int limitedUseCount;
+        public Option<int> GetMaxUseCount => hasLimitedUses ? Option<int>.Some(limitedUseCount) : Option.None;
         
-        [field: SerializeField]
-        public PerkScriptable[] PerkPrerequisites { get; private set; } = new PerkScriptable[0];
+        [SerializeField, Required]
+        private PerkScriptable[] perkPrerequisites = new PerkScriptable[0];
+        public ReadOnlySpan<PerkScriptable> PerkPrerequisites => perkPrerequisites;
         
-        [field: SerializeField]
-        public SkillScriptable[] SkillPrerequisites { get; private set; } = new SkillScriptable[0];
+        [SerializeField, Required]
+        private SkillScriptable[] skillPrerequisites = new SkillScriptable[0];
+        public ReadOnlySpan<SkillScriptable> SkillPrerequisites => skillPrerequisites;
 
         private void OnTargetTypeChanged()
         {
-            if (TargetType is TargetType.OnlySelf or TargetType.CanSelf && AllowAllies == false)
-                AllowAllies = true;
+#if UNITY_EDITOR
+            if (TargetType is TargetType.OnlySelf or TargetType.CanSelf && IsPositive == false)
+            {
+                isPositive = true;
+                UnityEditor.EditorUtility.SetDirty(this);
+            }
+#endif
         }
 
 #if UNITY_EDITOR
-        public void AssignData(string displayName, string flavorText)
+        public void AssignData(string newDisplayName, string newFlavorText)
         {
-            DisplayName = displayName;
-            FlavorText = flavorText;
+            displayName = new LocalizedText(newDisplayName);
+            flavorText = new LocalizedText(newFlavorText);
             UnityEditor.EditorUtility.SetDirty(this);
         }
 
         public void AssignIcons(Sprite background, Sprite baseIcon, Sprite baseFx, Sprite highIcon, Sprite highFx)
         {
             hasIcons = true;
-            IconBackground = background;
-            IconBaseSprite = baseIcon;
-            IconBaseFx = baseFx;
-            IconHighlightedSprite = highIcon;
-            IconHighlightedFx = highFx;
+            iconBackground = background;
+            iconBaseSprite = baseIcon;
+            iconBaseFx = baseFx;
+            iconHighlightedSprite = highIcon;
+            iconHighlightedFx = highFx;
             UnityEditor.EditorUtility.SetDirty(this);
         }
 

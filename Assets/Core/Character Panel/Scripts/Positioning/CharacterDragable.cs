@@ -3,12 +3,12 @@ using Core.Combat.Scripts.Managers;
 using Core.Game_Manager.Scripts;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Character_Panel.Scripts.Positioning
 {
@@ -36,7 +36,7 @@ namespace Core.Character_Panel.Scripts.Positioning
 
         private bool Interactable => CombatManager.Instance.TrySome(out CombatManager combatManager) == false || combatManager.Running == false;
 
-        public void SetCharacter(IReadonlyCharacterStats stats)
+        public void SetCharacter([CanBeNull] IReadonlyCharacterStats stats)
         {
             if (stats == null)
             {
@@ -67,7 +67,7 @@ namespace Core.Character_Panel.Scripts.Positioning
             gameObject.SetActive(true);
         }
         
-        public void OnBeginDrag(PointerEventData eventData)
+        public void OnBeginDrag([NotNull] PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left)
                 return;
@@ -89,7 +89,7 @@ namespace Core.Character_Panel.Scripts.Positioning
             _dragOffset = eventData.position - (Vector2)targetCamera.WorldToScreenPoint(transform.position);
         }
 
-        public void OnDrag(PointerEventData eventData)
+        public void OnDrag([NotNull] PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left || _isDragging == false || Interactable == false)
                 return;
@@ -100,7 +100,7 @@ namespace Core.Character_Panel.Scripts.Positioning
             transform.position = worldPosition;
         }
 
-        public void OnEndDrag(PointerEventData eventData)
+        public void OnEndDrag([NotNull] PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left || _isDragging == false || Interactable == false)
                 return;

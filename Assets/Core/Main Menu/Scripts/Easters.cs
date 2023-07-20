@@ -1,13 +1,14 @@
 ﻿// ReSharper disable StringLiteralTypo
 
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine.Diagnostics;
 
 namespace Core.Main_Menu.Scripts
 {
     public static class Easters
     {
-        public static bool TryGetNameEasters(string formatted, out string easter)
+        public static bool TryGetNameEasters(string formatted, [NotNull] out string easter)
         {
             easter = "";
             bool found = true;
@@ -154,10 +155,7 @@ namespace Core.Main_Menu.Scripts
             return found;
         }
 
-        static Easters()
-        {
-            IronGauntletCount = IronGauntletEasters.Count;
-        }
+        static Easters() => IronGauntletCount = IronGauntletEasters.Count;
 
         private static readonly int IronGauntletCount;
         private static readonly IReadOnlyList<string> IronGauntletEasters = new[]

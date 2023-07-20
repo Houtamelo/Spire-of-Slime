@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using JetBrains.Annotations;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -13,7 +14,7 @@ namespace Core.Combat.Scripts.BackgroundGeneration
 
         public void Generate() { gameObject.SetActive(Random.value <= appearChance); }
 
-        public void GenerateFromRecord(BackgroundChildRecord record)
+        public void GenerateFromRecord([CanBeNull] BackgroundChildRecord record)
         {
             if (record is not ToggleableRecord toggleableRecord)
             {
@@ -25,9 +26,10 @@ namespace Core.Combat.Scripts.BackgroundGeneration
             gameObject.SetActive(toggleableRecord.IsActive);
         }
 
+        [NotNull]
         public BackgroundChildRecord GetRecord() => new ToggleableRecord(gameObject.activeSelf);
 
-        public bool IsDataValid(BackgroundChildRecord data, StringBuilder errors)
+        public bool IsDataValid([CanBeNull] BackgroundChildRecord data, StringBuilder errors)
         {
             if (data is not ToggleableRecord toggleableRecord)
             {

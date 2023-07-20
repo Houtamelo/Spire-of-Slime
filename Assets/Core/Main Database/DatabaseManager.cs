@@ -1,4 +1,5 @@
 ﻿using Core.Combat.Scripts.Cues;
+using Core.Combat.Scripts.Timeline;
 using Core.Localization.Scripts;
 using Core.Main_Database.Audio;
 using Core.Main_Database.Combat;
@@ -14,6 +15,9 @@ namespace Core.Main_Database
     public sealed class DatabaseManager : SerializedScriptableObject
     {
         public static DatabaseManager Instance { get; private set; }
+
+        [OdinSerialize, Required]
+        public readonly TimelineIconDatabase TimelineIconDatabase;
 
         [OdinSerialize, Required]
         public readonly TranslationDatabase TranslationDatabase;

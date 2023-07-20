@@ -1,5 +1,4 @@
 ﻿using Core.Utils.Patterns;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Skills.Interfaces
 {

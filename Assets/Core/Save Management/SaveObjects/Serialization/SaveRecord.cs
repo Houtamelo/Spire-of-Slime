@@ -7,14 +7,14 @@ using Sirenix.Serialization;
 
 namespace Core.Save_Management.SaveObjects
 {
-    public record SaveRecord(string Name, DateTime Date, Dictionary<CleanString, bool> Booleans, Dictionary<CleanString, float> Floats, Dictionary<CleanString, CleanString> Strings, LocationEnum Location,
-                             LocationEnum[] LocationsUnlocked, CharacterStats[] Characters, float NemaExhaustion, bool IsNemaClearingMist, Random GeneralRandomizer, CleanString[] CombatOrder, SavePoint.Base SavePoint)
+    public record SaveRecord(string Name, DateTime Date, Dictionary<CleanString, bool> Booleans, Dictionary<CleanString, int> Ints, Dictionary<CleanString, CleanString> Strings, LocationEnum Location,
+                             LocationEnum[] LocationsUnlocked, CharacterStats[] Characters, int NemaExhaustion, bool IsNemaClearingMist, Random GeneralRandomizer, CleanString[] CombatOrder, SavePoint.Base SavePoint)
     {
         public bool IsDirty { get; set; }
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         [OdinSerialize]
         public SavePoint.Base SavePoint { get; init; } = SavePoint;
-        #endif
+#endif
 
         public bool IsDataValid(StringBuilder errors)
         {
@@ -30,9 +30,9 @@ namespace Core.Save_Management.SaveObjects
                 return false;
             }
             
-            if (Floats == null)
+            if (Ints == null)
             {
-                errors.AppendLine("Invalid ", nameof(SaveRecord), ". ", nameof(Floats), " is null");
+                errors.AppendLine("Invalid ", nameof(SaveRecord), ". ", nameof(Ints), " is null");
                 return false;
             }
             

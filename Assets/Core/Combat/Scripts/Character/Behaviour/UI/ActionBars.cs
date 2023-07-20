@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Core.Combat.Scripts.Managers;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using TMPro;
@@ -24,110 +25,110 @@ namespace Core.Combat.Scripts.Behaviour.UI
         private readonly StringBuilder _stringBuilder = new();
 
         private Tween _recoveryTween, _chargeTween, _downedTween, _stunTween;
-        private float _recovery, _charge, _downed, _stun;
+        private TSpan _recovery, _charge, _downed, _stun;
 
-        public void SetRecovery(bool active, float remaining, float total, CombatManager combatManager)
+        public void SetRecovery(bool active, TSpan remaining, TSpan total, CombatManager combatManager)
         {
             _recoveryTween.CompleteIfActive();
             recoveryBarGameObject.SetActive(active);
             gameObject.SetActive(recoveryBarGameObject.activeSelf || chargeBarGameObject.activeSelf || downedBarGameObject.activeSelf || stunBarGameObject.activeSelf);
             if (active == false)
             {
-                _recovery = -999f;
+                _recovery = TSpan.Zero;
                 return;
             }
             
             _recovery = remaining;
             UpdateValueText();
             float fill = GetRecoveryStunFill(remaining, total);
-            float timeUntilNextStep = CombatManager.TimePerStep - combatManager.AccumulatedStepTime;
+            TSpan timeUntilNextStep = CombatManager.TimePerStep - combatManager.AccumulatedStepTime;
             float speed = combatManager.SpeedHandler.Value;
-            if (combatManager.PauseHandler.Value || timeUntilNextStep <= 0f || speed <= 0f)
+            if (combatManager.PauseHandler.Value || timeUntilNextStep.Ticks <= 0 || speed <= 0f)
             {
                 recoveryBar.fillAmount = fill;
                 return;
             }
 
-            timeUntilNextStep /= speed;
-            _recoveryTween = recoveryBar.DOFillAmount(fill, timeUntilNextStep);
+            timeUntilNextStep.Divide(speed);
+            _recoveryTween = recoveryBar.DOFillAmount(endValue: fill, duration: timeUntilNextStep.FloatSeconds);
         }
 
-        public void SetCharge(bool active, float remaining, float total, CombatManager combatManager)
+        public void SetCharge(bool active, TSpan remaining, TSpan total, CombatManager combatManager)
         {
             _chargeTween.CompleteIfActive();
             chargeBarGameObject.SetActive(active);
             gameObject.SetActive(recoveryBarGameObject.activeSelf || chargeBarGameObject.activeSelf || downedBarGameObject.activeSelf || stunBarGameObject.activeSelf);
             if (active == false)
             {
-                _charge = -999f;
+                _charge = TSpan.Zero;
                 return;
             }
             
             _charge = remaining;
             UpdateValueText();
             float fill = GetChargeDownedFill(remaining, total);
-            float timeUntilNextStep = CombatManager.TimePerStep - combatManager.AccumulatedStepTime;
+            TSpan timeUntilNextStep = CombatManager.TimePerStep - combatManager.AccumulatedStepTime;
             float speed = combatManager.SpeedHandler.Value;
-            if (combatManager.PauseHandler.Value || timeUntilNextStep <= 0f || speed <= 0f)
+            if (combatManager.PauseHandler.Value || timeUntilNextStep.Ticks <= 0 || speed <= 0f)
             {
                 chargeBar.fillAmount = fill;
                 return;
             }
 
-            timeUntilNextStep /= speed;
-            _chargeTween = chargeBar.DOFillAmount(fill, timeUntilNextStep);
+            timeUntilNextStep.Divide(speed);
+            _chargeTween = chargeBar.DOFillAmount(endValue: fill, duration: timeUntilNextStep.FloatSeconds);
         }
 
-        public void SetDowned(bool active, float remaining, float total, CombatManager combatManager)
+        public void SetDowned(bool active, TSpan remaining, TSpan total, CombatManager combatManager)
         {
             _downedTween.CompleteIfActive();
             downedBarGameObject.SetActive(active);
             gameObject.SetActive(recoveryBarGameObject.activeSelf || chargeBarGameObject.activeSelf || downedBarGameObject.activeSelf || stunBarGameObject.activeSelf);
             if (active == false)
             {
-                _downed = -999f;
+                _downed = TSpan.Zero;
                 return;
             }
             
             _downed = remaining;
             UpdateValueText();
             float fill = GetChargeDownedFill(remaining, total);
-            float timeUntilNextStep = CombatManager.TimePerStep - combatManager.AccumulatedStepTime;
+            TSpan timeUntilNextStep = CombatManager.TimePerStep - combatManager.AccumulatedStepTime;
             float speed = combatManager.SpeedHandler.Value;
-            if (combatManager.PauseHandler.Value || timeUntilNextStep <= 0f || speed <= 0f)
+            if (combatManager.PauseHandler.Value || timeUntilNextStep.Ticks <= 0 || speed <= 0f)
             {
                 downedBar.fillAmount = fill;
                 return;
             }
 
-            timeUntilNextStep /= speed;
-            _downedTween = downedBar.DOFillAmount(fill, timeUntilNextStep);
+            timeUntilNextStep.Divide(speed);
+            _downedTween = downedBar.DOFillAmount(endValue: fill, duration: timeUntilNextStep.FloatSeconds);
         }
 
-        public void SetStun(bool active, float remaining, float total, CombatManager combatManager)
+        public void SetStun(bool active, TSpan remaining, TSpan total, CombatManager combatManager)
         {
             _stunTween.CompleteIfActive();
             stunBarGameObject.SetActive(active);
             gameObject.SetActive(recoveryBarGameObject.activeSelf || chargeBarGameObject.activeSelf || downedBarGameObject.activeSelf || stunBarGameObject.activeSelf);
             if (active == false)
             {
-                _stun = -999f;
+                _stun = TSpan.Zero;
                 return;
             }
             
             _stun = remaining;
             UpdateValueText();
             float fill = GetRecoveryStunFill(remaining, total);
-            float timeUntilNextStep = CombatManager.TimePerStep - combatManager.AccumulatedStepTime;
+            TSpan timeUntilNextStep = CombatManager.TimePerStep - combatManager.AccumulatedStepTime;
             float speed = combatManager.SpeedHandler.Value;
-            if (combatManager.PauseHandler.Value || timeUntilNextStep <= 0f || speed <= 0f)
+            if (combatManager.PauseHandler.Value || timeUntilNextStep.Ticks <= 0 || speed <= 0f)
             {
                 stunBar.fillAmount = fill;
                 return;
             }
 
-            timeUntilNextStep /= speed;
-            _stunTween = stunBar.DOFillAmount(fill, timeUntilNextStep);
+            timeUntilNextStep.Divide(speed);
+            _stunTween = stunBar.DOFillAmount(endValue: fill, duration: timeUntilNextStep.FloatSeconds);
         }
 
         private void UpdateValueText()
@@ -135,43 +136,43 @@ namespace Core.Combat.Scripts.Behaviour.UI
             _stringBuilder.Clear();
             bool anyBehind = false;
             
-            if (_recovery > 0)
+            if (_recovery.Ticks > 0)
             {
                 _stringBuilder.Append(ColorReferences.RecoveryRichText.start);
-                _stringBuilder.Append(_recovery.ToString("0.0"));
+                _stringBuilder.Append(_recovery.Seconds.ToString("0.0"));
                 _stringBuilder.Append(ColorReferences.RecoveryRichText.end);
                 anyBehind = true;
             }
             
-            if (_charge > 0)
+            if (_charge.Ticks > 0)
             {
                 if (anyBehind)
                     _stringBuilder.Append(" | ");
                 
                 _stringBuilder.Append(ColorReferences.ChargeRichText.start);
-                _stringBuilder.Append(_charge.ToString("0.0"));
+                _stringBuilder.Append(_charge.Seconds.ToString("0.0"));
                 _stringBuilder.Append(ColorReferences.ChargeRichText.end);
                 anyBehind = true;
             }
             
-            if (_downed > 0)
+            if (_downed.Ticks > 0)
             {
                 if (anyBehind)
                     _stringBuilder.Append(" | ");
                 
                 _stringBuilder.Append(ColorReferences.KnockedDownRichText.start);
-                _stringBuilder.Append(_downed.ToString("0.0"));
+                _stringBuilder.Append(_downed.Seconds.ToString("0.0"));
                 _stringBuilder.Append(ColorReferences.KnockedDownRichText.start);
                 anyBehind = true;
             }
             
-            if (_stun > 0)
+            if (_stun.Ticks > 0)
             {
                 if (anyBehind)
                     _stringBuilder.Append(" | ");
                 
                 _stringBuilder.Append(ColorReferences.StunRichText.start);
-                _stringBuilder.Append(_stun.ToString("0.0"));
+                _stringBuilder.Append(_stun.Seconds.ToString("0.0"));
                 _stringBuilder.Append(ColorReferences.StunRichText.end);
             }
             
@@ -204,19 +205,19 @@ namespace Core.Combat.Scripts.Behaviour.UI
             _stunTween.KillIfActive();
         }
 
-        private static float GetChargeDownedFill(float remaining, float total)
+        private static float GetChargeDownedFill(TSpan remaining, TSpan total)
         {
-            float fill = (total - remaining) / total;
-            if (total <= 0f || float.IsNaN(f: fill) || float.IsInfinity(f: fill))
+            float fill = (total - remaining).FloatSeconds / total.FloatSeconds;
+            if (total.Ticks <= 0 || float.IsNaN(fill) || float.IsInfinity(fill))
                 fill = 0f;
             
             return fill;
         }
         
-        private static float GetRecoveryStunFill(float remaining, float total)
+        private static float GetRecoveryStunFill(TSpan remaining, TSpan total)
         {
-            float fill = remaining / total;
-            if (total <= 0 || float.IsNaN(f: fill) || float.IsInfinity(f: fill))
+            float fill = remaining.FloatSeconds / total.FloatSeconds;
+            if (total.Ticks <= 0 || float.IsNaN(fill) || float.IsInfinity(fill))
                 fill = 0;
             
             return fill;

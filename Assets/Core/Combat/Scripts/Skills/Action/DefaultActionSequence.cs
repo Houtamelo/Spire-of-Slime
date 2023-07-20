@@ -6,11 +6,13 @@ using Core.Combat.Scripts.Animations;
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Managers;
+using Core.Utils.Collections;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
 using DG.Tweening;
+using JetBrains.Annotations;
 using ListPool;
 using UnityEngine;
-using Utils.Patterns;
 using static Core.Combat.Scripts.Skills.Action.IActionSequence;
 
 namespace Core.Combat.Scripts.Skills.Action
@@ -34,7 +36,7 @@ namespace Core.Combat.Scripts.Skills.Action
 
         public CharacterStateMachine Caster => Plan.Caster;
 
-        private float _cachedRecovery; // set in ResolveSkill()
+        private TSpan _cachedRecovery; // set in ResolveSkill()
         
         private bool _isPlaying;
         public bool IsPlaying => _isPlaying && IsDone == false;
@@ -69,11 +71,13 @@ namespace Core.Combat.Scripts.Skills.Action
         {
             Debug.Assert(_isPlaying);
             foreach ((CharacterStateMachine character, Vector3 position) in _combatManager.PositionManager.ComputeAllDefaultPositions())
-                if (Outsiders.Contains(character) && character.Display.TrySome(out CharacterDisplay display))
+            {
+                if (Outsiders.Contains(character) && character.Display.TrySome(out DisplayModule display))
                     display.MoveToPosition(position, baseDuration: Option.None);
+            }
         }
         
-        public void AddOutsider(CharacterStateMachine outsider) => _outsiders.Add(outsider);
+        public void AddOutsider([NotNull] CharacterStateMachine outsider) => _outsiders.Add(outsider);
 
         public void Play()
         {
@@ -138,11 +142,11 @@ namespace Core.Combat.Scripts.Skills.Action
 
             if (Caster.StateEvaluator.PureEvaluate() is not CharacterState.Defeated and not CharacterState.Corpse and not CharacterState.Grappled and not CharacterState.Downed)
             {
-                ActionResult result = SkillUtils.DoToCaster(ref skillStruct);
+                ActionResult result = SkillCalculator.DoToCaster(ref skillStruct);
                 _results.Add(result);
                 anyCrit |= result.Critical;
                 
-                if (Caster.Display.AssertSome(out CharacterDisplay casterDisplay))
+                if (Caster.Display.AssertSome(out DisplayModule casterDisplay))
                 {
                     (float xMovement, AnimationCurve animationCurve) = Plan.Skill.GetCasterMovement(isLeftSide: Caster.PositionHandler.IsLeftSide);
                     casterDisplay.transform.DOMoveX(endValue: xMovement, AnimationDuration).SetRelative().SetEase(animationCurve);
@@ -151,10 +155,10 @@ namespace Core.Combat.Scripts.Skills.Action
                 }
             }
 
-            ref ValueListPool<TargetProperties> targetProperties = ref skillStruct.TargetProperties;
+            ref CustomValuePooledList<TargetProperties> targetProperties = ref skillStruct.TargetProperties;
             int count = targetProperties.Count;
             
-            if (Plan.Skill.AllowAllies)
+            if (Plan.Skill.IsPositive)
             {
                 for (int index = 0; index < count; index++)
                 {
@@ -167,7 +171,7 @@ namespace Core.Combat.Scripts.Skills.Action
                     _results.Add(result);
                     anyCrit |= result.Critical;
                     
-                    if (target.Display.AssertSome(out CharacterDisplay targetDisplay) == false)
+                    if (target.Display.AssertSome(out DisplayModule targetDisplay) == false)
                         continue;
 
                     (float xMovement, AnimationCurve animationCurve) = Plan.Skill.GetTargetMovement(isLeftSide: target.PositionHandler.IsLeftSide);
@@ -191,7 +195,7 @@ namespace Core.Combat.Scripts.Skills.Action
                     target.Events.OnSelfAttacked(ref result);
                     Caster.Events.OnTargetAttacked(ref result);
                     
-                    if (target.Display.AssertSome(out CharacterDisplay targetDisplay) == false)
+                    if (target.Display.AssertSome(out DisplayModule targetDisplay) == false)
                         continue;
 
                     if (result.Hit && targetDisplay.AnimatorTransform.TrySome(out Transform targetAnimatorTransform))
@@ -213,7 +217,7 @@ namespace Core.Combat.Scripts.Skills.Action
                 }
             }
 
-            if (Caster.Display.AssertSome(out CharacterDisplay display))
+            if (Caster.Display.AssertSome(out DisplayModule display))
             {
                 CasterContext casterContext = new(_results.ToArray());
                 CombatAnimation animation = new(Plan.Skill.AnimationParameter, casterContext, Option<TargetContext>.None);

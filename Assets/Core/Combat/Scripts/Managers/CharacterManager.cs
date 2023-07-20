@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Core.Combat.Scripts.Barks;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Effects.Types.Grappled;
 using Core.Combat.Scripts.Effects.Types.Guarded;
@@ -10,19 +11,20 @@ using Core.Combat.Scripts.Effects.Types.Riposte;
 using Core.Combat.Scripts.Effects.Types.Summon;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Interfaces;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills.Action;
+using Core.Combat.Scripts.Timeline;
 using Core.Main_Characters.Nema.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Collections;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
 using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 using static Core.Utils.Patterns.Option<Core.Combat.Scripts.Behaviour.CharacterStateMachine>;
 using Save = Core.Save_Management.SaveObjects.Save;
 
@@ -31,13 +33,13 @@ namespace Core.Combat.Scripts.Managers
     public class CharacterManager : MonoBehaviour
     {
         [SerializeField, Required, AssetsOnly]
-        private CharacterDisplay characterDisplayPrefab;
+        private DisplayModule characterDisplayPrefab;
         
         [SerializeField, Required, SceneObjectsOnly]
         private Transform charactersParent;
         
         [SerializeField, Required, SceneObjectsOnly]
-        private TimelineIconsManager timelineIconsManager;
+        private TimelineManager timelineIconsManager;
 
         [SerializeField, Required, SceneObjectsOnly]
         private CombatManager combatManager;
@@ -45,25 +47,25 @@ namespace Core.Combat.Scripts.Managers
         public event Action<CharacterStateMachine> CharacterSetup;
 
         private readonly ReadOnlyReference<IndexableHashSet<CharacterStateMachine>> _onLeftSide = new(new IndexableHashSet<CharacterStateMachine>());
-        public FixedEnumerable<CharacterStateMachine> FixedOnLeftSide => _onLeftSide.Value.FixedEnumerate();
+        public FixedEnumerator<CharacterStateMachine> FixedOnLeftSide => _onLeftSide.Value.FixedEnumerate();
         public IndexableHashSet<CharacterStateMachine> GetLeftEditable() => _onLeftSide.Value;
         public int LeftSideCount => _onLeftSide.Value.Count;
         
         private readonly ReadOnlyReference<IndexableHashSet<CharacterStateMachine>> _onRightSide = new(new IndexableHashSet<CharacterStateMachine>());
-        public FixedEnumerable<CharacterStateMachine> FixedOnRightSide => _onRightSide.Value.FixedEnumerate();
+        public FixedEnumerator<CharacterStateMachine> FixedOnRightSide => _onRightSide.Value.FixedEnumerate();
         public IndexableHashSet<CharacterStateMachine> GetRightEditable() => _onRightSide.Value;
         public int RightSideCount => _onRightSide.Value.Count;
 
         [MustUseReturnValue]
-        public FixedEnumerable<CharacterStateMachine> GetOnSide(bool isLeftSide) => isLeftSide ? FixedOnLeftSide : FixedOnRightSide;
+        public FixedEnumerator<CharacterStateMachine> GetOnSide(bool isLeftSide) => isLeftSide ? FixedOnLeftSide : FixedOnRightSide;
         
         public IndexableHashSet<CharacterStateMachine> GetEditable(bool isLeftSide) => isLeftSide ? _onLeftSide.Value : _onRightSide.Value;
         
         [MustUseReturnValue]
-        public FixedEnumerable<CharacterStateMachine> GetOnSide(CharacterStateMachine character) => character.PositionHandler.IsLeftSide ? FixedOnLeftSide : FixedOnRightSide;
+        public FixedEnumerator<CharacterStateMachine> GetOnSide([NotNull] CharacterStateMachine character) => character.PositionHandler.IsLeftSide ? FixedOnLeftSide : FixedOnRightSide;
         
         [MustUseReturnValue]
-        public FixedEnumerable<CharacterStateMachine> GetEnemies(CharacterStateMachine character) => character.PositionHandler.IsLeftSide ? FixedOnRightSide : FixedOnLeftSide;
+        public FixedEnumerator<CharacterStateMachine> GetEnemies([NotNull] CharacterStateMachine character) => character.PositionHandler.IsLeftSide ? FixedOnRightSide : FixedOnLeftSide;
         
         public int IndexOf(CharacterStateMachine character)
         {
@@ -80,8 +82,10 @@ namespace Core.Combat.Scripts.Managers
             return characters.IndexOf(character);
         }
 
+        private DirectCharacterEnumerator DirectEnumerate() => new(_onLeftSide, _onRightSide);
+
         [MustUseReturnValue]
-        public CharacterEnumerator GetAllFixed() => new(characterManager: this);
+        public FixedCharacterEnumerator GetAllFixed() => new(characterManager: this);
         
         public delegate void DefeatedDelegate(CharacterStateMachine character, Option<CharacterStateMachine> lastDamager);
         public event DefeatedDelegate DefeatedEvent;
@@ -89,26 +93,30 @@ namespace Core.Combat.Scripts.Managers
         public Option<CharacterStateMachine> GetByGuid(Guid guid)
         {
             foreach (CharacterStateMachine character in GetAllFixed())
+            {
                 if (character.Guid == guid)
                     return Some(character);
+            }
 
             return None;
         }
 
     #region Setup
-        private CharacterDisplay InstantiateDisplay()
+        [NotNull]
+        private DisplayModule InstantiateDisplay()
         {
-            CharacterDisplay display = characterDisplayPrefab.InstantiateWithFixedLocalScaleAndAnchoredPosition(charactersParent);
-            display.SetCombatManager(combatManager, timelineIconsManager.CreateIcon());
+            DisplayModule display = characterDisplayPrefab.InstantiateWithFixedLocalScaleAndAnchoredPosition(charactersParent);
+            display.SetCombatManager(combatManager);
             return display;
         }
 
-        public CharacterStateMachine Create(ICharacterScript script, CombatSetupInfo.RecoveryInfo recoveryInfo, bool isLeftSide, Option<int> position, bool mistExists)
+        [NotNull]
+        public CharacterStateMachine Create([NotNull] ICharacterScript script, CombatSetupInfo.RecoveryInfo recoveryInfo, bool isLeftSide, Option<int> position, bool mistExists)
         {
             if (Save.AssertInstance(out Save save))
                 save.SetVariable($"{VariablesName.EnemyMetPrefix.ToString()}{script.CharacterName}", true);
             
-            CharacterDisplay display = InstantiateDisplay();
+            DisplayModule display = InstantiateDisplay();
             CharacterStateMachine stateMachine = new(script, display, Guid.NewGuid(), isLeftSide, mistExists, recoveryInfo);
             List<CharacterStateMachine> sideList = isLeftSide ? _onLeftSide : _onRightSide;
             int index;
@@ -123,11 +131,11 @@ namespace Core.Combat.Scripts.Managers
                 index = sideList.Count - 1;
             }
             
-            display.SetSortingOrder(1 - index % 2 - index);
+            display.SetSortingOrder(1 - (index % 2) - index);
             return stateMachine;
         }
         
-        public bool SummonFromSkill(SummonToApply effectStruct)
+        public bool SummonFromSkill([NotNull] SummonToApply effectStruct)
         {
             bool isCasterLeft = effectStruct.Caster.PositionHandler.IsLeftSide;
             List<CharacterStateMachine> sideList = isCasterLeft ? _onLeftSide : _onRightSide;
@@ -138,7 +146,7 @@ namespace Core.Combat.Scripts.Managers
             int casterIndex = sideList.IndexOf(effectStruct.Caster);
             Option<int> position = casterIndex != -1 ? Option<int>.Some(casterIndex) : Option<int>.None;
             CharacterStateMachine summoned = Create(script: effectStruct.CharacterToSummon, recoveryInfo: CombatSetupInfo.RecoveryInfo.Default, isLeftSide: isCasterLeft, position: position, combatManager.CombatSetupInfo.MistExists);
-            CharacterDisplay display = summoned.Display.Value;
+            DisplayModule display = summoned.Display.Value;
             summoned.ForceUpdateDisplay();
             display.SetBarsAlpha(0f);
             display.SetRendererAlpha(0f);
@@ -213,7 +221,7 @@ namespace Core.Combat.Scripts.Managers
                 }
                 
                 if (combatSetupInfo.MistExists && script.Key == Nema.GlobalKey)
-                    NemaExhaustion.CreateInstance(float.MaxValue, true, character);
+                    NemaExhaustion.CreateInstance(TSpan.MaxValue, isPermanent: true, character);
             }
 
             for (int index = 0; index < combatSetupInfo.Enemies.Length; index++)
@@ -231,12 +239,12 @@ namespace Core.Combat.Scripts.Managers
                 character.ForceUpdateDisplay();
         }
 
-        public void SetupCharactersFromSave(CombatRecord record)
+        public void SetupCharactersFromSave([NotNull] CombatRecord record)
         {
             foreach (CharacterRecord characterRecord in record.Characters)
             {
-                CharacterDisplay display = InstantiateDisplay();
-                Option<CharacterStateMachine> stateMachine = CharacterStateMachine.FromSave(characterRecord, display);
+                DisplayModule display = InstantiateDisplay();
+                Option<CharacterStateMachine> stateMachine = CharacterStateMachine.FromRecord(characterRecord, display);
                 if (stateMachine.IsNone)
                 {
                     Debug.LogWarning($"Failed to load character with guid {characterRecord.Guid} from save...");
@@ -256,9 +264,9 @@ namespace Core.Combat.Scripts.Managers
                     Debug.LogWarning($"Failed to find character with guid {characterRecord.Guid} while loading combat from save...");
                     continue;
                 }
-                
-                foreach (PerkRecord perkRecord in characterRecord.Perks)
-                    perkRecord.CreateInstance(character.Value, GetAllFixed());
+
+                characterRecord.PerksModule.Deserialize(character.Value);
+                characterRecord.PerksModule.AddSerializedPerks(character.Value, DirectEnumerate());
             }
             
             foreach (CharacterRecord characterRecord in record.Characters)
@@ -270,33 +278,19 @@ namespace Core.Combat.Scripts.Managers
                     continue;
                 }
                 
-                foreach (StatusRecord statusRecord in characterRecord.Statuses)
-                {
-                    CombatUtils.CreateStatusInstanceFromRecord(record: statusRecord, owner: character.Value, GetAllFixed());
-                }
+                characterRecord.StatusReceiverModule.AddSerializedStatuses(character.Value, DirectEnumerate());
             }
 
             foreach (CharacterRecord characterRecord in record.Characters)
             {
-                PlanRecord planRecord = characterRecord.SkillAction;
-                if (planRecord is not { Enqueued: false, IsDone: false })
-                    continue;
-                
-                Option<PlannedSkill> skillAction = PlannedSkill.CreateInstance(record: planRecord, combatManager);
-                if (skillAction.IsNone)
-                {
-                    Debug.LogWarning("Failed to create skill action from json while loading combat from save...");
-                    continue;
-                }
-                
                 Option<CharacterStateMachine> character = GetByGuid(characterRecord.Guid);
                 if (character.IsNone)
                 {
                     Debug.LogWarning($"Failed to find character with guid {characterRecord.Guid} while loading combat from save...");
                     continue;
                 }
-                    
-                character.Value.SkillModule.SetActionWithoutNotify(action: skillAction.Value);
+                
+                characterRecord.SkillModule.ApplySerializedPlan(character.Value, combatManager);
             }
 
             foreach (CharacterStateMachine character in GetAllFixed())
@@ -310,7 +304,7 @@ namespace Core.Combat.Scripts.Managers
     #endregion
 
     #region StateMachine
-        public void PerformTimeStep(float timeStep)
+        public void PerformTimeStep(TSpan timeStep)
         {
             foreach (CharacterStateMachine character in GetAllFixed())
                 character.SecondaryTick(timeStep);
@@ -322,7 +316,7 @@ namespace Core.Combat.Scripts.Managers
                 character.AfterTickUpdate(timeStep);
         }
         
-        public bool RequestSideSwitch(CharacterStateMachine requester)
+        public bool RequestSideSwitch([NotNull] CharacterStateMachine requester)
         {
             if (requester.StateEvaluator.PureEvaluate() is CharacterState.Defeated or CharacterState.Grappled)
                 return false;
@@ -360,50 +354,49 @@ namespace Core.Combat.Scripts.Managers
             }
         }
 
-        public void NotifyStunned(CharacterStateMachine character)
+        public void NotifyStunned([NotNull] CharacterStateMachine character)
         {
-            float chargeInitialDuration = character.ChargeModule.GetInitialDuration();
-            if (chargeInitialDuration > 0)
+            TSpan chargeInitialDuration = character.ChargeModule.GetInitialDuration();
+            if (chargeInitialDuration.Ticks > 0)
             {
-                float chargeRemaining = character.ChargeModule.GetRemaining();
-                float chargePenalty = Mathf.Min(character.StunModule.GetRemaining(), chargeInitialDuration - chargeRemaining);
-                chargePenalty = Mathf.Min(chargePenalty, chargeInitialDuration * 0.3333333f);
-                if (chargePenalty > 0)
-                {
+                TSpan chargeRemaining = character.ChargeModule.GetRemaining();
+                TSpan chargePenalty = TSpan.ChoseMin(character.StunModule.GetRemaining(), chargeInitialDuration - chargeRemaining);
+                chargePenalty = TSpan.ChoseMin(chargePenalty, chargeInitialDuration.GetMultiplication(0.3333333));
+                if (chargePenalty.Ticks > 0)
                     character.ChargeModule.SetBoth(chargeInitialDuration, chargeRemaining + chargePenalty);
-                }
             }
 
-            combatManager.Animations.CancelActionsOfCharacter(character, compensateChargeLost: false);
-            foreach (StatusInstance status in character.StatusModule.GetAll)
+            combatManager.Animations.CancelActionsOfCharacter(character);
+            foreach (StatusInstance status in character.StatusReceiverModule.GetAll)
+            {
                 if (status is Riposte riposte)
                     riposte.RequestDeactivation();
+            }
 
-            foreach (StatusInstance status in character.StatusModule.GetAllRelated)
+            foreach (StatusInstance status in character.StatusReceiverModule.GetAllRelated)
             {
                 if (status is LustGrappled lustGrappled && lustGrappled.Restrainer == character)
-                {
                     lustGrappled.RestrainerStunned();
-                }
                 else if (status is Guarded guarded && guarded.Caster == character)
-                {
                     status.RequestDeactivation();
-                }
             }
         }
 
-        public void NotifyDowned(CharacterStateMachine character)
+        public void NotifyDowned([NotNull] CharacterStateMachine character)
         {
-            character.SkillModule.CancelPlan(compensateChargeLost: false);
-            combatManager.Animations.CancelActionsOfCharacter(character, compensateChargeLost: false);
-            //combatManager.Animations.CancelLustPromptsOfActiveCharacter(character);
-            foreach (StatusInstance status in character.StatusModule.GetAll)
+            character.SkillModule.CancelPlan();
+            combatManager.Animations.CancelActionsOfCharacter(character);
+            foreach (StatusInstance status in character.StatusReceiverModule.GetAll)
+            {
                 if (status is Riposte riposte)
                     riposte.RequestDeactivation();
+            }
 
-            foreach (StatusInstance status in character.StatusModule.GetAllRelated)
-                if ((status is LustGrappled lustGrappled && lustGrappled.Restrainer == character) || status is Guarded guarded && guarded.Caster == character)
+            foreach (StatusInstance status in character.StatusReceiverModule.GetAllRelated)
+            {
+                if ((status is LustGrappled lustGrappled && lustGrappled.Restrainer == character) || (status is Guarded guarded && guarded.Caster == character))
                     status.RequestDeactivation();
+            }
 
             character.RecoveryModule.Reset();
             character.ChargeModule.Reset();
@@ -411,18 +404,21 @@ namespace Core.Combat.Scripts.Managers
                 save.CheckNemaCombatStatus();
         }
 
-        public void NotifyGrappled(CharacterStateMachine character)
+        public void NotifyGrappled([NotNull] CharacterStateMachine character)
         {
-            character.SkillModule.CancelPlan(compensateChargeLost: false);
-            combatManager.Animations.CancelActionsOfCharacter(character, compensateChargeLost: false);
-            //combatManager.Animations.CancelLustPromptsOfActiveCharacter(character);
-            foreach (StatusInstance status in character.StatusModule.GetAll)
+            character.SkillModule.CancelPlan();
+            combatManager.Animations.CancelActionsOfCharacter(character);
+            foreach (StatusInstance status in character.StatusReceiverModule.GetAll)
+            {
                 if (status is Riposte riposte)
                     riposte.RequestDeactivation();
+            }
 
-            foreach (StatusInstance status in character.StatusModule.GetAllRelated)
-                if ((status is LustGrappled lustGrappled && lustGrappled.Restrainer == character) || status is Guarded guarded && guarded.Caster == character)
+            foreach (StatusInstance status in character.StatusReceiverModule.GetAllRelated)
+            {
+                if ((status is LustGrappled lustGrappled && lustGrappled.Restrainer == character) || (status is Guarded guarded && guarded.Caster == character))
                     status.RequestDeactivation();
+            }
 
             if (character.DownedModule.TrySome(out IDownedModule downedModule))
                 downedModule.Reset();
@@ -435,23 +431,27 @@ namespace Core.Combat.Scripts.Managers
             combatManager.PositionManager.MoveAllToDefaultPosition(baseDuration: PositionManager.CharacterMoveDuration);
         }
 
-        public void NotifyGrappling(CharacterStateMachine restrainer, CharacterStateMachine target)
+        public void NotifyGrappling([NotNull] CharacterStateMachine restrainer, CharacterStateMachine target)
         {
-            restrainer.SkillModule.CancelPlan(compensateChargeLost: false);
-            combatManager.Animations.CancelActionsOfCharacter(restrainer, compensateChargeLost: false);
-            foreach (StatusInstance status in restrainer.StatusModule.GetAll)
+            restrainer.SkillModule.CancelPlan();
+            combatManager.Animations.CancelActionsOfCharacter(restrainer);
+            foreach (StatusInstance status in restrainer.StatusReceiverModule.GetAll)
+            {
                 if (status is Riposte riposte)
                     riposte.RequestDeactivation();
+            }
 
-            foreach (StatusInstance status in restrainer.StatusModule.GetAllRelated)
+            foreach (StatusInstance status in restrainer.StatusReceiverModule.GetAllRelated)
+            {
                 if ((status is LustGrappled lustGrappled && lustGrappled.Restrainer == restrainer && lustGrappled.Owner != target) || (status is Guarded guarded && guarded.Caster == restrainer))
                     status.RequestDeactivation();
-            
+            }
+
             restrainer.RecoveryModule.Reset();
             restrainer.ChargeModule.Reset();
         }
 
-        public void NotifyDefeated(CharacterStateMachine defeated, Option<CharacterStateMachine> lastDamager, bool becomesCorpseOnDefeat)
+        public void NotifyDefeated([NotNull] CharacterStateMachine defeated, Option<CharacterStateMachine> lastDamager, bool becomesCorpseOnDefeat)
         {
             Save save = Save.Current;
             if (save != null && defeated.PositionHandler.IsRightSide)
@@ -460,12 +460,14 @@ namespace Core.Combat.Scripts.Managers
             foreach (CharacterStateMachine character in GetAllFixed())
                 character.SkillModule.UnplanIfTargeting(defeated);
             
-            combatManager.Animations.CancelActionsOfCharacter(defeated, compensateChargeLost: false);
-            defeated.SkillModule.CancelPlan(compensateChargeLost: false);
+            combatManager.Animations.CancelActionsOfCharacter(defeated);
+            defeated.SkillModule.CancelPlan();
 
             foreach (CharacterStateMachine character in GetAllFixed())
-                foreach (StatusInstance status in character.StatusModule.GetAll)
+            {
+                foreach (StatusInstance status in character.StatusReceiverModule.GetAll)
                     status.CharacterDefeated(defeated, becomesCorpseOnDefeat);
+            }
 
             if (becomesCorpseOnDefeat == false)
             {
@@ -481,13 +483,15 @@ namespace Core.Combat.Scripts.Managers
         }
     #endregion
         
-        public Option<CharacterDisplay> GetCharacterOverMouse()
+        public Option<DisplayModule> GetCharacterOverMouse()
         {
             foreach (CharacterStateMachine character in GetAllFixed())
-                if (character.Display.TrySome(out CharacterDisplay display) && display.IsMouseOver())
-                    return Option<CharacterDisplay>.Some(display);
+            {
+                if (character.Display.TrySome(out DisplayModule display) && display.IsMouseOver())
+                    return Option<DisplayModule>.Some(display);
+            }
 
-            return Option<CharacterDisplay>.None;
+            return Option<DisplayModule>.None;
         }
 
         public Option<CharacterStateMachine> GetCharacterAt(int position, bool isLeftSide)
@@ -502,8 +506,10 @@ namespace Core.Combat.Scripts.Managers
         public bool AnyBarkPlaying()
         {
             foreach (CharacterStateMachine character in GetAllFixed())
-                if (character.Display.TrySome(out CharacterDisplay display) && display.gameObject.activeInHierarchy && display.BarkPlayer.IsBusy)
+            {
+                if (character.Display.TrySome(out DisplayModule display) && display.gameObject.activeInHierarchy && display.BarkPlayer.IsBusy)
                     return true;
+            }
 
             return false;
         }
@@ -511,8 +517,10 @@ namespace Core.Combat.Scripts.Managers
         public void StopAllBarks()
         {
             foreach (CharacterStateMachine character in GetAllFixed())
-                if (character.Display.TrySome(out CharacterDisplay display))
+            {
+                if (character.Display.TrySome(out DisplayModule display))
                     display.BarkPlayer.Stop();
+            }
         }
     }
 }

@@ -2,7 +2,7 @@
 {
     public enum SecondaryUpgrade
     {
-        StunRecoverySpeed = 0,
+        StunMitigation = 0,
         MoveResistance = 1,
         DebuffResistance = 2,
         PoisonResistance = 3,

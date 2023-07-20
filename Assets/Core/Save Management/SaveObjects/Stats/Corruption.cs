@@ -1,4 +1,5 @@
 ﻿using Core.Combat.Scripts;
+using JetBrains.Annotations;
 
 namespace Core.Save_Management.SaveObjects
 {
@@ -6,10 +7,10 @@ namespace Core.Save_Management.SaveObjects
     {
         private static class CorruptionThresholds
         {
-            public const float Max = 1f;
-            public const float High = 0.75f;
-            public const float Medium = 0.5f;
-            public const float Low = 0.25f;
+            public const int Max = 100;
+            public const int High = 75;
+            public const int Medium = 50;
+            public const int Low = 25;
         }
 
         private static class LustThresholds
@@ -22,22 +23,22 @@ namespace Core.Save_Management.SaveObjects
         
         private static class TemptationThresholds
         {
-            public const float Max = 1f;
-            public const float High = 0.9f;
-            public const float Medium = 0.7f;
-            public const float Low = 0.5f;
+            public const int Max = 100;
+            public const int High = 90;
+            public const int Medium = 70;
+            public const int Low = 50;
         }
         
         private static class RaceExpThresholds
         {
-            public const uint Max = 400;
-            public const uint High = 200;
-            public const uint Medium = 150;
-            public const uint Low = 100;
-            public const uint VeryLow = 50;
+            public const int Max = 400;
+            public const int High = 200;
+            public const int Medium = 150;
+            public const int Low = 100;
+            public const int VeryLow = 50;
         }
         
-        public static Threshold DesireThreshold(IReadonlyCharacterStats stats, Race partnerRace)
+        public static Threshold DesireThreshold([NotNull] IReadonlyCharacterStats stats, Race partnerRace)
         {
             int score = 0;
 
@@ -50,7 +51,7 @@ namespace Core.Save_Management.SaveObjects
                 _                        => 0
             };
 
-            score += (float)stats.Temptation switch
+            score += stats.Temptation switch
             {
                 >= TemptationThresholds.Max    => 6,
                 >= TemptationThresholds.High   => 5,
@@ -59,7 +60,7 @@ namespace Core.Save_Management.SaveObjects
                 _                              => 0
             };
             
-            stats.SexualExpByRace.TryGetValue(partnerRace, out uint raceExpCount);
+            stats.SexualExpByRace.TryGetValue(partnerRace, out int raceExpCount);
 
             score += raceExpCount switch
             {
@@ -71,7 +72,7 @@ namespace Core.Save_Management.SaveObjects
                 _                            => 0
             };
 
-            score += (float)stats.Corruption switch
+            score += stats.Corruption switch
             {
                 >= CorruptionThresholds.Max    => 5,
                 >= CorruptionThresholds.High   => 3,
@@ -90,9 +91,9 @@ namespace Core.Save_Management.SaveObjects
             };
         }
         
-        public static Threshold CorruptionOnlyThreshold(IReadonlyCharacterStats stats)
+        public static Threshold CorruptionOnlyThreshold([NotNull] IReadonlyCharacterStats stats)
         {
-            return (float)stats.Corruption switch
+            return stats.Corruption switch
             {
                 >= CorruptionThresholds.Max    => Threshold.Max,
                 >= CorruptionThresholds.High   => Threshold.High,

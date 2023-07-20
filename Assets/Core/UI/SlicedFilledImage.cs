@@ -2,6 +2,7 @@
 #endif
 using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.U2D;
 using UnityEngine.UI;
@@ -53,7 +54,7 @@ namespace UI
 		private Sprite m_Sprite;
 		public Sprite sprite
 		{
-			get { return m_Sprite; }
+			get => m_Sprite;
 			set
 			{
 				if( SetPropertyUtility.SetClass( currentValue: ref m_Sprite, newValue: value ) )
@@ -68,7 +69,7 @@ namespace UI
 		private FillDirection m_FillDirection;
 		public FillDirection fillDirection
 		{
-			get { return m_FillDirection; }
+			get => m_FillDirection;
 			set
 			{
 				if( SetPropertyUtility.SetStruct( currentValue: ref m_FillDirection, newValue: value ) )
@@ -81,7 +82,7 @@ namespace UI
 		private float m_FillAmount = 1f;
 		public float fillAmount
 		{
-			get { return m_FillAmount; }
+			get => m_FillAmount;
 			set
 			{
 				if( SetPropertyUtility.SetStruct( currentValue: ref m_FillAmount, newValue: Mathf.Clamp01( value: value ) ) )
@@ -93,7 +94,7 @@ namespace UI
 		private bool m_FillCenter = true;
 		public bool fillCenter
 		{
-			get { return m_FillCenter; }
+			get => m_FillCenter;
 			set
 			{
 				if( SetPropertyUtility.SetStruct( currentValue: ref m_FillCenter, newValue: value ) )
@@ -105,8 +106,8 @@ namespace UI
 		private float m_PixelsPerUnitMultiplier = 1f;
 		public float pixelsPerUnitMultiplier
 		{
-			get { return m_PixelsPerUnitMultiplier; }
-			set { m_PixelsPerUnitMultiplier = Mathf.Max( a: 0.01f, b: value ); }
+			get => m_PixelsPerUnitMultiplier;
+			set => m_PixelsPerUnitMultiplier = Mathf.Max( a: 0.01f, b: value );
 		}
 
 		public float pixelsPerUnit
@@ -130,7 +131,7 @@ namespace UI
 		private Sprite m_OverrideSprite;
 		public Sprite overrideSprite
 		{
-			get { return activeSprite; }
+			get => activeSprite;
 			set
 			{
 				if( SetPropertyUtility.SetClass( currentValue: ref m_OverrideSprite, newValue: value ) )
@@ -141,7 +142,7 @@ namespace UI
 			}
 		}
 
-		private Sprite activeSprite { get { return m_OverrideSprite != null ? m_OverrideSprite : m_Sprite; } }
+		private Sprite activeSprite => m_OverrideSprite != null ? m_OverrideSprite : m_Sprite;
 
 		public override Texture mainTexture
 		{
@@ -192,10 +193,7 @@ namespace UI
 #pragma warning restore IDE1006
 #pragma warning restore 1692
 
-		protected SlicedFilledImage()
-		{
-			useLegacyMeshGeneration = false;
-		}
+		protected SlicedFilledImage() => useLegacyMeshGeneration = false;
 
 		protected override void OnEnable()
 		{
@@ -249,7 +247,7 @@ namespace UI
 				canvasRenderer.SetAlphaTexture( texture: alphaTex );
 		}
 
-		private void GenerateSlicedFilledSprite( VertexHelper vh )
+		private void GenerateSlicedFilledSprite( [NotNull] VertexHelper vh )
 		{
 			vh.Clear();
 
@@ -269,10 +267,10 @@ namespace UI
 
 				// Image's dimensions used for drawing. X = left, Y = bottom, Z = right, W = top.
 				Vector4 vertices = new(
-				                       x: rect.x + rect.width * ( padding.x / spriteW ),
-				                       y: rect.y + rect.height * ( padding.y / spriteH ),
-				                       z: rect.x + rect.width * ( ( spriteW - padding.z ) / spriteW ),
-				                       w: rect.y + rect.height * ( ( spriteH - padding.w ) / spriteH ) );
+				                       x: rect.x + (rect.width * ( padding.x / spriteW )),
+				                       y: rect.y + (rect.height * ( padding.y / spriteH )),
+				                       z: rect.x + (rect.width * ( ( spriteW - padding.z ) / spriteW )),
+				                       w: rect.y + (rect.height * ( ( spriteH - padding.w ) / spriteH )) );
 
 				GenerateFilledSprite( vh: vh, vertices: vertices, uvs: outer, fillAmount: m_FillAmount );
 				return;
@@ -343,12 +341,12 @@ namespace UI
 							sliceEnd = ( s_SlicedVertices[y2].y - rectStartPos ) * _1OverTotalSize;
 							break;
 						case FillDirection.Left:
-							sliceStart = 1f - ( s_SlicedVertices[x2].x - rectStartPos ) * _1OverTotalSize;
-							sliceEnd = 1f - ( s_SlicedVertices[x].x - rectStartPos ) * _1OverTotalSize;
+							sliceStart = 1f - (( s_SlicedVertices[x2].x - rectStartPos ) * _1OverTotalSize);
+							sliceEnd = 1f - (( s_SlicedVertices[x].x - rectStartPos ) * _1OverTotalSize);
 							break;
 						case FillDirection.Down:
-							sliceStart = 1f - ( s_SlicedVertices[y2].y - rectStartPos ) * _1OverTotalSize;
-							sliceEnd = 1f - ( s_SlicedVertices[y].y - rectStartPos ) * _1OverTotalSize;
+							sliceStart = 1f - (( s_SlicedVertices[y2].y - rectStartPos ) * _1OverTotalSize);
+							sliceEnd = 1f - (( s_SlicedVertices[y].y - rectStartPos ) * _1OverTotalSize);
 							break;
 						default: // Just there to get rid of the "Use of unassigned local variable" compiler error
 							sliceStart = sliceEnd = 0f;
@@ -414,26 +412,26 @@ namespace UI
 				{
 					if( m_FillDirection == FillDirection.Left )
 					{
-						vertices.x = vertices.z - ( vertices.z - vertices.x ) * fillAmount;
-						uvLeft = uvRight - ( uvRight - uvLeft ) * fillAmount;
+						vertices.x = vertices.z - (( vertices.z - vertices.x ) * fillAmount);
+						uvLeft = uvRight - (( uvRight - uvLeft ) * fillAmount);
 					}
 					else
 					{
-						vertices.z = vertices.x + ( vertices.z - vertices.x ) * fillAmount;
-						uvRight = uvLeft + ( uvRight - uvLeft ) * fillAmount;
+						vertices.z = vertices.x + (( vertices.z - vertices.x ) * fillAmount);
+						uvRight = uvLeft + (( uvRight - uvLeft ) * fillAmount);
 					}
 				}
 				else
 				{
 					if( m_FillDirection == FillDirection.Down )
 					{
-						vertices.y = vertices.w - ( vertices.w - vertices.y ) * fillAmount;
-						uvBottom = uvTop - ( uvTop - uvBottom ) * fillAmount;
+						vertices.y = vertices.w - (( vertices.w - vertices.y ) * fillAmount);
+						uvBottom = uvTop - (( uvTop - uvBottom ) * fillAmount);
 					}
 					else
 					{
-						vertices.w = vertices.y + ( vertices.w - vertices.y ) * fillAmount;
-						uvTop = uvBottom + ( uvTop - uvBottom ) * fillAmount;
+						vertices.w = vertices.y + (( vertices.w - vertices.y ) * fillAmount);
+						uvTop = uvBottom + (( uvTop - uvBottom ) * fillAmount);
 					}
 				}
 			}
@@ -457,11 +455,11 @@ namespace UI
 			vh.AddTriangle( idx0: startIndex + 2, idx1: startIndex + 3, idx2: startIndex );
 		}
 
-		int ILayoutElement.layoutPriority { get { return 0; } }
-		float ILayoutElement.minWidth { get { return 0; } }
-		float ILayoutElement.minHeight { get { return 0; } }
-		float ILayoutElement.flexibleWidth { get { return -1; } }
-		float ILayoutElement.flexibleHeight { get { return -1; } }
+		int ILayoutElement.layoutPriority => 0;
+		float ILayoutElement.minWidth => 0;
+		float ILayoutElement.minHeight => 0;
+		float ILayoutElement.flexibleWidth => -1;
+		float ILayoutElement.flexibleHeight => -1;
 
 		float ILayoutElement.preferredWidth
 		{

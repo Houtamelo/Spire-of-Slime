@@ -2,18 +2,20 @@
 using System.Text;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Behaviour;
-using Core.Combat.Scripts.Interfaces.Modules;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Tank
 {
     public class Vanguard : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             VanguardInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -34,7 +36,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Tank
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             VanguardInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -44,14 +47,14 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Tank
 
     public class VanguardInstance : PerkInstance
     {
-        private const float MoveResistanceBonus = 0.3f;
-        private const float StunRecoverySpeedBonus = 0.3f;
+        private const int MoveResistanceBonus = 30;
+        private const int StunMitigationBonus = 30;
         
         public VanguardInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
         
-        public VanguardInstance(CharacterStateMachine owner, VanguardRecord record) : base(owner, record)
+        public VanguardInstance(CharacterStateMachine owner, [NotNull] VanguardRecord record) : base(owner, record)
         {
         }
 
@@ -59,19 +62,18 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Tank
         {
             if (CreatedFromLoad)
                 return;
-            
-            IResistancesModule resistancesModule = Owner.ResistancesModule;
-            resistancesModule.BaseMoveResistance += MoveResistanceBonus;
-            resistancesModule.BaseStunRecoverySpeed += StunRecoverySpeedBonus;
+
+            Owner.ResistancesModule.BaseMoveResistance += MoveResistanceBonus;
+            Owner.StunModule.BaseStunMitigation += StunMitigationBonus;
         }
 
         protected override void OnUnsubscribe()
         {
-            IResistancesModule resistancesModule = Owner.ResistancesModule;
-            resistancesModule.BaseMoveResistance -= MoveResistanceBonus;
-            resistancesModule.BaseStunRecoverySpeed -= StunRecoverySpeedBonus;
+            Owner.ResistancesModule.BaseMoveResistance -= MoveResistanceBonus;
+            Owner.StunModule.BaseStunMitigation -= StunMitigationBonus;
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new VanguardRecord(Key);
     }
 }

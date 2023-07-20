@@ -2,19 +2,22 @@
 using System.Text;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects.Types.Stun;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
 {
     public class GoForTheEyes : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             GoForTheEyesInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -35,7 +38,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             GoForTheEyesInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -45,17 +49,15 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
     
     public class GoForTheEyesInstance : PerkInstance, IStunModifier
     {
-        private const float DebuffApplyChanceModifier = 0.4f;
-        private const float StunDurationMultiplier = 1.2f;
-        private const float DamageModifier = -0.1f;
-        public string SharedId => nameof(GoForTheEyesInstance);
-        public int Priority => 5;
-        
+        private const int DebuffApplyChanceModifier = 40;
+        private const int DamageModifier = -10;
+        private const int StunPowerMultiplier = 120;
+
         public GoForTheEyesInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public GoForTheEyesInstance(CharacterStateMachine owner, GoForTheEyesRecord record) : base(owner, record)
+
+        public GoForTheEyesInstance(CharacterStateMachine owner, [NotNull] GoForTheEyesRecord record) : base(owner, record)
         {
         }
 
@@ -67,23 +69,28 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
             if (CreatedFromLoad)
                 return;
             
-            Owner.StatsModule.BasePower += DamageModifier;
+            Owner.StatsModule.BasePower = Owner.StatsModule.BasePower + DamageModifier;
             statusApplierModule.BaseDebuffApplyChance += DebuffApplyChanceModifier;
         }
 
         protected override void OnUnsubscribe()
         {
-            Owner.StatsModule.BasePower -= DamageModifier;
+            Owner.StatsModule.BasePower = Owner.StatsModule.BasePower - DamageModifier;
             IStatusApplierModule statusApplierModule = Owner.StatusApplierModule;
             statusApplierModule.BaseDebuffApplyChance -= DebuffApplyChanceModifier;
             statusApplierModule.StunApplyModifiers.Remove(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new GoForTheEyesRecord(Key);
 
-        public void Modify(ref StunToApply effectStruct)
+        public void Modify([NotNull] ref StunToApply effectStruct)
         {
-            effectStruct.Duration *= StunDurationMultiplier;
+            effectStruct.StunPower = (effectStruct.StunPower * StunPowerMultiplier) / 100;
         }
+
+        [NotNull]
+        public string SharedId => nameof(GoForTheEyesInstance);
+        public int Priority => 5;
     }
 }

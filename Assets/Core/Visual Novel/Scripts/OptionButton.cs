@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
@@ -19,7 +20,7 @@ namespace Core.Visual_Novel.Scripts
         private Action<int> _onClick;
         private DialogueDisplay _dialogueDisplay;
         
-        public void Initialize(DialogueOption dialogueOption, int index, Action<int> onClick, DialogueDisplay dialogueDisplay)
+        public void Initialize([NotNull] DialogueOption dialogueOption, int index, Action<int> onClick, DialogueDisplay dialogueDisplay)
         {
             _dialogueDisplay = dialogueDisplay;
             _index = index;

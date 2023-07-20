@@ -1,34 +1,34 @@
 ﻿using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Utils.Patterns;
-using Utils.Patterns;
+using JetBrains.Annotations;
 
 namespace Core.Combat.Scripts.Skills
 {
     public readonly struct ReadOnlyProperties
     {
         public readonly CharacterStateMachine Target;
-        public readonly Option<float> AccuracyModifier;
-        public readonly Option<float> DamageModifier;
-        public readonly Option<float> CriticalChanceModifier;
-        public readonly Option<float> ResiliencePiercingModifier;
+        public readonly Option<int> AccuracyModifier;
+        public readonly Option<int> Power;
+        public readonly Option<int> CriticalChanceModifier;
+        public readonly Option<int> ResiliencePiercingModifier;
         
-        public ReadOnlyProperties(CharacterStateMachine target, ISkill skill)
+        public ReadOnlyProperties(CharacterStateMachine target, [NotNull] ISkill skill)
         {
             Target = target;
-            AccuracyModifier = skill.BaseAccuracy;
-            DamageModifier = skill.BaseDamageMultiplier;
-            CriticalChanceModifier = skill.BaseCriticalChance;
-            ResiliencePiercingModifier = skill.BaseResiliencePiercing;
+            AccuracyModifier = skill.Accuracy;
+            Power = skill.Power;
+            CriticalChanceModifier = skill.CriticalChance;
+            ResiliencePiercingModifier = skill.ResilienceReduction;
         }
 
         public ReadOnlyProperties(TargetProperties targetProperties)
         {
             Target = targetProperties.Target;
             AccuracyModifier = targetProperties.AccuracyModifier;
-            DamageModifier = targetProperties.DamageModifier;
+            Power = targetProperties.Power;
             CriticalChanceModifier = targetProperties.CriticalChanceModifier;
-            ResiliencePiercingModifier = targetProperties.ResiliencePiercingModifier;
+            ResiliencePiercingModifier = targetProperties.ResilienceReductionModifier;
         }
     }
 }

@@ -6,7 +6,6 @@ using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Cues
 {
@@ -73,7 +72,7 @@ namespace Core.Combat.Scripts.Cues
             tmp.color = textColor;
             transform.position = worldPosition;
 
-            Vector3 endPosition = worldPosition + direction * StayDuration;
+            Vector3 endPosition = worldPosition + (direction * StayDuration);
 
             _sequence = DOTween.Sequence();
             _sequence.Append(transform.DOMove(endPosition, StayDuration));
@@ -92,13 +91,9 @@ namespace Core.Combat.Scripts.Cues
             audioSource.Clip = clipValue;
             audioSource.Play();
             if (clipValue.length > FullDuration)
-            {
                 DOVirtual.DelayedCall(clipValue.length, _onAudioEnd, ignoreTimeScale: false).SetTarget(this);
-            }
             else
-            {
                 _sequence.AppendCallback(_onAudioEnd);
-            }
         }
 
         private void OnDestroy()

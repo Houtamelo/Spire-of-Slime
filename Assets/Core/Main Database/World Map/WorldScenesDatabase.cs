@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
+using JetBrains.Annotations;
 using KGySoft.CoreLibraries;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 using Yarn.Unity;
 using Save = Core.Save_Management.SaveObjects.Save;
 
@@ -44,8 +44,10 @@ namespace Core.Main_Database.World_Map
                 
 #if UNITY_EDITOR
                 for (int i = 0; i < sortedArray.Length - 1; i++)
+                {
                     if (sortedArray[i] == sortedArray[i + 1])
                         Debug.LogWarning($"Two scenes with same priority and location: {sortedArray[i].name} - {sortedArray[i + 1].name}", context: sortedArray[i]);
+                }
 #endif
             }
         }
@@ -65,7 +67,7 @@ namespace Core.Main_Database.World_Map
         }
 
 #if UNITY_EDITOR
-        public void AssignData(IEnumerable<WorldYarnScene> worldYarnScenes)
+        public void AssignData([NotNull] IEnumerable<WorldYarnScene> worldYarnScenes)
         {
             serializedScenes = worldYarnScenes.ToArray();
             UnityEditor.EditorUtility.SetDirty(this);

@@ -6,6 +6,7 @@ using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
 using CsvHelper;
 using CsvHelper.Configuration;
+using JetBrains.Annotations;
 using KGySoft.CoreLibraries;
 using UnityEngine;
 
@@ -33,13 +34,12 @@ namespace Core.Localization.Scripts
             TargetBarkPaths = languages.ToDictionary(keySelector: language => language,        elementSelector: language => $"{MainFilesPath}{Enum<Language>.ToString(language).ToLowerInvariant()}_barks.csv");
         }
         
+        [NotNull]
         public static Dictionary<CleanString, string> ReadTranslationsFromFile(string filePath, Configuration configuration)
         {
             Dictionary<CleanString, string> translations;
             if (File.Exists(filePath) == false)
-            {
                 return new Dictionary<CleanString, string>();
-            }
 
             using (StreamReader reader = new(filePath))
             using (CsvReader csvReader = new(reader, configuration))
@@ -50,7 +50,7 @@ namespace Core.Localization.Scripts
             return translations;
         }
         
-        public static void WriteTranslationsToFile(string filePath, Dictionary<CleanString, string> translations, Configuration configuration)
+        public static void WriteTranslationsToFile([NotNull] string filePath, [NotNull] Dictionary<CleanString, string> translations, Configuration configuration)
         {
             using (StreamWriter writer = new(File.OpenWrite(filePath)))
             using (CsvWriter csvWriter = new(writer, configuration))

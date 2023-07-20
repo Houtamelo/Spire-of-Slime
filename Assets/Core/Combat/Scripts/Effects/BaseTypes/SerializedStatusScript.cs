@@ -19,11 +19,11 @@ using Core.Combat.Scripts.Effects.Types.Tempt;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Interfaces;
 using Core.Combat.Scripts.Perks;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
 using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 // ReSharper disable NonReadonlyMemberInGetHashCode
 
@@ -34,59 +34,63 @@ namespace Core.Combat.Scripts.Effects.BaseTypes
     {
         [SerializeField, ValidateInput(nameof(IsValidEffectType))]
         private EffectType effectType;
+        public EffectType EffectType => effectType;
 
         [SerializeField, ShowIf(nameof(ShowPermanent))]
         private bool permanent;
 
-        [SerializeField, ShowIf(nameof(ShowDuration)), LabelText("Duration"), PropertyRange(0f, 10f)]
-        private float baseDuration;
+        [SerializeField, ShowIf(nameof(ShowDuration))]
+        private TSpan duration;
 
-        [SerializeField, ShowIf(nameof(ShowApplyChance)), LabelText("Apply Chance"), PropertyRange(0f, 2f), SuffixLabel("@($value * 100f) + \"%\"")]
-        private float baseApplyChance;
+        [SerializeField, ShowIf(nameof(ShowApplyChance)), Range(-100, 300)]
+        private int applyChance;
 
-        [SerializeField, ShowIf(nameof(ShowBaseValuePerSecond)), LabelText(@"$BaseValuePerSecondLabel"), PropertyRange(1, 40)]
-        private uint baseValuePerSecond;
+        [SerializeField, ShowIf(nameof(IsArousal)), Range(0, 20)]
+        private int lustPerSecond;
         
-        [SerializeField, ShowIf(nameof(ShowFloatValuePerSecond)), LabelText(@"$FloatValuePerSecondLabel"), PropertyRange(-2f, 2f)]
-        private float baseFloatValuePerSecond;
-
-        [SerializeField, ShowIf(nameof(ShowStat)), LabelText("Affected Stat")]
+        [SerializeField, ShowIf(nameof(IsBuffOrDebuff)), LabelText("Affected Stat")]
         private CombatStat buffStat;
 
-        [SerializeField, ShowIf(nameof(ShowStat)), LabelText("Delta"), PropertyRange(-2f, 2f)]
-        private float buffBaseDelta;
+        [SerializeField, ShowIf(nameof(IsBuffOrDebuff)), Range(-200, 200), ValidateInput(nameof(IsEffectCorrectlyBuffOrDebuff))]
+        private int buffDelta;
+        
+        [SerializeField, ShowIf(nameof(IsHeal)), Range(0, 300)]
+        private int healPower;
 
-        [SerializeField, ShowIf(nameof(ShowTriggerName))]
-        private string triggerName;
-
-        [SerializeField, ShowIf(nameof(ShowTriggerName))]
-        private float graphicalX;
-
-        [SerializeField, ShowIf(nameof(ShowHealPower)), PropertyRange(0, 3f), SuffixLabel("@($value * 100f) + \"%\"")]
-        private float healPower;
-
-        [SerializeField, ShowIf(nameof(ShowLust)), LabelText("Lust Lower"), PropertyRange(-50, 50), ValidateInput(nameof(IsLustUpperHigherThanLower))]
+        [SerializeField, ShowIf(nameof(IsLust)), Range(-50, 50), ValidateInput(nameof(IsLustUpperHigherThanLower))]
         private int lustLower;
 
-        [SerializeField, ShowIf(nameof(ShowLust)), LabelText("Lust Upper"), PropertyRange(-50, 50)]
+        [SerializeField, ShowIf(nameof(IsLust)), Range(-50, 50)]
         private int lustUpper;
-
-        [SerializeField, ShowIf(nameof(ShowMoveDelta)), LabelText("Delta"), PropertyRange(-3, 3), ValidateInput(nameof(IsEffectCorrectlyBuffOrDebuff)), InfoBox("Positive means retreating, negative means advancing")]
+        
+        [SerializeField, ShowIf(nameof(IsLust)), Range(0, 500)]
+        private int lustPower;
+        
+        [SerializeField, ShowIf(nameof(IsMove)), Range(-3, 3), InfoBox("Positive means retreating, negative means advancing")]
         private int moveDelta;
-
-        [SerializeField, ShowIf(nameof(ShowPerkToApply)), LabelText("Perk")]
+        
+        [SerializeField, ShowIf(nameof(IsPerk)), Required]
         private PerkScriptable perkToApply;
-
-        [SerializeField, ShowIf(nameof(ShowRiposteMultiplier)), LabelText("Multiplier"), PropertyRange(0f, 2f), SuffixLabel("@($value * 100f) + \"%\"")]
-        private float baseRiposteMultiplier;
-
-        [SerializeField, ShowIf(nameof(ShowSummon)), Required]
+        
+        [SerializeField, ShowIf(nameof(IsPoison)), Range(0, 40)]
+        private int poisonPerSecond;
+        
+        [SerializeField, ShowIf(nameof(IsRiposte)), Range(0, 300)]
+        private int ripostePower;
+        
+        [SerializeField, ShowIf(nameof(IsStun)), Range(0, 400)]
+        private int stunPower;
+        
+        [SerializeField, ShowIf(nameof(IsOvertimeHeal)), Range(0, 40)]
+        private int healPerSecond;
+        
+        [SerializeField, ShowIf(nameof(IsTemptation)), Range(0, 300)]
+        private int temptationPower;
+        
+        [SerializeField, ShowIf(nameof(IsSummon)), Required]
         private CharacterScriptable characterToSummon;
 
-        [SerializeField, ShowIf(nameof(ShowTemptation))]
-        private float temptationPower;
-
-        [SerializeField, ShowIf(nameof(ShowSummon)), InfoBox("The AI uses this to calculate how good the summoned character's skill are. Default value should be 1.")]
+        [SerializeField, ShowIf(nameof(IsSummon)), InfoBox("The AI uses this to calculate how good the summoned character's skill are. Default value should be 1.")]
         private float pointsMultiplier;
 
     #region PropertyStates
@@ -116,22 +120,23 @@ namespace Core.Combat.Scripts.Effects.BaseTypes
                 _                         => throw new ArgumentException(message: $"Unhandled EffectType: {effectType}")
             };
         }
-        
+
         private bool IsEffectCorrectlyBuffOrDebuff()
         {
             if (effectType is not EffectType.Buff and not EffectType.Debuff)
                 return true;
             
-            return buffBaseDelta switch
+            return buffDelta switch
             {
                 > 0 => effectType == EffectType.Buff,
                 < 0 => effectType == EffectType.Debuff,
                 _   => true
             };
         }
-        
+
         private bool IsLustUpperHigherThanLower() => lustUpper > lustLower;
-        
+
+
         private bool ShowDuration =>
             permanent == false
             && effectType switch
@@ -145,11 +150,8 @@ namespace Core.Combat.Scripts.Effects.BaseTypes
                 EffectType.Marked         => true,
                 EffectType.Stun           => true,
                 EffectType.Guarded        => true,
-                EffectType.LustGrappled   => true,
                 EffectType.Perk           => true,
                 EffectType.HiddenPerk     => true,
-                EffectType.NemaExhaustion => true,
-                EffectType.Mist           => true,
                 EffectType.Move           => false,
                 EffectType.Heal           => false,
                 EffectType.Lust           => false,
@@ -157,6 +159,7 @@ namespace Core.Combat.Scripts.Effects.BaseTypes
                 EffectType.Temptation     => false,
                 _                         => throw new ArgumentException(message: $"Unhandled EffectType: {effectType}")
             };
+
         private bool ShowPermanent => effectType switch
         {
             EffectType.Buff           => true,
@@ -167,11 +170,8 @@ namespace Core.Combat.Scripts.Effects.BaseTypes
             EffectType.OvertimeHeal   => true,
             EffectType.Marked         => true,
             EffectType.Guarded        => true,
-            EffectType.LustGrappled   => true,
             EffectType.Perk           => true,
             EffectType.HiddenPerk     => true,
-            EffectType.NemaExhaustion => true,
-            EffectType.Mist           => true,
             EffectType.Stun           => false,
             EffectType.Move           => false,
             EffectType.Heal           => false,
@@ -180,6 +180,7 @@ namespace Core.Combat.Scripts.Effects.BaseTypes
             EffectType.Temptation     => false,
             _                         => throw new ArgumentException(message: $"Unhandled EffectType: {effectType}")
         };
+
         private bool ShowApplyChance =>
             effectType switch
             {
@@ -190,68 +191,40 @@ namespace Core.Combat.Scripts.Effects.BaseTypes
                 EffectType.Move    => true,
                 _                  => false
             };
-        private bool ShowBaseValuePerSecond =>
-            effectType switch
-            {
-                EffectType.Poison       => true,
-                EffectType.Arousal      => true,
-                EffectType.OvertimeHeal => true,
-                EffectType.LustGrappled => true,
-                _                       => false
-            };
 
-        private bool ShowFloatValuePerSecond =>
-            effectType switch
-            {
-                EffectType.LustGrappled => true,
-                _                       => false
-            };
+        private bool IsArousal => effectType is EffectType.Arousal;
+        private bool IsPoison => effectType is EffectType.Poison;
+        private bool IsStun => effectType is EffectType.Stun;
+        private bool IsBuffOrDebuff => effectType is EffectType.Buff or EffectType.Debuff;
+        private bool IsHeal => effectType is EffectType.Heal;
+        private bool IsOvertimeHeal => effectType is EffectType.OvertimeHeal;
+        private bool IsLust => effectType is EffectType.Lust;
+        private bool IsMove => effectType is EffectType.Move;
+        private bool IsPerk => effectType is EffectType.Perk or EffectType.HiddenPerk;
+        private bool IsRiposte => effectType is EffectType.Riposte;
+        private bool IsSummon => effectType is EffectType.Summon;
+        private bool IsTemptation => effectType is EffectType.Temptation;
+    #endregion
         
-        [UsedImplicitly] private string BaseValuePerSecondLabel => effectType switch
-        {
-            EffectType.Poison       => "Damage per second",
-            EffectType.Arousal      => "Lust per second",
-            EffectType.OvertimeHeal => "Heal per second",
-            EffectType.LustGrappled => "Lust per second",
-            _                       => "Base Value Per Second"
-        };
-        
-        [UsedImplicitly] private string FloatValuePerSecondLabel => effectType switch
-        {
-            EffectType.LustGrappled => "Temptation per second",
-            _                       => "Float Value Per Second"
-        };
-
-        private bool ShowStat => effectType is EffectType.Buff or EffectType.Debuff;
-        private bool ShowTriggerName => effectType is EffectType.LustGrappled;
-        private bool ShowHealPower => effectType is EffectType.Heal;
-        private bool ShowLust => effectType is EffectType.Lust;
-        private bool ShowMoveDelta => effectType is EffectType.Move;
-        private bool ShowPerkToApply => effectType is EffectType.Perk or EffectType.HiddenPerk;
-        private bool ShowRiposteMultiplier => effectType is EffectType.Riposte;
-        private bool ShowSummon => effectType is EffectType.Summon;
-        private bool ShowTemptation => effectType is EffectType.Temptation;
-        #endregion
-        
+        [NotNull]
         public IActualStatusScript Deserialize()
         {
             return effectType switch
             {
-                EffectType.Buff         => new BuffOrDebuffScript(permanent, baseDuration, baseApplyChance, buffStat, buffBaseDelta),
-                EffectType.Debuff       => new BuffOrDebuffScript(permanent, baseDuration, baseApplyChance, buffStat, buffBaseDelta),
-                EffectType.Poison       => new PoisonScript(permanent, baseDuration, baseApplyChance, baseValuePerSecond),
-                EffectType.Arousal      => new ArousalScript(permanent, baseDuration, baseApplyChance, baseValuePerSecond),
-                EffectType.Riposte      => new RiposteScript(permanent, baseDuration, baseRiposteMultiplier),
-                EffectType.OvertimeHeal => new OvertimeHealScript(permanent, baseDuration, baseValuePerSecond),
-                EffectType.Marked       => new MarkedScript(permanent, baseDuration),
-                EffectType.Stun         => new StunScript(baseDuration),
-                EffectType.Guarded      => new GuardedScript(permanent, baseDuration),
-                EffectType.Move         => new MoveScript(baseApplyChance, moveDelta),
-                EffectType.LustGrappled => new LustGrappledScript(permanent, baseDuration, triggerName, graphicalX, baseValuePerSecond, baseFloatValuePerSecond),
-                EffectType.Perk         => new PerkStatusScript(permanent, baseDuration, perkToApply, IsHidden: false),
-                EffectType.HiddenPerk   => new PerkStatusScript(permanent, baseDuration, perkToApply, IsHidden: true),
+                EffectType.Buff         => new BuffOrDebuffScript(permanent, duration, applyChance, buffStat, buffDelta),
+                EffectType.Debuff       => new BuffOrDebuffScript(permanent, duration, applyChance, buffStat, buffDelta),
+                EffectType.Poison       => new PoisonScript(permanent, duration, applyChance, poisonPerSecond),
+                EffectType.Arousal      => new ArousalScript(permanent, duration, applyChance, lustPerSecond),
+                EffectType.Riposte      => new RiposteScript(permanent, duration, ripostePower),
+                EffectType.OvertimeHeal => new OvertimeHealScript(permanent, duration, healPerSecond),
+                EffectType.Marked       => new MarkedScript(permanent, duration),
+                EffectType.Stun         => new StunScript(stunPower),
+                EffectType.Guarded      => new GuardedScript(permanent, duration),
+                EffectType.Move         => new MoveScript(applyChance, moveDelta),
+                EffectType.Perk         => new PerkStatusScript(permanent, duration, perkToApply, IsHidden: false),
+                EffectType.HiddenPerk   => new PerkStatusScript(permanent, duration, perkToApply, IsHidden: true),
                 EffectType.Heal         => new HealScript(healPower),
-                EffectType.Lust         => new LustScript(lustLower, lustUpper),
+                EffectType.Lust         => new LustScript(lustLower, lustUpper, lustPower),
                 EffectType.Summon       => new SummonScript(characterToSummon, pointsMultiplier),
                 EffectType.Temptation   => new TemptScript(temptationPower),
                 _                       => throw new ArgumentException(message: $"effectType {effectType} is not supported")
@@ -269,60 +242,62 @@ namespace Core.Combat.Scripts.Effects.BaseTypes
             if (other.EffectType != effectType)
                 return false;
 
-            switch (other)
+            return other switch
             {
-                case ArousalScript arousalScript when effectType is EffectType.Arousal:
-                    return arousalScript.BaseLustPerTime == baseValuePerSecond
-                           && Math.Abs(arousalScript.BaseApplyChance - baseApplyChance) < 0.0001f
-                           && (arousalScript.Permanent == permanent || Mathf.Abs(arousalScript.BaseDuration - baseDuration) < 0.0001f);
-                case BuffOrDebuffScript buffOrDebuffScript when effectType is EffectType.Buff or EffectType.Debuff:
-                    return Math.Abs(buffOrDebuffScript.BaseDelta - buffBaseDelta) < 0.0001f
-                           && buffOrDebuffScript.Stat == buffStat
-                           && Math.Abs(buffOrDebuffScript.BaseApplyChance - baseApplyChance) < 0.0001f
-                           && (buffOrDebuffScript.Permanent == permanent || Mathf.Abs(buffOrDebuffScript.BaseDuration - baseDuration) < 0.0001f);
-                case HealScript healScript when effectType is EffectType.Heal:
-                    return Math.Abs(healScript.Power - healPower) < 0.0001f;
-                case LustScript lustScript when effectType is EffectType.Lust:
-                    return lustScript.LustLower == lustLower && lustScript.LustUpper == lustUpper;
-                case MarkedScript markedScript when effectType is EffectType.Marked:
-                    return markedScript.Permanent == permanent || Mathf.Abs(markedScript.BaseDuration - baseDuration) < 0.0001f;
-                case MoveScript moveScript when effectType is EffectType.Move:
-                    return Math.Abs(moveScript.BaseApplyChance - baseApplyChance) < 0.0001f
-                           && moveScript.MoveDelta == moveDelta;
-                case OvertimeHealScript overtimeHealScript when effectType is EffectType.OvertimeHeal:
-                    return overtimeHealScript.BaseHealPerTime == baseValuePerSecond
-                           && (overtimeHealScript.Permanent == permanent || Mathf.Abs(overtimeHealScript.BaseDuration - baseDuration) < 0.0001f);
-                case PerkStatusScript perkStatusScript when effectType is EffectType.Perk or EffectType.HiddenPerk:
-                    return (perkStatusScript.Permanent == permanent || Mathf.Abs(perkStatusScript.BaseDuration - baseDuration) < 0.0001f)
-                           && perkStatusScript.PerkToApply == perkToApply;
-                case PoisonScript poisonScript when effectType is EffectType.Poison:
-                    return poisonScript.BasePoisonPerTime == baseValuePerSecond
-                           && Math.Abs(poisonScript.BaseApplyChance - baseApplyChance) < 0.0001f
-                           && (poisonScript.Permanent == permanent || Mathf.Abs(poisonScript.BaseDuration - baseDuration) < 0.0001f);
-                case RiposteScript riposteScript when effectType is EffectType.Riposte:
-                    return Math.Abs(riposteScript.BasePower - baseRiposteMultiplier) < 0.0001f
-                           && (riposteScript.Permanent == permanent || Mathf.Abs(riposteScript.BaseDuration - baseDuration) < 0.0001f);
-                case StunScript stunScript when effectType is EffectType.Stun:
-                    return Math.Abs(stunScript.BaseDuration - baseDuration) < 0.0001f;
-                case GuardedScript guardedScript when effectType is EffectType.Guarded:
-                    return guardedScript.Permanent == permanent || Mathf.Abs(guardedScript.BaseDuration - baseDuration) < 0.0001f;
-                case LustGrappledScript lustGrappledScript when effectType is EffectType.LustGrappled:
-                    return lustGrappledScript.BaseLustPerTime == baseValuePerSecond
-                           && (lustGrappledScript.Permanent == permanent || Mathf.Abs(lustGrappledScript.BaseDuration - baseDuration) < 0.0001f)
-                           && lustGrappledScript.TriggerName == triggerName;
-                case SummonScript summonScript when effectType is EffectType.Summon:
-                    return EqualityComparer<ICharacterScript>.Default.Equals(summonScript.CharacterToSummon, characterToSummon) && Mathf.Abs(summonScript.PointsMultiplier - pointsMultiplier) < 0.0001f;
-                case TemptScript temptationScript when effectType is EffectType.Temptation:
-                    return Mathf.Abs(temptationScript.Power - temptationPower) < 0.0001f;
-            }
+                ArousalScript arousalScript when effectType is EffectType.Arousal
+                    => arousalScript.BaseLustPerSecond == lustPerSecond
+                    && arousalScript.BaseApplyChance == applyChance
+                    && arousalScript.Permanent == permanent
+                    && (permanent == true || arousalScript.BaseDuration == duration),
+                BuffOrDebuffScript buffOrDebuffScript when effectType is EffectType.Buff or EffectType.Debuff
+                    => buffOrDebuffScript.BaseDelta == buffDelta
+                    && buffOrDebuffScript.Stat == buffStat
+                    && buffOrDebuffScript.BaseApplyChance == applyChance
+                    && buffOrDebuffScript.Permanent == permanent
+                    && (permanent == true || buffOrDebuffScript.BaseDuration == duration),
+                HealScript healScript when effectType is EffectType.Heal       
+                    => healScript.Power == healPower,
+                LustScript lustScript when effectType is EffectType.Lust       
+                    => lustScript.LustLower == lustLower 
+                    && lustScript.LustUpper == lustUpper,
+                MarkedScript markedScript when effectType is EffectType.Marked 
+                    => markedScript.Permanent == permanent 
+                    && (permanent == true || markedScript.BaseDuration == duration),
+                MoveScript moveScript when effectType is EffectType.Move       
+                    => moveScript.BaseApplyChance == applyChance 
+                    && moveScript.MoveDelta == moveDelta,
+                OvertimeHealScript overtimeHealScript when effectType is EffectType.OvertimeHeal 
+                    => overtimeHealScript.BaseHealPerTime == healPerSecond
+                    && overtimeHealScript.Permanent == permanent
+                    && (permanent == true || overtimeHealScript.BaseDuration == duration),
+                PerkStatusScript perkStatusScript when effectType is EffectType.Perk or EffectType.HiddenPerk 
+                    => perkStatusScript.PerkToApply == perkToApply
+                    && perkStatusScript.Permanent == permanent
+                    && (permanent == true || perkStatusScript.BaseDuration == duration),
+                PoisonScript poisonScript when effectType is EffectType.Poison
+                    => poisonScript.BasePoisonPerTime == poisonPerSecond
+                    && poisonScript.BaseApplyChance == applyChance
+                    && poisonScript.Permanent == permanent
+                    && (permanent == true || poisonScript.BaseDuration == duration),
+                RiposteScript riposteScript when effectType is EffectType.Riposte 
+                    => riposteScript.BasePower == ripostePower 
+                    && riposteScript.Permanent == permanent 
+                    && (permanent == true || riposteScript.BaseDuration == duration),
+                StunScript stunScript when effectType is EffectType.Stun         
+                    => stunScript.StunPower == stunPower,
+                GuardedScript guardedScript when effectType is EffectType.Guarded 
+                    => guardedScript.Permanent == permanent 
+                    && (permanent == true || guardedScript.BaseDuration == duration),
+                SummonScript summonScript when effectType is EffectType.Summon
+                    => EqualityComparer<ICharacterScript>.Default.Equals(summonScript.CharacterToSummon, characterToSummon)
+                    && Mathf.Abs(summonScript.PointsMultiplier - pointsMultiplier) < 0.0001f,
+                TemptScript temptationScript when effectType is EffectType.Temptation 
+                    => temptationScript.Power == temptationPower,
+                _ => false
+            };
+        }
 
-            return false;
-        }
-        
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is StatusScript other && Equals(other);
-        }
+        public override bool Equals(object obj) => ReferenceEquals(this, obj) || (obj is StatusScript other && Equals(other));
 
         public bool Equals(SerializedStatusScript other)
         {
@@ -336,38 +311,56 @@ namespace Core.Combat.Scripts.Effects.BaseTypes
 
             return effectType switch
             {
-                EffectType.Arousal => other.baseValuePerSecond == baseValuePerSecond 
-                                   && Mathf.Abs(other.baseApplyChance - baseApplyChance) < 0.0001f 
-                                   && (other.permanent == permanent || Mathf.Abs(other.baseDuration - baseDuration) < 0.0001f),
-                EffectType.Buff => Mathf.Abs(other.buffBaseDelta - buffBaseDelta) < 0.0001f
-                                && other.buffStat == buffStat
-                                && Mathf.Abs(other.baseApplyChance - baseApplyChance) < 0.0001f
-                                && (other.permanent == permanent || Mathf.Abs(other.baseDuration - baseDuration) < 0.0001f),
-                EffectType.Debuff => Mathf.Abs(other.buffBaseDelta - buffBaseDelta) < 0.0001f
-                                  && other.buffStat == buffStat
-                                  && Mathf.Abs(other.baseApplyChance - baseApplyChance) < 0.0001f
-                                  && (other.permanent == permanent || Mathf.Abs(other.baseDuration - baseDuration) < 0.0001f),
-                EffectType.Heal           => Mathf.Abs(other.healPower - healPower) < 0.0001f,
-                EffectType.Lust           => other.lustLower == lustLower && other.lustUpper == lustUpper,
-                EffectType.Marked         => other.permanent == permanent || Mathf.Abs(other.baseDuration - baseDuration) < 0.0001f,
-                EffectType.Move           => Mathf.Abs(other.baseApplyChance - baseApplyChance) < 0.0001f && other.moveDelta == moveDelta,
-                EffectType.OvertimeHeal   => other.baseValuePerSecond == baseValuePerSecond && (other.permanent == permanent || Mathf.Abs(other.baseDuration - baseDuration) < 0.0001f),
-                EffectType.Perk           => (other.permanent == permanent || Mathf.Abs(other.baseDuration - baseDuration) < 0.0001f) && other.perkToApply == perkToApply,
-                EffectType.HiddenPerk     => (other.permanent == permanent || Mathf.Abs(other.baseDuration - baseDuration) < 0.0001f) && other.perkToApply == perkToApply,
-                EffectType.Poison         => other.baseValuePerSecond == baseValuePerSecond 
-                                          && Mathf.Abs(other.baseApplyChance - baseApplyChance) < 0.0001f 
-                                          && (other.permanent == permanent || Math.Abs(other.baseDuration - baseDuration) < 0.0001f),
-                EffectType.Riposte        => Mathf.Abs(other.baseRiposteMultiplier - baseRiposteMultiplier) < 0.0001f 
-                                          && (other.permanent == permanent || Mathf.Abs(other.baseDuration - baseDuration) < 0.0001f),
-                EffectType.Stun           => Mathf.Abs(other.baseDuration - baseDuration) < 0.0001f,
-                EffectType.Guarded        => other.permanent == permanent || Mathf.Abs(other.baseDuration - baseDuration) < 0.0001f,
-                EffectType.LustGrappled   => other.baseValuePerSecond == baseValuePerSecond 
-                                          && (other.permanent == permanent || Mathf.Abs(other.baseDuration - baseDuration) < 0.0001f) && other.triggerName == triggerName,
-                EffectType.Summon         => other.characterToSummon == characterToSummon && Mathf.Abs(other.pointsMultiplier - pointsMultiplier) < 0.0001f,
-                EffectType.Temptation     => Mathf.Abs(other.temptationPower - temptationPower) < 0.0001f,
-                EffectType.NemaExhaustion => false,
-                EffectType.Mist           => false,
-                _                         => throw new ArgumentException($"Unhandled effect type {effectType}")
+                EffectType.Arousal
+                    => other.lustPerSecond == lustPerSecond
+                    && other.applyChance == applyChance
+                    && other.permanent == permanent
+                    && (permanent == true || other.duration == duration),
+                EffectType.Buff or EffectType.Debuff
+                    => other.buffDelta == buffDelta
+                    && other.buffStat == buffStat
+                    && other.applyChance == applyChance
+                    && other.permanent == permanent
+                    && (permanent == true || other.duration == duration),
+                EffectType.Heal       
+                    => other.healPower == healPower,
+                EffectType.Lust       
+                    => other.lustLower == lustLower 
+                    && other.lustUpper == lustUpper,
+                EffectType.Marked 
+                    => other.permanent == permanent 
+                    && (permanent == true || other.duration == duration),
+                EffectType.Move       
+                    => other.applyChance == applyChance 
+                    && other.moveDelta == moveDelta,
+                EffectType.OvertimeHeal 
+                    => other.healPerSecond == healPerSecond
+                    && other.permanent == permanent
+                    && (permanent == true || other.duration == duration),
+                EffectType.Perk or EffectType.HiddenPerk 
+                    => other.perkToApply == perkToApply
+                    && other.permanent == permanent
+                    && (permanent == true || other.duration == duration),
+                EffectType.Poison
+                    => other.poisonPerSecond == poisonPerSecond
+                    && other.applyChance == applyChance
+                    && other.permanent == permanent
+                    && (permanent == true || other.duration == duration),
+                EffectType.Riposte 
+                    => other.ripostePower == ripostePower 
+                    && other.permanent == permanent 
+                    && (permanent == true || other.duration == duration),
+                EffectType.Stun         
+                    => other.stunPower == stunPower,
+                EffectType.Guarded 
+                    => other.permanent == permanent 
+                    && (permanent == true || other.duration == duration),
+                EffectType.Summon 
+                    => EqualityComparer<ICharacterScript>.Default.Equals(other.characterToSummon, characterToSummon)
+                    && Mathf.Abs(other.pointsMultiplier - pointsMultiplier) < 0.0001f,
+                EffectType.Temptation 
+                    => other.temptationPower == temptationPower,
+                _ => false
             };
         }
 
@@ -375,30 +368,25 @@ namespace Core.Combat.Scripts.Effects.BaseTypes
         {
             return effectType switch
             {
-                EffectType.Buff           => HashCode.Combine(effectType, buffStat,              buffBaseDelta,   baseApplyChance, permanent, baseDuration),
-                EffectType.Debuff         => HashCode.Combine(effectType, buffStat,              buffBaseDelta,   baseApplyChance, permanent, baseDuration),
-                EffectType.Poison         => HashCode.Combine(effectType, baseValuePerSecond,    baseApplyChance, permanent,       baseDuration),
-                EffectType.Arousal        => HashCode.Combine(effectType, baseValuePerSecond,    baseApplyChance, permanent,       baseDuration),
-                EffectType.Riposte        => HashCode.Combine(effectType, baseRiposteMultiplier, permanent,       baseDuration),
-                EffectType.OvertimeHeal   => HashCode.Combine(effectType, baseValuePerSecond,    permanent,       baseDuration),
-                EffectType.Marked         => HashCode.Combine(effectType, permanent,             baseDuration),
-                EffectType.Stun           => HashCode.Combine(effectType, baseDuration),
-                EffectType.Guarded        => HashCode.Combine(effectType, permanent,          baseDuration),
-                EffectType.Move           => HashCode.Combine(effectType, baseApplyChance,    moveDelta),
-                EffectType.LustGrappled   => HashCode.Combine(effectType, baseValuePerSecond, permanent,    baseDuration, triggerName),
-                EffectType.Perk           => HashCode.Combine(effectType, permanent,          baseDuration, perkToApply),
-                EffectType.HiddenPerk     => HashCode.Combine(effectType, permanent,          baseDuration, perkToApply),
-                EffectType.Heal           => HashCode.Combine(effectType, healPower),
-                EffectType.Lust           => HashCode.Combine(effectType, lustLower,         lustUpper),
-                EffectType.Summon         => HashCode.Combine(effectType, characterToSummon, pointsMultiplier),
-                EffectType.Temptation     => HashCode.Combine(effectType, temptationPower),
-                EffectType.NemaExhaustion => effectType.GetHashCode(),
-                EffectType.Mist           => effectType.GetHashCode(),
-                _                         => throw new ArgumentException($"Unhandled effect type {effectType}")
+                EffectType.Buff         => HashCode.Combine(effectType, buffStat, buffDelta, applyChance, permanent, duration),
+                EffectType.Debuff       => HashCode.Combine(effectType, buffStat, buffDelta, applyChance, permanent, duration),
+                EffectType.Poison       => HashCode.Combine(effectType, poisonPerSecond, applyChance, permanent, duration),
+                EffectType.Arousal      => HashCode.Combine(effectType, lustPerSecond, applyChance, permanent, duration),
+                EffectType.Riposte      => HashCode.Combine(effectType, ripostePower, permanent, duration),
+                EffectType.OvertimeHeal => HashCode.Combine(effectType, healPerSecond, permanent, duration),
+                EffectType.Marked       => HashCode.Combine(effectType, permanent, duration),
+                EffectType.Stun         => HashCode.Combine(effectType, stunPower),
+                EffectType.Guarded      => HashCode.Combine(effectType, permanent, duration),
+                EffectType.Move         => HashCode.Combine(effectType, applyChance, moveDelta),
+                EffectType.Perk         => HashCode.Combine(effectType, permanent, duration, perkToApply),
+                EffectType.HiddenPerk   => HashCode.Combine(effectType, permanent, duration, perkToApply),
+                EffectType.Heal         => HashCode.Combine(effectType, healPower),
+                EffectType.Lust         => HashCode.Combine(effectType, lustLower, lustUpper),
+                EffectType.Summon       => HashCode.Combine(effectType, characterToSummon, pointsMultiplier),
+                EffectType.Temptation   => HashCode.Combine(effectType, temptationPower),
+                _                       => throw new ArgumentException($"Unhandled effect type {effectType}")
             };
         }
-
-        public EffectType EffectType => effectType;
 
         public bool IsPositive =>
             effectType switch
@@ -413,13 +401,10 @@ namespace Core.Combat.Scripts.Effects.BaseTypes
                 EffectType.Stun           => false,
                 EffectType.Guarded        => true,
                 EffectType.Move           => true,
-                EffectType.LustGrappled   => false,
                 EffectType.Perk           => perkToApply == null || perkToApply.IsPositive,
                 EffectType.HiddenPerk     => perkToApply == null || perkToApply.IsPositive,
                 EffectType.Heal           => true,
                 EffectType.Lust           => false,
-                EffectType.NemaExhaustion => false,
-                EffectType.Mist           => false,
                 EffectType.Summon         => true,
                 EffectType.Temptation     => false,
                 _                         => throw new ArgumentException($"Unhandled effect type {effectType}")
@@ -427,6 +412,7 @@ namespace Core.Combat.Scripts.Effects.BaseTypes
 
         public Option<PredictionIconsDisplay.IconType> GetPredictionIconType() => effectType.GetPredictionIcon();
 
+        [NotNull]
         public IActualStatusScript GetActual => Deserialize();
     }
 }

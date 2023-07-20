@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
@@ -17,18 +16,17 @@ using Core.Utils.Extensions;
 using Core.Utils.Handlers;
 using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
-using Data.Main_Characters.Ethel;
 using Data.Main_Characters.Nema;
+using JetBrains.Annotations;
 using KGySoft.CoreLibraries;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 using Random = UnityEngine.Random;
 
 namespace Core.Save_Management.SaveObjects
 {
     public delegate void BoolChanged(CleanString variableName, bool oldValue, bool newValue);
-    public delegate void FloatChanged(CleanString variableName, float oldValue, float newValue);
+    public delegate void IntChanged(CleanString variableName, int oldValue, int newValue);
     public delegate void StringChanged(CleanString variableName, CleanString oldValue, CleanString newValue);
     
     public partial class Save
@@ -36,17 +34,14 @@ namespace Core.Save_Management.SaveObjects
         public static bool VALIDATE = true;
         
         private static VariableDatabase VariableDatabase => DatabaseManager.Instance.VariableDatabase;
-        
-        private static readonly StringBuilder StringBuilder = new();
-        
-        public const float LowExhaustion = 0.4f;
-        public const float MediumExhaustion = 0.7f;
-        public const float HighExhaustion = 1f;
+        private static readonly StringBuilder Builder = new();
 
-        public static readonly ValueHandler<Core.Save_Management.SaveObjects.Save> Handler = new();
-        public static Core.Save_Management.SaveObjects.Save Current => Handler.Value;
+        public static System.Random Random => Current != null ? Current.GeneralRandomizer : new System.Random();
 
-        public static bool AssertInstance(out Core.Save_Management.SaveObjects.Save save)
+        public static readonly ValueHandler<Save> Handler = new();
+        public static Save Current => Handler.Value;
+
+        public static bool AssertInstance(out Save save)
         {
             if (Current != null)
             {
@@ -60,20 +55,20 @@ namespace Core.Save_Management.SaveObjects
         }
 
         public static event BoolChanged BoolChanged;
-        public static event FloatChanged FloatChanged;
+        public static event IntChanged IntChanged;
         public static event StringChanged StringChanged;
 
         public LocationEnum Location;
         public static event Action<LocationEnum> LocationChanged;
 
     #region NemaStatus
-        public ClampedPercentage NemaExhaustion { get; private set; }
-        public ExhaustionEnum NemaExhaustionAsEnum => (float) NemaExhaustion switch
+        public int NemaExhaustion { get; private set; }
+        public ExhaustionEnum NemaExhaustionAsEnum => NemaExhaustion switch
         {
-            > HighExhaustion => ExhaustionEnum.High,
-            > MediumExhaustion => ExhaustionEnum.Medium,
-            > LowExhaustion => ExhaustionEnum.Low,
-            _ => ExhaustionEnum.None
+            >= NemaStatus.HighExhaustion   => ExhaustionEnum.High,
+            >= NemaStatus.MediumExhaustion => ExhaustionEnum.Medium,
+            >= NemaStatus.LowExhaustion    => ExhaustionEnum.Low,
+            _                              => ExhaustionEnum.None
         };
         
         public static event Action<NemaStatus> NemaExhaustionChanged;
@@ -83,10 +78,10 @@ namespace Core.Save_Management.SaveObjects
             NemaExhaustionChanged?.Invoke(GetFullNemaStatus());
         }
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         public NemaStatus GetFullNemaStatus()
         {
-            (ClampedPercentage, ClampedPercentage) exhaustion = (NemaExhaustion, NemaExhaustion);
+            (int, int) exhaustion = (NemaExhaustion, NemaExhaustion);
             (bool isInCombat, bool isStanding) combatStatus = GetNemaCombatStatus();
             (bool, bool) setToClearingMist = (IsNemaClearingMist, IsNemaClearingMist);
             (bool, bool) isInCombat = (combatStatus.isInCombat, combatStatus.isInCombat);
@@ -94,55 +89,56 @@ namespace Core.Save_Management.SaveObjects
             return new NemaStatus(exhaustion, setToClearingMist, isInCombat, isStanding);
         }
         
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         public (bool isInCombat, bool isStanding) GetNemaCombatStatus()
         {
+            if (CombatManager.Instance.TrySome(out CombatManager combatManager) == false)
+                return (isInCombat: false, isStanding: false);
+
             bool isInCombat = false;
             bool isStanding = false;
-            if (CombatManager.Instance.TrySome(out CombatManager combatManager))
+            
+            foreach (CharacterStateMachine character in combatManager.Characters.FixedOnLeftSide) // No need to check right characters cause if Nema is there she won't be clearing mist anyway
             {
-                foreach (CharacterStateMachine character in combatManager.Characters.FixedOnLeftSide) // No need to check right characters cause if Nema is there she won't be clearing mist anyway
-                {
-                    if (character.Script is not Nema)
-                        continue;
+                if (character.Script is not Nema)
+                    continue;
 
-                    isInCombat = true;
-                    isStanding = character.StateEvaluator.FullPureEvaluate() is not ({ Defeated: true } or { Corpse: true } or { Downed: true } or { Grappled: true });
-                    break;
-                }
+                isInCombat = true;
+                isStanding = character.StateEvaluator.FullPureEvaluate() is not ({ Defeated: true } or { Corpse: true } or { Downed: true } or { Grappled: true });
+                break;
             }
 
             return (isInCombat, isStanding);
         }
         
-        public void SetNemaExhaustion(float newValue)
+        public void SetNemaExhaustion(int newValue)
         {
             if (NemaExhaustion == newValue)
                 return;
             
             SetDirty();
-            ClampedPercentage oldValue = NemaExhaustion;
+            int oldValue = NemaExhaustion;
             NemaExhaustion = newValue;
             (bool isInCombat, bool isStanding) combatStatus = GetNemaCombatStatus();
-            (ClampedPercentage, ClampedPercentage) exhaustion = (oldValue, newValue);
+            (int, int) exhaustion = (oldValue, newValue);
             (bool, bool) isClearingMist = (IsNemaClearingMist, IsNemaClearingMist);
             (bool, bool) isInCombat = (combatStatus.isInCombat, combatStatus.isInCombat);
             (bool, bool) isStanding = (combatStatus.isStanding, combatStatus.isStanding);
             NemaStatus status = new(exhaustion, isClearingMist, isInCombat, isStanding);
             NemaExhaustionChanged?.Invoke(status);
-            FloatChanged?.Invoke(VariablesName.Nema_Exhaustion, oldValue, newValue);
+            IntChanged?.Invoke(VariablesName.Nema_Exhaustion, oldValue, newValue);
         }
 
-        public void ChangeNemaExhaustion(float delta)
+        public void ChangeNemaExhaustion(int delta)
         {
             SetDirty();
-            ClampedPercentage previousValue = NemaExhaustion;
-            NemaExhaustion += delta;
+            int previousValue = NemaExhaustion;
+            NemaExhaustion = NemaExhaustion + delta;
             if (previousValue == NemaExhaustion)
                 return;
 
             (bool isInCombat, bool isStanding) combatStatus = GetNemaCombatStatus();
-            (ClampedPercentage, ClampedPercentage) exhaustion = (previousValue, NemaExhaustion);
+            (int, int) exhaustion = (previousValue, NemaExhaustion);
             (bool, bool) isClearingMist = (IsNemaClearingMist, IsNemaClearingMist);
             (bool, bool) isInCombat = (combatStatus.isInCombat, combatStatus.isInCombat);
             (bool, bool) isStanding = (combatStatus.isStanding, combatStatus.isStanding);
@@ -160,7 +156,7 @@ namespace Core.Save_Management.SaveObjects
             IsNemaClearingMist = newValue;
             
             (bool isInCombat, bool isStanding) combatStatus = GetNemaCombatStatus();
-            (ClampedPercentage, ClampedPercentage) exhaustion = (NemaExhaustion, NemaExhaustion);
+            (int, int) exhaustion = (NemaExhaustion, NemaExhaustion);
             (bool, bool) isClearingMist = (oldValue, newValue);
             (bool, bool) isInCombat = (combatStatus.isInCombat, combatStatus.isInCombat);
             (bool, bool) isStanding = (combatStatus.isStanding, combatStatus.isStanding);
@@ -169,16 +165,16 @@ namespace Core.Save_Management.SaveObjects
             BoolChanged?.Invoke(VariablesName.Nema_ClearingMist, oldValue, newValue);
         }
     #endregion
-        
-        public DateTime Date { get; set; }
-        
-        public Dictionary<CleanString, bool> Booleans;
-        public Dictionary<CleanString, float> Floats;
-        public Dictionary<CleanString, CleanString> Strings;
-        private List<LocationEnum> _locationsUnlocked;
-        public List<LocationEnum> LocationsUnlocked => _locationsUnlocked;
 
         public string Name { get; set; }
+        public DateTime Date { get; set; }
+
+        public Dictionary<CleanString, bool> Booleans;
+        public Dictionary<CleanString, int> Ints;
+        public Dictionary<CleanString, CleanString> Strings;
+
+        private List<LocationEnum> _locationsUnlocked;
+        public List<LocationEnum> LocationsUnlocked => _locationsUnlocked;
 
         private CharacterStats _ethelStats;
         public IReadonlyCharacterStats EthelStats => _ethelStats;
@@ -205,14 +201,14 @@ namespace Core.Save_Management.SaveObjects
         }
 
         /// <summary> Each element is a character's ID </summary>
-        [Pure]
+        [System.Diagnostics.Contracts.Pure, NotNull]
         public IReadOnlyList<(CleanString key, bool bindToSave)> GetCombatOrderAsKeys()
         {
             SanitizeCombatOrder();
             return CombatOrder.Select(key => (key, bindToSave: true)).ToList();
         }
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure, NotNull]
         public IReadOnlyList<(IReadonlyCharacterStats stats, bool bindToSave)> GetCombatOrderAsStats()
         {
             SanitizeCombatOrder();
@@ -230,23 +226,23 @@ namespace Core.Save_Management.SaveObjects
             return characters;
         }
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         public CleanString GetCombatOrderAsString()
         {
             SanitizeCombatOrder();
-            StringBuilder.Clear();
-            StringBuilder.Append(CombatOrder[0].ToString());
+            Builder.Clear();
+            Builder.Append(CombatOrder[0].ToString());
             for (int index = 1; index < CombatOrder.Count; index++)
             {
                 CleanString characterId = CombatOrder[index];
-                StringBuilder.Append("_");
-                StringBuilder.Append(characterId.ToString());
+                Builder.Append("_");
+                Builder.Append(characterId.ToString());
             }
             
-            return StringBuilder.ToString();
+            return Builder.ToString();
         }
 
-        public void SetCombatOrder(IEnumerable<CleanString> characterIds)
+        public void SetCombatOrder([NotNull] IEnumerable<CleanString> characterIds)
         {
             SetDirty();
             SanitizeCombatOrder();
@@ -299,10 +295,10 @@ namespace Core.Save_Management.SaveObjects
             foreach ((CleanString key, bool value) in VariableDatabase.DefaultBools)
                 Booleans[key] = value;
 
-            Floats = new Dictionary<CleanString, float>();
+            Ints = new Dictionary<CleanString, int>();
             
-            foreach ((CleanString key, float value) in VariableDatabase.DefaultFloats)
-                Floats[key] = value;
+            foreach ((CleanString key, int value) in VariableDatabase.DefaultInts)
+                Ints[key] = value;
             
             Strings = new Dictionary<CleanString, CleanString>();
             
@@ -311,10 +307,10 @@ namespace Core.Save_Management.SaveObjects
 
             _locationsUnlocked = new List<LocationEnum> { LocationEnum.Chapel };
             
-            float seed = (int) (DateTime.Now.Millisecond * Random.Range(1f, 1337f));
-            GeneralRandomizer = new System.Random((int)seed);
+            int seed = (int) (DateTime.Now.Millisecond * UnityEngine.Random.Range(1f, 1337f));
+            GeneralRandomizer = new System.Random(seed);
 
-            int ethelSeed = (int) Mathf.Pow(seed, 0.69f);
+            int ethelSeed = (int) Math.Pow(seed, 0.69);
             System.Random ethelRandomizer = new(ethelSeed);
 
             _ethelStats = new CharacterStats
@@ -328,25 +324,25 @@ namespace Core.Save_Management.SaveObjects
                 DamageLower = 8,
                 DamageUpper = 12,
                 DebuffResistance = 0,
-                MoveResistance = 0.1f,
-                StunRecoverySpeed = 1.1f,
+                MoveResistance = 10,
+                StunMitigation = 10,
                 Composure = 0,
-                Speed = 1f,
-                Dodge = 0.1f,
+                Speed = 100,
+                Dodge = 10,
                 Lust = 0,
                 Resilience = 0,
                 PoisonResistance = 0,
                 OrgasmLimit = 3,
                 SkillSet = new SkillSet(EthelSkills.Clash, EthelSkills.Sever, EthelSkills.Jolt, EthelSkills.Safeguard),
                 Randomizer = ethelRandomizer,
-                PrimaryUpgrades = new Dictionary<PrimaryUpgrade, uint>(),
-                SecondaryUpgrades = new Dictionary<SecondaryUpgrade, uint>(),
-                PrimaryUpgradeOptions = new Dictionary<uint, List<PrimaryUpgrade>>(),
-                SecondaryUpgradeOptions = new Dictionary<uint, List<SecondaryUpgrade>>(),
-                SexualExpByRace = new Dictionary<Race, uint>(),
+                PrimaryUpgrades = new Dictionary<PrimaryUpgrade, int>(),
+                SecondaryUpgrades = new Dictionary<SecondaryUpgrade, int>(),
+                PrimaryUpgradeOptions = new Dictionary<int, PrimaryUpgrade[]>(),
+                SecondaryUpgradeOptions = new Dictionary<int, SecondaryUpgrade[]>(),
+                SexualExpByRace = new Dictionary<Race, int>(),
             };
 
-            int nemaSeed = (int) Mathf.Pow(seed, 4.20f);
+            int nemaSeed = (int) Math.Pow(seed, 4.20);
             System.Random nemaRandomizer = new(nemaSeed);
 
             _nemaStats = new CharacterStats
@@ -360,22 +356,22 @@ namespace Core.Save_Management.SaveObjects
                 DamageLower =  6,
                 DamageUpper =  10,
                 DebuffResistance =  0,
-                MoveResistance =  0f,
-                StunRecoverySpeed =  1f,
+                MoveResistance =  0,
+                StunMitigation =  0,
                 Composure =  0,
-                Speed =  1,
-                Dodge =  0.05f,
+                Speed =  100,
+                Dodge =  5,
                 Lust =  0,
                 Resilience =  0,
-                PoisonResistance =  0.1f,
+                PoisonResistance =  10,
                 OrgasmLimit =  3,
                 SkillSet =  new SkillSet(NemaSkills.Gawky.key, NemaSkills.Calm.key, string.Empty, string.Empty),
                 Randomizer = nemaRandomizer,
-                PrimaryUpgrades = new Dictionary<PrimaryUpgrade, uint>(),
-                SecondaryUpgrades = new Dictionary<SecondaryUpgrade, uint>(),
-                PrimaryUpgradeOptions = new Dictionary<uint, List<PrimaryUpgrade>>(),
-                SecondaryUpgradeOptions = new Dictionary<uint, List<SecondaryUpgrade>>(),
-                SexualExpByRace = new Dictionary<Race, uint>(),
+                PrimaryUpgrades = new Dictionary<PrimaryUpgrade, int>(),
+                SecondaryUpgrades = new Dictionary<SecondaryUpgrade, int>(),
+                PrimaryUpgradeOptions = new Dictionary<int, PrimaryUpgrade[]>(),
+                SecondaryUpgradeOptions = new Dictionary<int, SecondaryUpgrade[]>(),
+                SexualExpByRace = new Dictionary<Race, int>(),
             };
 
             CombatOrder = new List<CleanString> { _ethelStats.Key, _nemaStats.Key };
@@ -392,14 +388,14 @@ namespace Core.Save_Management.SaveObjects
                 return;
             }
             
-            Core.Save_Management.SaveObjects.Save save = new(name);
+            Save save = new(name);
             Handler.SetValue(save);
         }
         
 #if UNITY_EDITOR
         public static void StartSaveAsTesting()
         {
-            Core.Save_Management.SaveObjects.Save save = new("test");
+            Save save = new("test");
             Handler.SetValue(save);
         }
 #endif
@@ -419,6 +415,7 @@ namespace Core.Save_Management.SaveObjects
             return _recentRecords.Peek().TrySome(out SaveRecord lastRecord) ? Option<SaveRecord>.Some(lastRecord) : Option.None;
         }
 
+        [NotNull]
         private SaveRecord CreateRecordImmediate(SavePoint.Base savePoint)
         {
             SanitizeCombatOrder();
@@ -427,7 +424,7 @@ namespace Core.Save_Management.SaveObjects
             for (int i = 0; i < statsSpan.Length; i++)
                 clonedStats[i] = statsSpan[i].DeepClone();
 
-            SaveRecord record = new(Name, DateTime.Now, new Dictionary<CleanString, bool>(Booleans), new Dictionary<CleanString, float>(Floats), new Dictionary<CleanString, CleanString>(Strings),
+            SaveRecord record = new(Name, DateTime.Now, new Dictionary<CleanString, bool>(Booleans), new Dictionary<CleanString, int>(Ints), new Dictionary<CleanString, CleanString>(Strings),
                                     Location, LocationsUnlocked.ToArray(), clonedStats, NemaExhaustion, IsNemaClearingMist, GeneralRandomizer.DeepClone(), CombatOrder.ToArray(), savePoint);
 
             if (VALIDATE)
@@ -455,13 +452,13 @@ namespace Core.Save_Management.SaveObjects
                 _recentRecords.RemoveAt(0);
         }
 
-        public static Result<Core.Save_Management.SaveObjects.Save> FromRecord(SaveRecord record)
+        public static Result<Save> FromRecord([NotNull] SaveRecord record)
         {
             if (VALIDATE)
             {
                 StringBuilder errors = new();
                 if (record.IsDataValid(errors) == false)
-                    return Result<Core.Save_Management.SaveObjects.Save>.Error(errors.ToString());
+                    return Result<Save>.Error(errors.ToString());
             }
             
             Option<CharacterStats> ethel = Option.None;
@@ -475,14 +472,14 @@ namespace Core.Save_Management.SaveObjects
             }
             
             if (ethel.IsNone || nema.IsNone)
-                return Result<Core.Save_Management.SaveObjects.Save>.Error($"Could not find both Ethel and Nema in the save record, {(ethel.IsSome ? "missing Nema" : nema.IsSome ? "missing Ethel" : "missing Both" )}");
+                return Result<Save>.Error($"Could not find both Ethel and Nema in the save record, {(ethel.IsSome ? "missing Nema" : nema.IsSome ? "missing Ethel" : "missing Both" )}");
 
-            return Result<Core.Save_Management.SaveObjects.Save>.Ok(new Core.Save_Management.SaveObjects.Save
+            return Result<Save>.Ok(new Save
             {
                 Name = record.Name,
                 Date = record.Date,
                 Booleans = new Dictionary<CleanString, bool>(record.Booleans),
-                Floats = new Dictionary<CleanString, float>(record.Floats),
+                Ints = new Dictionary<CleanString, int>(record.Ints),
                 Strings = new Dictionary<CleanString, CleanString>(record.Strings),
                 Location = record.Location,
                 _locationsUnlocked = new List<LocationEnum>(record.LocationsUnlocked),

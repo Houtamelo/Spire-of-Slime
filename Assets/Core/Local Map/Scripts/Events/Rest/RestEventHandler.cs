@@ -2,6 +2,7 @@
 using System.Collections;
 using Core.Audio.Scripts;
 using Core.Game_Manager.Scripts;
+using Core.Main_Characters.Ethel.Combat;
 using Core.Main_Characters.Nema.Combat;
 using Core.Main_Database.Local_Map;
 using Core.Save_Management.SaveObjects;
@@ -10,8 +11,8 @@ using Core.Utils.Extensions;
 using Core.Utils.Math;
 using Core.Utils.Patterns;
 using Core.Visual_Novel.Scripts;
-using Data.Main_Characters.Ethel;
 using DG.Tweening;
+using JetBrains.Annotations;
 using TMPro;
 using UnityEngine;
 using Utils.Patterns;
@@ -25,13 +26,14 @@ namespace Core.Local_Map.Scripts.Events.Rest
     {
         public static bool LOG;
         
-        public static CoroutineWrapper HandleRest(float restMultiplier, float restMultiplierDelta, int lustDecrease, float exhaustionDecrease, Option<RestEventBackground> backgroundPrefab)
+        [NotNull]
+        public static CoroutineWrapper HandleRest(float restMultiplier, float restMultiplierAmplitude, int lustDecrease, int exhaustionDecrease, int orgasmRestore, Option<RestEventBackground> backgroundPrefab)
         {
             CoroutineWrapper wrapper;
             if (backgroundPrefab.IsSome)
             {
                 Reference<GameObject> backgroundGameObjectRef = new(null);
-                IEnumerator restRoutine = RestRoutine(restMultiplier, restMultiplierDelta, lustDecrease, exhaustionDecrease, backgroundPrefab.Value, backgroundGameObjectRef);
+                IEnumerator restRoutine = RestRoutine(restMultiplier, restMultiplierAmplitude, lustDecrease, exhaustionDecrease, orgasmRestore, backgroundPrefab.Value, backgroundGameObjectRef);
                 wrapper = new CoroutineWrapper(restRoutine, nameof(RestRoutine), context: null, autoStart: true);
                 wrapper.Finished += (_, _) =>
                 {
@@ -44,13 +46,13 @@ namespace Core.Local_Map.Scripts.Events.Rest
                 if (LOG)
                     Debug.LogWarning("No background prefab found for rest event.");
                 
-                wrapper = new CoroutineWrapper(RestRoutineNoBackground(restMultiplier, restMultiplierDelta, lustDecrease, exhaustionDecrease), nameof(RestRoutineNoBackground), context: null, autoStart: true);
+                wrapper = new CoroutineWrapper(RestRoutineNoBackground(restMultiplier, restMultiplierAmplitude, lustDecrease, exhaustionDecrease, orgasmRestore), nameof(RestRoutineNoBackground), context: null, autoStart: true);
             }
             
             return wrapper;
         }
         
-        private static IEnumerator RestRoutine(float restMultiplier, float restMultiplierDelta, int lustDecrease, float exhaustionDecrease, RestEventBackground backgroundPrefab, Reference<GameObject> backgroundGameObjectRef)
+        private static IEnumerator RestRoutine(float restMultiplier, float restMultiplierAmplitude, int lustDecrease, int exhaustionDecrease, int orgasmRestore, RestEventBackground backgroundPrefab, Reference<GameObject> backgroundGameObjectRef)
         {
             if (Save.AssertInstance(out Save save) == false)
                 yield break;
@@ -73,9 +75,7 @@ namespace Core.Local_Map.Scripts.Events.Rest
                 yield return dialogueController.Play(dialogue.Value.SceneName);
 
             yield return new WaitForSeconds(1f);
-
-            float lowerBound = restMultiplier - restMultiplierDelta;
-            float upperBound = restMultiplier + restMultiplierDelta;
+            
 
             Option<int> ethelLustDelta = Option.None;
             Option<int> nemaLustDelta = Option.None;
@@ -83,19 +83,15 @@ namespace Core.Local_Map.Scripts.Events.Rest
             for (int i = 0; i < allCharacters.Length; i++)
             {
                 IReadonlyCharacterStats stats = allCharacters[i];
-                save.SetOrgasmCount(stats.Key, stats.OrgasmCount - 1);
-                float multiplier = Random.Range(minInclusive: lowerBound, maxInclusive: upperBound);
-                int lustDelta = -1 * Mathf.CeilToInt(lustDecrease * multiplier);
-                uint lustBeforeChange = stats.Lust;
-                save.ChangeLust(stats.Key, lustDelta);
-                int delta = (int) save.GetStat(stats.Key, GeneralStat.Lust);
-                if (delta == 0)
+                ProcessStatRecovery(lustDecrease, orgasmRestore, save, stats, restMultiplier, restMultiplierAmplitude, out int actualLustDelta);
+
+                if (actualLustDelta == 0)
                     continue;
                 
                 if (stats.Key == Ethel.GlobalKey)
-                    ethelLustDelta = Option<int>.Some((int)save.EthelStats.Lust - (int)lustBeforeChange);
+                    ethelLustDelta = Option<int>.Some(actualLustDelta);
                 else if (stats.Key == Nema.GlobalKey)
-                    nemaLustDelta = Option<int>.Some((int)save.NemaStats.Lust - (int)lustBeforeChange);
+                    nemaLustDelta = Option<int>.Some(actualLustDelta);
             }
 
             save.ChangeNemaExhaustion(-exhaustionDecrease);
@@ -127,9 +123,7 @@ namespace Core.Local_Map.Scripts.Events.Rest
                     globalSounds.LustReduction.Play();
                 
                 if (anyCue.IsSome)
-                {
                     yield return anyCue.Value.WaitForCompletion();
-                }
             }
 
             if (GameManager.AssertInstance(out gameManager))
@@ -142,7 +136,19 @@ namespace Core.Local_Map.Scripts.Events.Rest
                 yield return gameManager.FadePanel.FadeDown().WaitForCompletion();
         }
 
-        private static IEnumerator RestRoutineNoBackground(float restMultiplier, float restMultiplierDelta, int lustDecrease, float exhaustionDecrease)
+        private static void ProcessStatRecovery(int lustDecrease, int orgasmRestore, [NotNull] Save save, [NotNull] IReadonlyCharacterStats stats, float restMultiplier, float restMultiplierAmplitude, out int actualLustDelta)
+        {
+            save.ChangeOrgasmCount(stats.Key, orgasmRestore);
+            
+            float actualMultiplier = Random.Range(restMultiplier - restMultiplierAmplitude, restMultiplier + restMultiplierAmplitude);
+            int lustDelta = (int)(-1 * lustDecrease * actualMultiplier);
+            int lustBeforeChange = stats.Lust;
+            save.ChangeLust(stats.Key, lustDelta);
+            int lustAfterChange = save.GetStat(stats.Key, GeneralStat.Lust);
+            actualLustDelta = lustAfterChange - lustBeforeChange;
+        }
+
+        private static IEnumerator RestRoutineNoBackground(float restMultiplier, float restMultiplierAmplitude, int lustDecrease, int exhaustionDecrease, int orgasmRestore)
         {
             if (Save.AssertInstance(out Save save) == false)
                 yield break;
@@ -153,17 +159,13 @@ namespace Core.Local_Map.Scripts.Events.Rest
             Option<RestDialogue> dialogue = RestEventsDatabase.GetAvailableDialogue();
             if (dialogue.IsSome && DialogueController.AssertInstance(out DialogueController dialogueController))
                 yield return dialogueController.Play(dialogue.Value.SceneName);
-
-            float lowerBound = restMultiplier - restMultiplierDelta;
-            float upperBound = restMultiplier + restMultiplierDelta;
-            float olderMultiplier = Random.Range(minInclusive: lowerBound,   maxInclusive: upperBound);
-            float youngerMultiplier = Random.Range(minInclusive: lowerBound, maxInclusive: upperBound);
-
-            int ethelLust = Mathf.CeilToInt(lustDecrease * olderMultiplier);
-            save.ChangeLust(Ethel.GlobalKey, -ethelLust);
-
-            int nemaLust = Mathf.CeilToInt(lustDecrease * youngerMultiplier);
-            save.ChangeLust(Nema.GlobalKey, -nemaLust);
+            
+            ReadOnlySpan<IReadonlyCharacterStats> allCharacters = save.GetAllReadOnlyCharacterStats();
+            for (int i = 0; i < allCharacters.Length; i++)
+            {
+                IReadonlyCharacterStats stats = allCharacters[i];
+                ProcessStatRecovery(lustDecrease, orgasmRestore, save, stats, restMultiplier, restMultiplierAmplitude, out _);
+            }
             
             save.ChangeNemaExhaustion(-exhaustionDecrease);
             

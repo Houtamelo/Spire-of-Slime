@@ -2,8 +2,10 @@
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Game_Manager.Scripts;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.Utils.Objects;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -65,12 +67,10 @@ namespace Core.Main_Characters.Ethel.Combat.Skills.Challenge.Anim
             {
                 ref ActionResult result = ref results[resultIndex];
                 if (result.Missed || result.Caster == result.Target ||
-                    result.Target.Display.AssertSome(out CharacterDisplay display) == false ||
+                    result.Target.Display.AssertSome(out DisplayModule display) == false ||
                     display.GetBounds().TrySome(out Bounds bounds) == false)
-                {
                     continue;
-                }
-                
+
                 ChallengeParticleFx particle = _particles[particleIndex];
                 Vector3 worldPosition = bounds.center + new Vector3(0, bounds.extents.y * 0.8f);
                 particle.Animate(worldPosition);
@@ -81,6 +81,7 @@ namespace Core.Main_Characters.Ethel.Combat.Skills.Challenge.Anim
                 _particles[i].Stop();
         }
 
+        [NotNull]
         private ChallengeParticleFx CreateParticle()
         {
             ChallengeParticleFx particle = particlePrefab.InstantiateWithFixedLocalScale(transform);

@@ -18,7 +18,8 @@ namespace Core.Utils.Extensions
         
         private static readonly TweenCallback<int> EmptyCallback = _ => { };
 
-        public static T InstantiateWithFixedLocalScale<T>(this T prefab, Transform parent, bool worldPositionStays = false) where T : Component
+        [NotNull]
+        public static T InstantiateWithFixedLocalScale<T>([NotNull] this T prefab, Transform parent, bool worldPositionStays = false) where T : Component
         {
             Vector3 localScale = prefab.transform.localScale;
             T instance = Object.Instantiate(prefab, parent, worldPositionStays);
@@ -26,7 +27,8 @@ namespace Core.Utils.Extensions
             return instance;
         }
         
-        public static GameObject InstantiateWithFixedLocalScale(this GameObject prefab, Transform parent, bool worldPositionStays = false)
+        [NotNull]
+        public static GameObject InstantiateWithFixedLocalScale([NotNull] this GameObject prefab, Transform parent, bool worldPositionStays = false)
         {
             Vector3 localScale = prefab.transform.localScale;
             GameObject instance = Object.Instantiate(prefab, parent, worldPositionStays);
@@ -34,7 +36,8 @@ namespace Core.Utils.Extensions
             return instance;
         }
         
-        public static T InstantiateWithFixedLocalScaleAndPosition<T>(this T prefab, Transform parent) where T : Component
+        [NotNull]
+        public static T InstantiateWithFixedLocalScaleAndPosition<T>([NotNull] this T prefab, Transform parent) where T : Component
         {
             Transform prefabTransform = prefab.transform;
             Vector3 localScale = prefabTransform.localScale;
@@ -47,7 +50,8 @@ namespace Core.Utils.Extensions
             return instance;
         }
         
-        public static GameObject InstantiateWithFixedLocalScaleAndPosition(this GameObject prefab, Transform parent)
+        [NotNull]
+        public static GameObject InstantiateWithFixedLocalScaleAndPosition([NotNull] this GameObject prefab, Transform parent)
         {
             Transform prefabTransform = prefab.transform;
             Vector3 localScale = prefabTransform.localScale;
@@ -60,7 +64,8 @@ namespace Core.Utils.Extensions
             return instance;
         }
 
-        public static GameObject InstantiateWithFixedLocalScaleAndAnchoredPosition(this GameObject prefab, Transform parent)
+        [NotNull]
+        public static GameObject InstantiateWithFixedLocalScaleAndAnchoredPosition([NotNull] this GameObject prefab, Transform parent)
         {
             Transform prefabTransform = prefab.transform;
             if (prefabTransform is not RectTransform rectTransform)
@@ -79,7 +84,8 @@ namespace Core.Utils.Extensions
             return instance;
         }
         
-        public static T InstantiateWithFixedLocalScaleAndAnchoredPosition<T>(this T prefab, Transform parent) where T : Component
+        [NotNull]
+        public static T InstantiateWithFixedLocalScaleAndAnchoredPosition<T>([NotNull] this T prefab, Transform parent) where T : Component
         {
             Transform prefabTransform = prefab.transform;
             if (prefabTransform is not RectTransform rectTransform)
@@ -98,7 +104,7 @@ namespace Core.Utils.Extensions
             return instance;
         }
 
-        public static void ClearBoolsAndTriggers(this Animator animator)
+        public static void ClearBoolsAndTriggers([NotNull] this Animator animator)
         {
             foreach (AnimatorControllerParameter parameter in animator.parameters)
             {
@@ -114,14 +120,17 @@ namespace Core.Utils.Extensions
             }
         }
 
-        public static void ClearTriggers(this Animator animator)
+        public static void ClearTriggers([NotNull] this Animator animator)
         {
             foreach (AnimatorControllerParameter parameter in animator.parameters)
+            {
                 if (parameter.type == AnimatorControllerParameterType.Trigger)
                     animator.ResetTrigger(name: parameter.name);
+            }
         }
         
-        public static string GetPath(this Transform current)
+        [NotNull]
+        public static string GetPath([NotNull] this Transform current)
         {
             if (current.parent == null)
                 return $"/{current.name}";
@@ -129,7 +138,8 @@ namespace Core.Utils.Extensions
             return $"{current.parent.GetPath()}/{current.name}";
         }
 
-        public static string GetPathUntil(this Transform current, Transform maxParent)
+        [NotNull]
+        public static string GetPathUntil([NotNull] this Transform current, Transform maxParent)
         {
             if (current.parent == null)
                 return $"/{current.name}";
@@ -140,7 +150,7 @@ namespace Core.Utils.Extensions
             return $"{current.parent.GetPath()}/{current.name}";
         }
 
-        public static Option<Transform> FindChildByPath(this Transform self, string path)
+        public static Option<Transform> FindChildByPath(this Transform self, [CanBeNull] string path)
         {
             if (string.IsNullOrEmpty(path))
                 return Option<Transform>.None;
@@ -173,7 +183,7 @@ namespace Core.Utils.Extensions
             return current;
         }
         
-        public static void SetColorIgnoringAlpha(this Graphic graphic, Color color)
+        public static void SetColorIgnoringAlpha([NotNull] this Graphic graphic, Color color)
         {
             Color currentColor = graphic.color;
             graphic.color = new Color(color.r, color.g, color.b, currentColor.a);
@@ -191,21 +201,18 @@ namespace Core.Utils.Extensions
                 tween.Complete();
         }
         
-        public static void SetAlpha(this SpriteRenderer spriteRenderer, float alpha)
+        public static void SetAlpha([NotNull] this SpriteRenderer spriteRenderer, float alpha)
         {
             Color color = spriteRenderer.color;
             spriteRenderer.color = new Color(color.r, color.g, color.b, alpha);
         }
 
-        public static void SetAlpha(this Graphic graphic, float alpha)
+        public static void SetAlpha([NotNull] this Graphic graphic, float alpha)
         {
             Color color = graphic.color;
             graphic.color = new Color(color.r, color.g, color.b, alpha);
         }
 
-        public static Tween EmptyTween()
-        {
-            return DOVirtual.Int(0, 1, 0.001f, EmptyCallback);
-        }
+        public static Tween EmptyTween() => DOVirtual.Int(0, 1, 0.001f, EmptyCallback);
     }
 }

@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Pool;
 using Random = UnityEngine.Random;
@@ -40,18 +43,21 @@ namespace Core.Combat.Scripts.BackgroundGeneration
                 return;
             }
 
-            using var pool = ListPool<GameObject>.Get(out List<GameObject> propPool);
-            propPool.Add(props);
+            System.Random random = Save.Random;
 
-            float quantity = Random.Range(minInclusive: propQuantity - thresholdAmplitude, maxInclusive: propQuantity + thresholdAmplitude) * props.Length;
-            for (int i = 0; i < quantity; i++) 
-                propPool.TakeRandom().SetActive(true);
+            using (CustomValuePooledList<GameObject> propPool = new(props, CustomValuePooledList<GameObject>.SourceType.Copy))
+            {
+                float quantity = Random.Range(minInclusive: propQuantity - thresholdAmplitude, maxInclusive: propQuantity + thresholdAmplitude) * props.Length;
 
-            foreach (GameObject obj in propPool) 
-                obj.SetActive(false);
+                for (int i = 0; i < quantity; i++)
+                    propPool.TakeRandom(random).SetActive(true);
+
+                foreach (GameObject obj in propPool)
+                    obj.SetActive(false);
+            }
         }
 
-        public void GenerateFromRecord(BackgroundChildRecord record)
+        public void GenerateFromRecord([CanBeNull] BackgroundChildRecord record)
         {
             if (record is not PropPickerRecord propPickerRecord)
             {
@@ -85,6 +91,7 @@ namespace Core.Combat.Scripts.BackgroundGeneration
                 props[index].SetActive(propPickerRecord.Actives[index]);
         }
 
+        [NotNull]
         public BackgroundChildRecord GetRecord()
         {
             if (props.IsNullOrEmpty())
@@ -96,7 +103,7 @@ namespace Core.Combat.Scripts.BackgroundGeneration
             return new PropPickerRecord(props.Select(p => p.activeSelf).ToArray());
         }
 
-        public bool IsDataValid(BackgroundChildRecord data, StringBuilder errors)
+        public bool IsDataValid([CanBeNull] BackgroundChildRecord data, StringBuilder errors)
         {
             if (data is not PropPickerRecord propPickerRecord)
             {

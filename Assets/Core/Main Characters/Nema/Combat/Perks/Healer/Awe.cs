@@ -2,12 +2,12 @@
 using System.Text;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects;
 using Core.Combat.Scripts.Effects.Types.Heal;
 using Core.Combat.Scripts.Effects.Types.OvertimeHeal;
 using Core.Combat.Scripts.Interfaces;
 using Core.Combat.Scripts.Interfaces.Events;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills.Action;
@@ -15,12 +15,14 @@ using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
 using Core.Utils.Math;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Nema.Combat.Perks.Healer
 {
     public class Awe : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             AweInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -28,7 +30,7 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Healer
         }
     }
     
-    public record AweRecord(CleanString Key, uint StackCount, float AccumulatedDelay) : PerkRecord(Key)
+    public record AweRecord(CleanString Key, int StackCount, TSpan AccumulatedDelay) : PerkRecord(Key)
     {
         public override bool IsDataValid(StringBuilder errors, ICollection<CharacterRecord> allCharacters)
         {
@@ -41,7 +43,8 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Healer
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             AweInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -51,22 +54,20 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Healer
     
     public class AweInstance : PerkInstance, ITick, IHealModifier, IOvertimeHealModifier, IStatusAppliedListener
     {
-        public string SharedId => nameof(AweInstance);
-        public int Priority => 6;
+        private static readonly TSpan DelayPerStackGain = TSpan.FromSeconds(1.5);
         
-        private const float DelayPerStackGain = 1.5f;
-        private const float HealPowerPerStack = 0.1f;
-        private const float OvertimeHealPowerPerStack = 0.7f;
-        private const uint MaxStackCount = 5;
+        private const int HealPowerPerStack = 10;
+        private const int OvertimeHealPowerPerStack = 7;
+        private const int MaxStackCount = 5;
 
-        private uint _stackCount;
-        private float _accumulatedDelay;
+        private int _stackCount;
+        private TSpan _accumulatedDelay;
 
         public AweInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public AweInstance(CharacterStateMachine owner, AweRecord record) : base(owner, record)
+
+        public AweInstance(CharacterStateMachine owner, [NotNull] AweRecord record) : base(owner, record)
         {
             _stackCount = record.StackCount;
             _accumulatedDelay = record.AccumulatedDelay;
@@ -92,6 +93,7 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Healer
             applierModule.OvertimeHealApplyModifiers.Remove(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new AweRecord(Key, _stackCount, _accumulatedDelay);
 
         public void OnStatusApplied(ref StatusResult statusResult)
@@ -100,7 +102,7 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Healer
                 _stackCount = 0;
         }
 
-        public void Tick(float timeStep)
+        public void Tick(TSpan timeStep)
         {
             _accumulatedDelay += timeStep;
             if (_accumulatedDelay >= DelayPerStackGain)
@@ -110,14 +112,18 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Healer
             }
         }
 
-        public void Modify(ref OvertimeHealToApply effectStruct)
+        public void Modify([NotNull] ref OvertimeHealToApply effectStruct)
         {
-            effectStruct.HealPerTime = ((1 + OvertimeHealPowerPerStack * _stackCount) * effectStruct.HealPerTime).CeilToUInt();
+            effectStruct.HealPerSecond = ((100 + (OvertimeHealPowerPerStack * _stackCount)) * effectStruct.HealPerSecond) / 100;
         }
 
-        public void Modify(ref HealToApply effectStruct)
+        public void Modify([NotNull] ref HealToApply effectStruct)
         {
-            effectStruct.Power *= 1 + HealPowerPerStack * _stackCount;
+            effectStruct.Power = ((100 + (HealPowerPerStack * _stackCount)) * effectStruct.Power) / 100;
         }
+
+        [NotNull]
+        public string SharedId => nameof(AweInstance);
+        public int Priority => 6;
     }
 }

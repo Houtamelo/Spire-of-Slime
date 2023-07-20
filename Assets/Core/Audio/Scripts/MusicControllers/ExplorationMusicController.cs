@@ -131,7 +131,7 @@ namespace Core.Audio.Scripts.MusicControllers
 
             if (exploration.volume <= 0f)
             {
-                Destroy(this.gameObject);
+                Destroy(gameObject);
                 return;
             }
             

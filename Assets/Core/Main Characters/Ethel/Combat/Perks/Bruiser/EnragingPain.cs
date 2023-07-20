@@ -11,13 +11,15 @@ using Core.Combat.Scripts.Skills.Action;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
 {
     public class EnragingPain : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             EnragingPainInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -38,7 +40,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             EnragingPainInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -46,23 +49,18 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
         }
     }
 
-    public class EnragingPainInstance : PerkInstance, IBaseFloatAttributeModifier, ISelfAttackedListener
+    public class EnragingPainInstance : PerkInstance, IBaseAttributeModifier, ISelfAttackedListener
     {
-        public string SharedId => nameof(EnragingPainInstance);
-        public int Priority => 0;
-        private const float MaxValue = 0.3f;
-        private const float ValuePerStack = 0.05f;
+        private const int MaxValue = 30;
+        private const int ValuePerStack = 5;
 
         private int _stackCount;
-        
+
         public EnragingPainInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public EnragingPainInstance(CharacterStateMachine owner, EnragingPainRecord record) : base(owner, record)
-        {
-            _stackCount = record.StackCount;
-        }
+
+        public EnragingPainInstance(CharacterStateMachine owner, [NotNull] EnragingPainRecord record) : base(owner, record) => _stackCount = record.StackCount;
 
         protected override void OnSubscribe()
         {
@@ -76,11 +74,12 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
             Owner.StatsModule.UnsubscribePower(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new EnragingPainRecord(Key, _stackCount);
 
         public void OnSelfAttacked(ref ActionResult result)
         {
-            if (result.Missed || result.Skill.AllowAllies ||
+            if (result.Missed || result.Skill.IsPositive ||
                 Owner.StateEvaluator.PureEvaluate() is CharacterState.Defeated or CharacterState.Corpse or CharacterState.Grappled or CharacterState.Downed ||
                 result.DamageDealt.IsNone || result.DamageDealt.Value <= 0)
                 return;
@@ -88,9 +87,13 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
             _stackCount++;
         }
 
-        public void Modify(ref float value, CharacterStateMachine self)
+        public void Modify(ref int value, CharacterStateMachine self)
         {
-            value += Mathf.Clamp(_stackCount * ValuePerStack, 0, MaxValue);
+            value += Mathf.Clamp(_stackCount * ValuePerStack, min: 0, MaxValue);
         }
+
+        [NotNull]
+        public string SharedId => nameof(EnragingPainInstance);
+        public int Priority => 0;
     }
 }

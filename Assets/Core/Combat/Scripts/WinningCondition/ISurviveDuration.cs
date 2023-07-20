@@ -1,6 +1,7 @@
 ﻿using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Managers;
-using UnityEngine;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 
 namespace Core.Combat.Scripts.WinningCondition
 {
@@ -9,7 +10,7 @@ namespace Core.Combat.Scripts.WinningCondition
     //fucking c#, COMPOSITION >>>>>>>> INHERITANCE
     public static class DefaultSurviveDurationImplementation
     {
-        public static CombatStatus DefaultTick<T>(this T _, CombatManager combatManager, in float duration) where T : ISurviveDuration
+        public static CombatStatus DefaultTick<T>(this T _, [NotNull] CombatManager combatManager, in TSpan duration) where T : ISurviveDuration
         {
             bool anyLeftSideAlive = false;
             bool anyRightSideAlive = false;
@@ -36,14 +37,10 @@ namespace Core.Combat.Scripts.WinningCondition
             return CombatStatus.InProgress;
         }
 
-        public static string DefaultDisplayName<T>(this T _, in float duration) where T : ISurviveDuration
-        {
-            return $"Survive for {duration.ToString("0")} seconds";
-        }
+        [NotNull]
+        public static string DefaultDisplayName<T>(this T _, in TSpan duration) where T : ISurviveDuration => $"Survive for {duration.ToString("0")} seconds";
 
-        public static float DefaultTimeToDisplay<T>(this T _, CombatManager combatManager, in float duration) where T : ISurviveDuration
-        {
-            return Mathf.Clamp(duration - combatManager.ElapsedTime, 0f, duration);
-        }
+        public static TSpan DefaultTimeToDisplay<T>(this T _, [NotNull] CombatManager combatManager, in TSpan duration) where T : ISurviveDuration 
+            => (duration - combatManager.ElapsedTime).Clamp(TSpan.Zero, duration);
     }
 }

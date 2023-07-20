@@ -12,15 +12,19 @@ using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
 using Data.Main_Characters.Nema;
+using JetBrains.Annotations;
 using ListPool;
 
 namespace Core.Main_Characters.Nema.Combat.Perks.Healer
 {
     public class Adoration : PerkScriptable 
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             AdorationInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -41,7 +45,8 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Healer
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             AdorationInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -51,22 +56,19 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Healer
     
     public class AdorationInstance : PerkInstance, ISkillModifier
     {
-        public string SharedId => nameof(AdorationInstance);
-        public int Priority => 0;
-        
-        private const float BuffModifier = 0.1f;
-        private const float BaseDuration = 4f;
-        private const float BaseApplyChance = 1f;
-        
-        private static readonly LustScript LustScript = new(-4, -5);
-        private static readonly BuffOrDebuffScript ResilienceScript = new(false, BaseDuration, BaseApplyChance, CombatStat.Resilience, BuffModifier);
-        private static readonly BuffOrDebuffScript ComposureScript = new(false, BaseDuration, BaseApplyChance, CombatStat.Composure, BuffModifier);
+        private const int BuffModifier = 10;
+        private static readonly TSpan BaseDuration = TSpan.FromSeconds(4.0);
+        private const int BaseApplyChance = 100;
+
+        private static readonly LustScript LustScript = new(LustLower: -4, LustUpper: -5, LustPower: 100);
+        private static readonly BuffOrDebuffScript ResilienceScript = new(Permanent: false, BaseDuration, BaseApplyChance, CombatStat.Resilience, BuffModifier);
+        private static readonly BuffOrDebuffScript ComposureScript = new(Permanent: false, BaseDuration, BaseApplyChance, CombatStat.Composure, BuffModifier);
 
         public AdorationInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public AdorationInstance(CharacterStateMachine owner, AdorationRecord record) : base(owner, record)
+
+        public AdorationInstance(CharacterStateMachine owner, [NotNull] AdorationRecord record) : base(owner, record)
         {
         }
 
@@ -80,6 +82,7 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Healer
             Owner.SkillModule.SkillModifiers.Remove(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new AdorationRecord(Key);
 
         public void Modify(ref SkillStruct skillStruct)
@@ -89,10 +92,14 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Healer
             if (key != NemaSkills.Serenity.key && key != NemaSkills.Calm.key)
                 return;
             
-            ref ValueListPool<IActualStatusScript> targetEffects = ref skillStruct.TargetEffects;
+            ref CustomValuePooledList<IActualStatusScript> targetEffects = ref skillStruct.TargetEffects;
             targetEffects.Add(LustScript);
             targetEffects.Add(ResilienceScript);
             targetEffects.Add(ComposureScript);
         }
+
+        [NotNull]
+        public string SharedId => nameof(AdorationInstance);
+        public int Priority => 0;
     }
 }

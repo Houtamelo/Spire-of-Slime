@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine;
 using Yarn.Unity;
 using Save = Core.Save_Management.SaveObjects.Save;
@@ -29,7 +30,7 @@ namespace Core.Save_Management
             return (new Dictionary<string, float>(), new Dictionary<string, string>(), new Dictionary<string, bool>());
         }
 
-        public override bool TryGetValue<T>(string variableName, out T result)
+        public override bool TryGetValue<T>(string variableName, [CanBeNull] out T result)
         {
             if (Save.AssertInstance(out Save save) == false)
             {
@@ -42,8 +43,8 @@ namespace Core.Save_Management
             return true;
         }
         
-        public override void SetValue(string variableName, bool boolValue) => Save.Current?.SetVariable(variableName,     boolValue);
+        public override void SetValue(string variableName, bool boolValue)     => Save.Current?.SetVariable(variableName, boolValue);
         public override void SetValue(string variableName, string stringValue) => Save.Current?.SetVariable(variableName, stringValue);
-        public override void SetValue(string variableName, float floatValue) => Save.Current?.SetVariable(variableName,   floatValue);
+        public override void SetValue(string variableName, float floatValue)   => Save.Current?.SetVariable(variableName, (int)floatValue);
     }
 }

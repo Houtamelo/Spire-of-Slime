@@ -2,22 +2,24 @@
 using System.Text;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects.Interfaces;
 using Core.Combat.Scripts.Interfaces.Events;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 using ListPool;
 
 namespace Core.Main_Characters.Nema.Combat.Perks.AoE
 {
     public class Hatred : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             HatredInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -38,7 +40,8 @@ namespace Core.Main_Characters.Nema.Combat.Perks.AoE
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             HatredInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -46,24 +49,19 @@ namespace Core.Main_Characters.Nema.Combat.Perks.AoE
         }
     }
     
-    public class HatredInstance : PerkInstance, IBaseFloatAttributeModifier, ISelfAttackedListener, IActionCompletedListener
+    public class HatredInstance : PerkInstance, IBaseAttributeModifier, ISelfAttackedListener, IActionCompletedListener
     {
-        public string SharedId => nameof(HatredInstance);
-        public int Priority => 0;
-        private const float ResilienceModifier = 0.05f;
-        private const float DamageModifierPerHit = 0.25f;
+        private const int ResilienceModifier = 5;
+        private const int DamageModifierPerHit = 25;
         private const int LustModifierPerHit = 3;
-        
+
         private int _hits;
-        
+
         public HatredInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public HatredInstance(CharacterStateMachine owner, HatredRecord record) : base(owner, record)
-        {
-            _hits = record.Hits;
-        }
+
+        public HatredInstance(CharacterStateMachine owner, [NotNull] HatredRecord record) : base(owner, record) => _hits = record.Hits;
 
         protected override void OnSubscribe()
         {
@@ -71,7 +69,7 @@ namespace Core.Main_Characters.Nema.Combat.Perks.AoE
             eventsHandler.ActionCompletedListeners.Add(this);
             eventsHandler.SelfAttackedListeners.Add(this);
             
-            Owner.StatsModule.SubscribePower(this, allowDuplicates: false);
+            Owner.StatsModule.SubscribePower(modifier: this, allowDuplicates: false);
             if (CreatedFromLoad)
                 return;
             
@@ -85,12 +83,13 @@ namespace Core.Main_Characters.Nema.Combat.Perks.AoE
             eventsHandler.ActionCompletedListeners.Remove(this);
             eventsHandler.SelfAttackedListeners.Remove(this);
             
-            Owner.StatsModule.UnsubscribePower(this);
+            Owner.StatsModule.UnsubscribePower(modifier: this);
             
             if (Owner.StaminaModule.TrySome(out IStaminaModule staminaModule))
                 staminaModule.BaseResilience -= ResilienceModifier;
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new HatredRecord(Key, _hits);
 
         public void OnSelfAttacked(ref ActionResult result)
@@ -107,9 +106,13 @@ namespace Core.Main_Characters.Nema.Combat.Perks.AoE
             _hits = 0;
         }
 
-        public void Modify(ref float value, CharacterStateMachine self)
+        public void Modify(ref int value, CharacterStateMachine self)
         {
             value += _hits * DamageModifierPerHit;
         }
+
+        [NotNull]
+        public string SharedId => nameof(HatredInstance);
+        public int Priority => 0;
     }
 }

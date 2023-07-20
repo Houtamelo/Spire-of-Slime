@@ -4,10 +4,10 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using Core.Combat.Scripts;
+using Core.Main_Characters.Ethel.Combat;
 using Core.Main_Characters.Nema.Combat;
 using Core.Utils.Extensions;
 using Core.World_Map.Scripts;
-using Data.Main_Characters.Ethel;
 using KGySoft.CoreLibraries;
 using UnityEngine;
 
@@ -18,20 +18,20 @@ namespace Core.Save_Management.SaveObjects
     public static class VariablesName
     {
         public delegate void StringSetter(Save save, CleanString value, CleanString variableName);
-        public delegate void FloatSetter(Save save, float value, CleanString variableName);
+        public delegate void IntSetter(Save save, int value, CleanString variableName);
         public delegate void BoolSetter(Save save, bool value, CleanString variableName);
         public delegate CleanString StringGetter(Save save, CleanString variableName);
-        public delegate float FloatGetter(Save save, CleanString variableName);
+        public delegate int IntGetter(Save save, CleanString variableName);
         public delegate bool BoolGetter(Save save, CleanString variableName);
         
         private static readonly StringBuilder Builder = new();
 
         public static readonly ReadOnlyDictionary<CleanString, StringSetter> StringSetters;
-        public static readonly ReadOnlyDictionary<CleanString, FloatSetter> FloatSetters;
+        public static readonly ReadOnlyDictionary<CleanString, IntSetter> IntSetters;
         public static readonly ReadOnlyDictionary<CleanString, BoolSetter> BoolSetters;
 
         public static readonly ReadOnlyDictionary<CleanString, StringGetter> StringGetters;
-        public static readonly ReadOnlyDictionary<CleanString, FloatGetter> FloatGetters;
+        public static readonly ReadOnlyDictionary<CleanString, IntGetter> IntGetters;
         public static readonly ReadOnlyDictionary<CleanString, BoolGetter> BoolGetters;
 
         public static readonly CleanString Ethel_Lust = StatName(Ethel.GlobalKey,                     GeneralStat.Lust);
@@ -73,7 +73,7 @@ namespace Core.Save_Management.SaveObjects
 
                     save.Location = location;
                 },
-                [Combat_Order] = (save, value, _) => save.SetCombatOrder(value.ToString().Split('_').Select(s => (CleanString) s)),
+                [Combat_Order] = (save, value, _) => save.SetCombatOrder(characterIds: value.ToString().Split('_').Select(s => (CleanString) s)),
                 [AssignedSkillName(Ethel.GlobalKey, index: 0)] = (save, value, _) => save.OverrideSkill(Ethel.GlobalKey, value, slotIndex: 0),
                 [AssignedSkillName(Ethel.GlobalKey, index: 1)] = (save, value, _) => save.OverrideSkill(Ethel.GlobalKey, value, slotIndex: 1),
                 [AssignedSkillName(Ethel.GlobalKey, index: 2)] = (save, value, _) => save.OverrideSkill(Ethel.GlobalKey, value, slotIndex: 2),
@@ -88,27 +88,31 @@ namespace Core.Save_Management.SaveObjects
                 [UnassignSkillName(Nema.GlobalKey)]            = (save, value, _) => save.UnassignSkill(Nema.GlobalKey, value),
             });
             
-            Dictionary<CleanString, FloatSetter> floatSetters = new();
+            Dictionary<CleanString, IntSetter> intSetters = new();
             foreach (GeneralStat stat in Enum<GeneralStat>.GetValues())
             {
-                floatSetters.Add(StatName(Ethel.GlobalKey, stat), (save, value, _) => save.SetStat(Ethel.GlobalKey, stat, value));
-                floatSetters.Add(StatName(Nema.GlobalKey, stat), (save, value, _) => save.SetStat(Nema.GlobalKey, stat, value));
+                intSetters.Add(StatName(Ethel.GlobalKey, stat), (save, value, _) => save.SetStat(Ethel.GlobalKey, stat, value));
+                intSetters.Add(StatName(Nema.GlobalKey,  stat), (save, value, _) => save.SetStat(Nema.GlobalKey,  stat, value));
             }
 
             foreach (Race race in Enum<Race>.GetValues())
             {
-                floatSetters.Add(SexualExpByRaceName(Ethel.GlobalKey, race), (save, value, _) => save.SetSexualExp(Ethel.GlobalKey, race, (uint)value));
-                floatSetters.Add(SexualExpByRaceName(Nema.GlobalKey,  race), (save, value, _) => save.SetSexualExp(Nema.GlobalKey,  race, (uint)value));
+                intSetters.Add(SexualExpByRaceName(Ethel.GlobalKey, race), (save, value, _) => save.SetSexualExp(Ethel.GlobalKey, race, value));
+                intSetters.Add(SexualExpByRaceName(Nema.GlobalKey,  race), (save, value, _) => save.SetSexualExp(Nema.GlobalKey,  race, value));
             }
 
-            floatSetters[Ethel_Experience] = (save, value, _) => save.SetExperience(Ethel.GlobalKey, value);
-            floatSetters[Ethel_Lust] = (save, value, _) => save.SetLust(Ethel.GlobalKey, (uint)value);
-            floatSetters[Nema_Experience] = (save, value, _) => save.SetExperience(Nema.GlobalKey, value);
-            floatSetters[Nema_Lust] = (save, value, _) => save.SetLust(Nema.GlobalKey, (uint)value);
-            floatSetters[Nema_Exhaustion] = (save, value, _) => save.SetNemaExhaustion(value);
-            FloatSetters = new ReadOnlyDictionary<CleanString, FloatSetter>(floatSetters);
+            intSetters[Ethel_Experience] = (save, value, _) => save.SetExperience(Ethel.GlobalKey, value);
+            intSetters[Ethel_Lust]       = (save, value, _) => save.SetLust(Ethel.GlobalKey, value);
+            intSetters[Nema_Experience]  = (save, value, _) => save.SetExperience(Nema.GlobalKey,  value);
+            intSetters[Nema_Lust]        = (save, value, _) => save.SetLust(Nema.GlobalKey,  value);
+            intSetters[Nema_Exhaustion]  = (save, value, _) => save.SetNemaExhaustion(       value);
+            
+            IntSetters = new ReadOnlyDictionary<CleanString, IntSetter>(intSetters);
 
-            BoolSetters = new ReadOnlyDictionary<CleanString, BoolSetter>(new Dictionary<CleanString, BoolSetter> { [Nema_ClearingMist] = (save, value, _) => save.SetNemaClearingMist(value) });
+            BoolSetters = new ReadOnlyDictionary<CleanString, BoolSetter>(new Dictionary<CleanString, BoolSetter>
+            {
+                [Nema_ClearingMist] = (save, value, _) => save.SetNemaClearingMist(value)
+            });
 
             StringGetters = new ReadOnlyDictionary<CleanString, StringGetter>(new Dictionary<CleanString, StringGetter>()
             {
@@ -124,22 +128,22 @@ namespace Core.Save_Management.SaveObjects
                 [AssignedSkillName(Nema.GlobalKey,  index: 3)] = (save, _) => save.GetSkill(Nema.GlobalKey,  index: 3).SomeOrDefault().ToString(),
             });
 
-            Dictionary<CleanString, FloatGetter> floatGetters = new();
+            Dictionary<CleanString, IntGetter> intGetters = new();
             foreach (GeneralStat stat in Enum<GeneralStat>.GetValues())
             {
-                floatGetters.Add(StatName(Ethel.GlobalKey, stat), (save, _) => save.GetStat(Ethel.GlobalKey, stat));
-                floatGetters.Add(StatName(Nema.GlobalKey, stat), (save, _) => save.GetStat(Nema.GlobalKey, stat));
+                intGetters.Add(StatName(Ethel.GlobalKey, stat), (save, _) => save.GetStat(Ethel.GlobalKey, stat));
+                intGetters.Add(StatName(Nema.GlobalKey,  stat), (save, _) => save.GetStat(Nema.GlobalKey,  stat));
             }
             
             foreach (Race race in Enum<Race>.GetValues())
             {
-                floatGetters.Add(SexualExpByRaceName(Ethel.GlobalKey, race), (save, _) => save.GetSexualExp(Ethel.GlobalKey, race));
-                floatGetters.Add(SexualExpByRaceName(Nema.GlobalKey,  race), (save, _) => save.GetSexualExp(Nema.GlobalKey,  race));
+                intGetters.Add(SexualExpByRaceName(Ethel.GlobalKey, race), (save, _) => save.GetSexualExp(Ethel.GlobalKey, race));
+                intGetters.Add(SexualExpByRaceName(Nema.GlobalKey,  race), (save, _) => save.GetSexualExp(Nema.GlobalKey,  race));
             }
 
-            floatGetters.Add(Nema_Exhaustion, (save, _) => save.NemaExhaustion);
+            intGetters.Add(Nema_Exhaustion, (save, _) => save.NemaExhaustion);
             
-            FloatGetters = new ReadOnlyDictionary<CleanString, FloatGetter>(floatGetters);
+            IntGetters = new ReadOnlyDictionary<CleanString, IntGetter>(intGetters);
             
             Dictionary<CleanString, BoolGetter> locationGetters = new();
             foreach (LocationEnum location in Enum<LocationEnum>.GetValues())
@@ -153,17 +157,17 @@ namespace Core.Save_Management.SaveObjects
         
         public static CleanString StatName(CleanString key, GeneralStat stat) => Builder.Override(key.ToString(), '_', stat.GetName().ToString()).ToString();
         
-        public static CleanString AllocatedPrimaryUpgradeName(CleanString key, PrimaryUpgrade upgrade) => Builder.Override(key.ToString(),     "_allocated_", upgrade.GetName().ToString()).ToString();
+        public static CleanString AllocatedPrimaryUpgradeName(CleanString key,   PrimaryUpgrade upgrade)   => Builder.Override(key.ToString(), "_allocated_", upgrade.GetName().ToString()).ToString();
         public static CleanString AllocatedSecondaryUpgradeName(CleanString key, SecondaryUpgrade upgrade) => Builder.Override(key.ToString(), "_allocated_", upgrade.GetName().ToString()).ToString();
 
-        public static CleanString PerkPrefix(CleanString characterKey) => Builder.Override("perk_",   characterKey.ToString(), '_').ToString();
+        public static CleanString PerkPrefix(CleanString characterKey)  => Builder.Override("perk_",  characterKey.ToString(), '_').ToString();
         public static CleanString SkillPrefix(CleanString characterKey) => Builder.Override("skill_", characterKey.ToString(), '_').ToString();
         
         public static CleanString EnabledPerkPrefix() => "enabled_";
         public static CleanString EnabledPerkName(CleanString characterKey, CleanString perkKey) => Builder.Override(EnabledPerkPrefix().ToString(), PerkPrefix(characterKey).ToString(), perkKey.ToString()).ToString();
 
-        private static CleanString GetName(this GeneralStat stat) => Enum<GeneralStat>.ToString(stat);
-        private static CleanString GetName(this PrimaryUpgrade upgrade) => upgrade.ToGeneral().GetName();
+        private static CleanString GetName(this GeneralStat stat)         => Enum<GeneralStat>.ToString(stat);
+        private static CleanString GetName(this PrimaryUpgrade upgrade)   => upgrade.ToGeneral().GetName();
         private static CleanString GetName(this SecondaryUpgrade upgrade) => upgrade.ToGeneral().GetName();
         
         public static CleanString SexualExpByRaceName(CleanString statsKey, Race race) => Builder.Override("sexual_exp_", statsKey.ToString(), '_' , Enum<Race>.ToString(race)).ToString();

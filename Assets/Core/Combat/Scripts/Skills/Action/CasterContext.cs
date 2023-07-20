@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace Core.Combat.Scripts.Skills.Action
 {
@@ -10,14 +11,14 @@ namespace Core.Combat.Scripts.Skills.Action
         public readonly bool AnyCritical;
         public readonly ActionResult[] Results;
         
-        public CasterContext(ActionResult[] results)
+        public CasterContext([NotNull] ActionResult[] results)
         {
             Results = results;
             AnyHit = false;
             AnyCritical = false;
             foreach (ActionResult result in results)
             {
-                if (result.Hit && (result.Caster != result.Target || result.Skill.AllowAllies))
+                if (result.Hit && (result.Caster != result.Target || result.Skill.IsPositive))
                     AnyHit = true;
                     
                 AnyCritical |= result.Critical;

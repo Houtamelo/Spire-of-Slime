@@ -1,7 +1,7 @@
 ﻿using Core.Local_Map.Scripts.Enums;
 using Core.Utils.Async;
 using Core.Utils.Patterns;
-using Utils.Patterns;
+using JetBrains.Annotations;
 
 namespace Core.Local_Map.Scripts.Events.Combat
 {
@@ -9,6 +9,7 @@ namespace Core.Local_Map.Scripts.Events.Combat
     {
         public override bool AllowSaving => true;
 
+        [NotNull]
         public override CoroutineWrapper Execute(TileInfo tileInfo, in Option<float> multiplier) => CombatEventHandler.HandleCombat(tileInfo, multiplier, Option.None);
 
         public override IconType GetIconType(in Option<float> multiplier)

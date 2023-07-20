@@ -10,12 +10,13 @@ using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Misc;
 using Core.Utils.Async;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 using Random = UnityEngine.Random;
 
 namespace Core.Combat.Scripts.Managers
@@ -105,7 +106,7 @@ namespace Core.Combat.Scripts.Managers
             raycastBlocker.SetActive(false);
         }
 
-        public void FadeUpActionSplashScreenAndSpeedLines(PlannedSkill plan, float fadeDuration, float animationDuration)
+        public void FadeUpActionSplashScreenAndSpeedLines([NotNull] PlannedSkill plan, float fadeDuration, float animationDuration)
         {
             _splashScreenFadeTween.KillIfActive();
             _splashScreenMovementTween.KillIfActive();
@@ -130,7 +131,7 @@ namespace Core.Combat.Scripts.Managers
             bool isCasterLeft = caster.PositionHandler.IsLeftSide;
             (float xSpeed, AnimationCurve curve) casterMovement = skill.GetCasterMovement(isCasterLeft);
             
-            float movementDuration = fadeDuration * 2f + animationDuration;
+            float movementDuration = (fadeDuration * 2f) + animationDuration;
             _splashScreenMovementTween = splashScreenBackground.transform.DOMoveX(endValue: casterMovement.xSpeed * Random.Range(0.9f, 1.1f) * 0.5f, movementDuration).SetRelative().SetEase(casterMovement.curve);
             
             if (casterMovement.xSpeed > 0f)
@@ -139,7 +140,7 @@ namespace Core.Combat.Scripts.Managers
                 _leftFacingSpeedLinesFadeTween = leftFacingSpeedLines.DOFade(SpeedLinesMaximumAlpha, fadeDuration);
         }
 
-        public void AnimateSpeedLines(PlannedSkill plan, float duration)
+        public void AnimateSpeedLines([NotNull] PlannedSkill plan, float duration)
         {
             ISkill skill = plan.Skill;
             CharacterStateMachine caster = plan.Caster;
@@ -169,7 +170,7 @@ namespace Core.Combat.Scripts.Managers
             _rightFacingSpeedLinesFadeTween = rightFacingSpeedLines.DOFade(endValue: 0f, duration);
         }
         
-        public void AnimateOrgasm(CharacterDisplay owner)
+        public void AnimateOrgasm(DisplayModule owner)
         {
             if (CombatTextCueManager.AssertInstance(out CombatTextCueManager combatTextCueManager) == false)
                 return;
@@ -195,13 +196,13 @@ namespace Core.Combat.Scripts.Managers
             combatManager.Animations.Enqueue(animationRoutineInfo);*/
         }
 
-        public Sequence AnimateCameraForAction(IReadOnlyCollection<CharacterStateMachine> presentCharacters, float lerpDuration, float stayDuration)
+        public Sequence AnimateCameraForAction([NotNull] IReadOnlyCollection<CharacterStateMachine> presentCharacters, float lerpDuration, float stayDuration)
         {
             const float defaultZoomOffset = 0.3f; // for maximum height of 3.6f
             float maxHeight = 0f;
             foreach (CharacterStateMachine character in presentCharacters)
             {
-                if (character.Display.AssertSome(out CharacterDisplay display) == false)
+                if (character.Display.AssertSome(out DisplayModule display) == false)
                     continue;
 
                 Option<Bounds> boundsOption = display.GetBounds();
@@ -223,6 +224,7 @@ namespace Core.Combat.Scripts.Managers
             return sequence;
         }
 
+        [NotNull]
         public AnimationRoutineInfo AnimateOverlayMist(Action underTheMist, Option<CharacterStateMachine> owner, float fadeDuration = 1f, float stayDuration = 1f)
         {
             // AUTO START IS TRUE ON THIS ONE!

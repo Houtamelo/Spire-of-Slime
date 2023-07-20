@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using JetBrains.Annotations;
+using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace Core.Combat.Scripts
@@ -7,7 +8,7 @@ namespace Core.Combat.Scripts
     {
         [SerializeField] private GameObject clearMistOption;
         
-        public void OnPointerClick(PointerEventData eventData)
+        public void OnPointerClick([NotNull] PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Right)
                 return;

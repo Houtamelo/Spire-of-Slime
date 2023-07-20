@@ -2,12 +2,12 @@
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Game_Manager.Scripts;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Character_Panel.Scripts.Skills
 {
@@ -42,7 +42,7 @@ namespace Core.Character_Panel.Scripts.Skills
             _holdingDragableSound = holdingDragableSound;
         }
 
-        public void SetSkill(ISkill skill)
+        public void SetSkill([CanBeNull] ISkill skill)
         {
             if (skill == null)
             {
@@ -70,7 +70,7 @@ namespace Core.Character_Panel.Scripts.Skills
             gameObject.SetActive(true);
         }
         
-        public void OnBeginDrag(PointerEventData eventData)
+        public void OnBeginDrag([NotNull] PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left)
                 return;
@@ -94,7 +94,7 @@ namespace Core.Character_Panel.Scripts.Skills
                 tooltip.Hide();
         }
 
-        public void OnDrag(PointerEventData eventData)
+        public void OnDrag([NotNull] PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left || _isDragging == false || Interactable == false)
                 return;
@@ -105,7 +105,7 @@ namespace Core.Character_Panel.Scripts.Skills
             transform.position = worldPosition;
         }
 
-        public void OnEndDrag(PointerEventData eventData)
+        public void OnEndDrag([NotNull] PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left || _isDragging == false || Interactable == false)
                 return;

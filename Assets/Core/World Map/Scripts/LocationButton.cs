@@ -1,13 +1,13 @@
 ﻿using Core.Pause_Menu.Scripts;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using KGySoft.CoreLibraries;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.World_Map.Scripts
 {
@@ -57,7 +57,7 @@ namespace Core.World_Map.Scripts
                 worldMapManager.LocationButtonClicked(buttonLocation: Location);
         }
 
-        public void OnPointerEnter(PointerEventData _ = null)
+        public void OnPointerEnter([CanBeNull] PointerEventData _ = null)
         {
             HighLight();
             Option<WorldMapManager> worldMap = WorldMapManager.Instance;
@@ -67,7 +67,7 @@ namespace Core.World_Map.Scripts
                 Debug.LogError("WorldMapManager is null");
         }
 
-        public void OnPointerExit(PointerEventData _ = null)
+        public void OnPointerExit([CanBeNull] PointerEventData _ = null)
         {
             LowLight();
             Option<WorldMapManager> worldMap = WorldMapManager.Instance;

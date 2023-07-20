@@ -4,13 +4,14 @@ using Core.Combat.Scripts;
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Localization.Scripts;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections;
 using Core.Utils.Patterns;
 using ListPool;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Main_Characters.Nema.Combat
@@ -19,24 +20,21 @@ namespace Core.Main_Characters.Nema.Combat
     {
         public static readonly CleanString GlobalKey = "nema";
         public override CleanString Key => GlobalKey;
-        public override string CharacterName => "Nema";
 
-        private readonly List<ISkill> _cachedSkills = new();
+        public static readonly LocalizedText NameTrans = new("charactername_nema");
+        public override LocalizedText CharacterName => NameTrans;
+
+        private readonly ListPool<ISkill> _cachedSkills = new (SkillSet.MaxSkills);
         private int _cachedHash;
 
-        public override IReadOnlyList<ISkill> Skills
+        public override ReadOnlySpan<ISkill> Skills
         {
             get
             {
-                Save save = Save.Current;
-                if (save == null)
-                {
-                    Debug.LogWarning("Save is null, returning cached skill list", this);
-                    return _cachedSkills;
-                }
+                if (Save.AssertInstance(out Save save))
+                    save.FillSkills(GlobalKey, fillMe: _cachedSkills, character: this, ref _cachedHash);
                 
-                save.GetSkills(GlobalKey, destinationList: _cachedSkills, character: this, ref _cachedHash);
-                return _cachedSkills;
+                return _cachedSkills.AsSpan();
             }
         }
         
@@ -47,9 +45,10 @@ namespace Core.Main_Characters.Nema.Combat
                 if (Save.AssertInstance(out Save save) == false || save.GetReadOnlyStats(GlobalKey).AssertSome(out IReadonlyCharacterStats stats) == false)
                     return ReadOnlySpan<IPerk>.Empty;
 
-                ValueListPool<CleanString> unlockedPerks = stats.GetUnlockedPerks(save);
+                CustomValuePooledList<CleanString> unlockedPerks = stats.GetUnlockedPerks(save);
                 ReadOnlySpan<IPerk> perkScripts = PerkDatabase.GetPerks(ref unlockedPerks);
                 unlockedPerks.Dispose();
+                
                 return perkScripts;
             }
         }
@@ -57,43 +56,43 @@ namespace Core.Main_Characters.Nema.Combat
         [SerializeField, Required] private RuntimeAnimatorController portraitAnimation;
         public override Option<RuntimeAnimatorController> GetPortraitAnimation => portraitAnimation;
 
-        public override float Speed => Save.Current.NemaStats.GetValue(GeneralStat.Speed);
-        public override (uint lower, uint upper) Damage
+        public override int Speed => Save.Current.NemaStats.GetValue(GeneralStat.Speed);
+        public override (int lower, int upper) Damage
         {
             get
             {
                 IReadonlyCharacterStats stats = Save.Current.NemaStats;
-                return ((uint) stats.GetValue(GeneralStat.DamageLower), (uint) stats.GetValue(GeneralStat.DamageUpper));
+                return (stats.GetValue(GeneralStat.DamageLower), stats.GetValue(GeneralStat.DamageUpper));
             }
         }
         
-        public override uint Stamina => (uint) Save.Current.NemaStats.GetValue(GeneralStat.Stamina);
-        public override uint StaminaAmplitude => 0;
-        public override float Resilience => Save.Current.NemaStats.GetValue(GeneralStat.Resilience);
+        public override int Stamina => Save.Current.NemaStats.GetValue(GeneralStat.Stamina);
+        public override int StaminaAmplitude => 0;
+        public override int Resilience => Save.Current.NemaStats.GetValue(GeneralStat.Resilience);
         
-        public override float Accuracy => Save.Current.NemaStats.GetValue(GeneralStat.Accuracy);
-        public override float Dodge => Save.Current.NemaStats.GetValue(GeneralStat.Dodge);
-        public override float Critical => Save.Current.NemaStats.GetValue(GeneralStat.CriticalChance);
+        public override int Accuracy => Save.Current.NemaStats.GetValue(GeneralStat.Accuracy);
+        public override int Dodge => Save.Current.NemaStats.GetValue(GeneralStat.Dodge);
+        public override int CriticalChance => Save.Current.NemaStats.GetValue(GeneralStat.CriticalChance);
         
-        public override float DebuffResistance => Save.Current.NemaStats.GetValue(GeneralStat.DebuffResistance);
-        public override float DebuffApplyChance => Save.Current.NemaStats.GetValue(GeneralStat.DebuffApplyChance);
+        public override int DebuffResistance => Save.Current.NemaStats.GetValue(GeneralStat.DebuffResistance);
+        public override int DebuffApplyChance => Save.Current.NemaStats.GetValue(GeneralStat.DebuffApplyChance);
         
-        public override float MoveResistance => Save.Current.NemaStats.GetValue(GeneralStat.MoveResistance);
-        public override float MoveApplyChance => Save.Current.NemaStats.GetValue(GeneralStat.MoveApplyChance);
+        public override int MoveResistance => Save.Current.NemaStats.GetValue(GeneralStat.MoveResistance);
+        public override int MoveApplyChance => Save.Current.NemaStats.GetValue(GeneralStat.MoveApplyChance);
         
-        public override float PoisonResistance => Save.Current.NemaStats.GetValue(GeneralStat.PoisonResistance);
-        public override float PoisonApplyChance => Save.Current.NemaStats.GetValue(GeneralStat.PoisonApplyChance);
+        public override int PoisonResistance => Save.Current.NemaStats.GetValue(GeneralStat.PoisonResistance);
+        public override int PoisonApplyChance => Save.Current.NemaStats.GetValue(GeneralStat.PoisonApplyChance);
         
-        public override float ArousalApplyChance => Save.Current.NemaStats.GetValue(GeneralStat.ArousalApplyChance);
+        public override int ArousalApplyChance => Save.Current.NemaStats.GetValue(GeneralStat.ArousalApplyChance);
         
-        public override uint Lust => (uint) Save.Current.NemaStats.GetValue(GeneralStat.Lust);
-        public override ClampedPercentage Temptation => Save.Current.NemaStats.GetValue(GeneralStat.Temptation);
-        public override float Composure => Save.Current.NemaStats.GetValue(GeneralStat.Composure);
-        public override uint OrgasmLimit => (uint) Save.Current.NemaStats.GetValue(GeneralStat.OrgasmLimit);
-        public override uint OrgasmCount => (uint) Save.Current.NemaStats.GetValue(GeneralStat.OrgasmCount);
+        public override int Lust => Save.Current.NemaStats.GetValue(GeneralStat.Lust);
+        public override int Temptation => Save.Current.NemaStats.GetValue(GeneralStat.Temptation);
+        public override int Composure => Save.Current.NemaStats.GetValue(GeneralStat.Composure);
+        public override int OrgasmLimit => Save.Current.NemaStats.GetValue(GeneralStat.OrgasmLimit);
+        public override int OrgasmCount => Save.Current.NemaStats.GetValue(GeneralStat.OrgasmCount);
         
-        public override float ExpMultiplier => 1f;
-        public override float StunRecoverySpeed => Save.Current.NemaStats.GetValue(GeneralStat.StunRecoverySpeed);
+        public override double ExpMultiplier => 1f;
+        public override int StunMitigation => Save.Current.NemaStats.GetValue(GeneralStat.StunMitigation);
         
         public override bool IsGirl => true;
         public override bool IsControlledByPlayer => true;

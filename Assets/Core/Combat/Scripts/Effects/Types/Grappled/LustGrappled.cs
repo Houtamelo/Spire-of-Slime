@@ -1,85 +1,63 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Text;
 using Core.Combat.Scripts.Animations;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects.BaseTypes;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Utils.Async;
-using Core.Utils.Extensions;
 using Core.Utils.Math;
-using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
+using Option = Core.Utils.Patterns.Option;
 
 namespace Core.Combat.Scripts.Effects.Types.Grappled
 {
-    public record LustGrappledRecord(float Duration, bool IsPermanent, uint LustPerTime, float TemptationDeltaPerTime, float AccumulatedTime, string TriggerName, Guid Restrainer) : StatusRecord(Duration, IsPermanent)
-    {
-        public override bool IsDataValid(StringBuilder errors, ICollection<CharacterRecord> allCharacters)
-        {
-            if (string.IsNullOrEmpty(TriggerName))
-            {
-                errors.AppendLine("Invalid ", nameof(LustGrappledRecord), " data. ", nameof(TriggerName), " cannot be null or empty.");
-                return false;
-            }
-
-            foreach (CharacterRecord character in allCharacters)
-            {
-                if (Restrainer == character.Guid)
-                    return true;
-            }
-            
-            errors.AppendLine("Invalid ", nameof(LustGrappledRecord), " data. ", nameof(Restrainer), "'s Guid: ", Restrainer.ToString(), " could not be mapped to a character.");
-            return false;
-        }
-    }
-
     public class LustGrappled : StatusInstance
     {
         public override bool IsPositive => false;
         
         public CharacterStateMachine Restrainer { get; }
         public readonly string TriggerName;
+        // ReSharper disable once NotAccessedField.Local
         private readonly string _cumTriggerName;
         public readonly float GraphicalX;
         
-        private readonly uint _lustPerTime;
-        private readonly float _temptationDeltaPerTime;
+        private readonly int _lustPerSecond;
+        private readonly int _temptationDeltaPerSecond;
         
-        private float _accumulatedTime;
+        private TSpan _accumulatedTime;
         private bool _cumAnimationQueued;
 
-        private LustGrappled(float duration, bool isPermanent, CharacterStateMachine owner, CharacterStateMachine restrainer, uint lustPerTime, float temptationDeltaPerTime, string triggerName, float graphicalX, string cumTriggerName)
+        private LustGrappled(TSpan duration, bool isPermanent, CharacterStateMachine owner, CharacterStateMachine restrainer, int lustPerTime,
+                             int temptationDeltaPerTime, string triggerName, float graphicalX, string cumTriggerName)
             : base(duration, isPermanent, owner)
         {
             Restrainer = restrainer;
-            _lustPerTime = lustPerTime;
-            _temptationDeltaPerTime = temptationDeltaPerTime;
+            _lustPerSecond = lustPerTime;
+            _temptationDeltaPerSecond = temptationDeltaPerTime;
             TriggerName = triggerName;
             GraphicalX = graphicalX;
             _cumTriggerName = cumTriggerName;
         }
 
-        public static Option<StatusInstance> CreateInstance(float duration, bool isPermanent, CharacterStateMachine owner, CharacterStateMachine restrainer,
-                                                            uint lustPerTime, float temptationDeltaPerTime, string triggerName, float graphicalX)
+        public static Utils.Patterns.Option<StatusInstance> CreateInstance(TSpan duration, bool isPermanent, CharacterStateMachine owner, CharacterStateMachine restrainer,
+                                                                           int lustPerTime, int temptationDeltaPerTime, string triggerName, float graphicalX)
         {
-            if ((duration <= 0 && !isPermanent) || lustPerTime <= 0)
+            if ((duration.Ticks <= 0 && !isPermanent) || lustPerTime <= 0)
             {
-                Debug.LogWarning($"Invalid parameters for creating a {nameof(LustGrappled)} effect, duration: {duration.ToString()}, isPermanent: {isPermanent.ToString()}, lustPerTime: {lustPerTime.ToString()}");
+                Debug.LogWarning($"Invalid parameters for creating a {nameof(LustGrappled)} effect, duration: {duration.Seconds.ToString()}, isPermanent: {isPermanent.ToString()}, lustPerTime: {lustPerTime.ToString()}");
                 return Option.None;
             }
 
-            if (owner.Display.AssertSome(out CharacterDisplay ownerDisplay) == false || restrainer.Display.AssertSome(out CharacterDisplay restrainerDisplay) == false)
+            if (owner.Display.AssertSome(out DisplayModule ownerDisplay) == false || restrainer.Display.AssertSome(out DisplayModule restrainerDisplay) == false)
                 return Option.None;
 
             LustGrappled instance = new(duration, isPermanent, owner, restrainer, lustPerTime, temptationDeltaPerTime, triggerName, graphicalX, cumTriggerName: $"{triggerName}_cum");
-            owner.StatusModule.AddStatus(instance, restrainer);
-            restrainer.StatusModule.TrackRelatedStatus(instance);
+            owner.StatusReceiverModule.AddStatus(instance, restrainer);
+            restrainer.StatusReceiverModule.TrackRelatedStatus(instance);
             
             ownerDisplay.CombatManager.Characters.NotifyGrappled(owner);
             ownerDisplay.CombatManager.Characters.NotifyGrappling(restrainer, target: owner);
@@ -87,7 +65,7 @@ namespace Core.Combat.Scripts.Effects.Types.Grappled
             if (ownerDisplay.CombatManager.Animations.CurrentAction is { IsPlaying: true }) // grappled was likely the result of a temptation
             {
                 ownerDisplay.AnimateGrappled();
-                CombatAnimation animation = new(triggerName, Option<CasterContext>.None, Option<TargetContext>.None);
+                CombatAnimation animation = new(triggerName, Utils.Patterns.Option<CasterContext>.None, Utils.Patterns.Option<TargetContext>.None);
                 restrainerDisplay.AnimateGrapplingInsideTemptSkill(animation);
             }
             else
@@ -95,90 +73,54 @@ namespace Core.Combat.Scripts.Effects.Types.Grappled
                 Action underTheMist = () =>
                 {
                     ownerDisplay.AnimateGrappled();
-                    CombatAnimation animation = new(triggerName, Option<CasterContext>.None, Option<TargetContext>.None);
+                    CombatAnimation animation = new(triggerName, Utils.Patterns.Option<CasterContext>.None, Utils.Patterns.Option<TargetContext>.None);
                     restrainerDisplay.AnimateGrappling(animation);
                 };
 
-                ownerDisplay.CombatManager.ActionAnimator.AnimateOverlayMist(underTheMist, Option<CharacterStateMachine>.Some(owner));
+                ownerDisplay.CombatManager.ActionAnimator.AnimateOverlayMist(underTheMist, Utils.Patterns.Option<CharacterStateMachine>.Some(owner));
             }
             
-            return Option<StatusInstance>.Some(instance);
+            return Utils.Patterns.Option<StatusInstance>.Some(instance);
         }
 
-        private LustGrappled(LustGrappledRecord record, float graphicalX, CharacterStateMachine owner, CharacterStateMachine restrainer) : base(record, owner)
+        public LustGrappled([NotNull] LustGrappledRecord record, float graphicalX, CharacterStateMachine owner, CharacterStateMachine restrainer) : base(record, owner)
         {
             Restrainer = restrainer;
-            _lustPerTime = record.LustPerTime;
-            _temptationDeltaPerTime = record.TemptationDeltaPerTime;
+            _lustPerSecond = record.LustPerTime;
+            _temptationDeltaPerSecond = record.TemptationDeltaPerTime;
             _accumulatedTime = record.AccumulatedTime;
             TriggerName = record.TriggerName;
             GraphicalX = graphicalX;
             _cumTriggerName = $"{TriggerName}_cum";
         }
 
-        public static Option<StatusInstance> CreateInstance(LustGrappledRecord record, CharacterStateMachine owner, ref CharacterEnumerator allCharacters)
-        {
-            CharacterStateMachine restrainer = null;
-            foreach (CharacterStateMachine character in allCharacters)
-            {
-                if (character.Guid == record.Restrainer)
-                {
-                    restrainer = character;
-                    break;
-                }
-            }
-            
-            if (restrainer == null)
-                return Option.None;
-
-            Option<float> graphicalX = owner.Script.GetSexGraphicalX(record.TriggerName);
-            if (graphicalX.IsNone)
-                return Option.None;
-
-            LustGrappled instance = new(record, graphicalX.Value, owner, restrainer);
-            owner.StatusModule.AddStatus(instance, restrainer);
-            restrainer.StatusModule.TrackRelatedStatus(instance);
-            
-            if (owner.Display.TrySome(out CharacterDisplay ownerDisplay))
-                ownerDisplay.AnimateGrappled();
-
-            if (restrainer.Display.TrySome(out CharacterDisplay restrainerDisplay))
-            {
-                CombatAnimation animation = new(record.TriggerName, Option<CasterContext>.None, Option<TargetContext>.None);
-                restrainerDisplay.AnimateGrappling(animation);
-            }
-            
-            return Option<StatusInstance>.Some(instance);
-        }
-
-        public override void Tick(float timeStep)
+        public override void Tick(TSpan timeStep)
         {
             if (Duration > timeStep)
             {
+                ILustModule lustModule;
                 _accumulatedTime += timeStep;
-                if (_accumulatedTime >= 1f)
+                if (_accumulatedTime.Seconds >= 1)
                 {
-                    uint roundTime = _accumulatedTime.FloorToUInt();
-                    _accumulatedTime -= roundTime;
-                    if (Owner.LustModule.TrySome(out ILustModule lustModule))
+                    int roundSeconds = _accumulatedTime.Seconds.FloorToInt();
+                    _accumulatedTime.SubtractSeconds(roundSeconds);
+                    if (Owner.LustModule.TrySome(out lustModule))
                     {
-                        lustModule.ChangeLust((int)(roundTime * _lustPerTime));
-                        lustModule.ChangeTemptation(roundTime * _temptationDeltaPerTime);
-                        lustModule.IncrementSexualExp(Restrainer.Script.Race, ILustModule.SexualExpDeltaPerSexSecond * roundTime);
+                        lustModule.ChangeLust(roundSeconds * _lustPerSecond);
+                        lustModule.ChangeTemptation(roundSeconds * _temptationDeltaPerSecond);
+                        lustModule.IncrementSexualExp(Restrainer.Script.Race, ILustModule.SexualExpDeltaPerSexSecond * roundSeconds);
                     }
                 }
 
-                {
-                    if (Owner.LustModule.TrySome(out ILustModule lustModule) && lustModule.GetLust() >= ILustModule.MaxLust)
-                        lustModule.Orgasm();
-                }
+                if (Owner.LustModule.TrySome(out lustModule) && lustModule.GetLust() >= ILustModule.MaxLust)
+                    lustModule.Orgasm();
 
                 base.Tick(timeStep);
                 return;
             }
 
             // Duration is over so the monster should cum
-            if (Owner.Display.AssertSome(out CharacterDisplay display) == false)
+            if (Owner.Display.AssertSome(out DisplayModule display) == false)
             {
                 RequestDeactivation();
                 return;
@@ -187,11 +129,11 @@ namespace Core.Combat.Scripts.Effects.Types.Grappled
             _accumulatedTime += Duration;
             if (Owner.LustModule.IsSome)
             {
-                Owner.LustModule.Value.ChangeLust(Mathf.CeilToInt(_accumulatedTime * _lustPerTime));
-                Owner.LustModule.Value.ChangeTemptation(_accumulatedTime * _temptationDeltaPerTime);
+                Owner.LustModule.Value.ChangeLust((_accumulatedTime.Seconds * _lustPerSecond).CeilToInt());
+                Owner.LustModule.Value.ChangeTemptation((_accumulatedTime.Seconds * _temptationDeltaPerSecond).CeilToInt());
             }
 
-            _accumulatedTime = 0f;
+            _accumulatedTime.Ticks = 0;
             if (_cumAnimationQueued)
             {
                 Debug.LogWarning("Cum animation already queued");
@@ -199,7 +141,7 @@ namespace Core.Combat.Scripts.Effects.Types.Grappled
                 return;
             }
             
-            if (Restrainer.Display.AssertSome(out CharacterDisplay restrainer) == false)
+            if (Restrainer.Display.AssertSome(out DisplayModule restrainer) == false)
                 return;
 
             _cumAnimationQueued = true;
@@ -209,7 +151,7 @@ namespace Core.Combat.Scripts.Effects.Types.Grappled
             combatManager.Animations.PriorityEnqueue(animationRoutineInfo);
         }
 
-        private IEnumerator CumAnimationRoutine(CharacterDisplay restrainer)
+        private IEnumerator CumAnimationRoutine(DisplayModule restrainer)
         {
             if (restrainer == null)
                 yield break;
@@ -238,15 +180,15 @@ namespace Core.Combat.Scripts.Effects.Types.Grappled
                     return;
 
                 base.RequestDeactivation();
-                Restrainer.StatusModule.UntrackRelatedStatus(this);
-                if (Owner.Display.TrySome(out CharacterDisplay casterDisplay))
+                Restrainer.StatusReceiverModule.UntrackRelatedStatus(this);
+                if (Owner.Display.TrySome(out DisplayModule casterDisplay))
                     casterDisplay.MatchAnimationWithState(Owner.StateEvaluator.PureEvaluate());
 
-                if (Restrainer.Display.TrySome(out CharacterDisplay restrainerDisplay))
+                if (Restrainer.Display.TrySome(out DisplayModule restrainerDisplay))
                     restrainerDisplay.MatchAnimationWithState(Restrainer.StateEvaluator.PureEvaluate());
             };
 
-            AnimationRoutineInfo info = restrainer.CombatManager.ActionAnimator.AnimateOverlayMist(underTheMist, Option<CharacterStateMachine>.Some(Restrainer));
+            AnimationRoutineInfo info = restrainer.CombatManager.ActionAnimator.AnimateOverlayMist(underTheMist, Utils.Patterns.Option<CharacterStateMachine>.Some(Restrainer));
             while (info.IsFinished == false)
                 yield return null;
         }
@@ -257,19 +199,19 @@ namespace Core.Combat.Scripts.Effects.Types.Grappled
                 return;
             
             base.RequestDeactivation();
-            Restrainer.StatusModule.UntrackRelatedStatus(this);
-            if (Owner.Display.TrySome(out CharacterDisplay casterDisplay))
+            Restrainer.StatusReceiverModule.UntrackRelatedStatus(this);
+            if (Owner.Display.TrySome(out DisplayModule casterDisplay))
                 casterDisplay.DeAnimateGrappled(Restrainer);
-            else if (Restrainer.Display.TrySome(out CharacterDisplay restrainerDisplay))
+            else if (Restrainer.Display.TrySome(out DisplayModule restrainerDisplay))
                 restrainerDisplay.MatchAnimationWithState(Restrainer.StateEvaluator.PureEvaluate());
         }
 
         public override void CharacterDefeated(CharacterStateMachine character, bool becomesCorpseOnDefeat)
         {
             if (character == Owner)
-            { 
-                Duration = 9999999f;
-                IsPermanent = true;
+            {
+                Duration = new TSpan(ticks: long.MaxValue / 2);
+                Permanent = true;
             }
             else if (character == Restrainer)
             {
@@ -282,20 +224,21 @@ namespace Core.Combat.Scripts.Effects.Types.Grappled
             Debug.Assert(IsDeactivated == false);
 
             base.RequestDeactivation();
-            Restrainer.StatusModule.UntrackRelatedStatus(this);
+            Restrainer.StatusReceiverModule.UntrackRelatedStatus(this);
             
             if (Owner.DownedModule.TrySome(out IDownedModule downedModule))
                 downedModule.SetInitial(IDownedModule.DefaultDownedDurationOnGrappleRelease);
             
-            if (Owner.Display.TrySome(out CharacterDisplay casterDisplay))
+            if (Owner.Display.TrySome(out DisplayModule casterDisplay))
                 casterDisplay.DeAnimateGrappledFromStunnedRestrainer(Restrainer);
-            else if (Restrainer.Display.TrySome(out CharacterDisplay restrainerDisplay))
+            else if (Restrainer.Display.TrySome(out DisplayModule restrainerDisplay))
                 restrainerDisplay.MatchAnimationWithState(Restrainer.StateEvaluator.PureEvaluate());
         }
 
-        public override StatusRecord GetRecord() => new LustGrappledRecord(Duration, IsPermanent, _lustPerTime, _temptationDeltaPerTime, _accumulatedTime, TriggerName, Restrainer.Guid);
+        [NotNull]
+        public override StatusRecord GetRecord() => new LustGrappledRecord(Duration, Permanent, _lustPerSecond, _temptationDeltaPerSecond, _accumulatedTime, TriggerName, Restrainer.Guid);
 
-        public override Option<string> GetDescription() => StatusInstanceDescriptions.Get(this);
+        public override Utils.Patterns.Option<string> GetDescription() => StatusInstanceDescriptions.Get(this);
         public override EffectType EffectType => EffectType.LustGrappled;
         public const int GlobalId = Riposte.Riposte.GlobalId + 2; // +2 because stealth was removed
     }

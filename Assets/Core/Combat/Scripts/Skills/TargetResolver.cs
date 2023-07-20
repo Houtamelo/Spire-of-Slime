@@ -1,13 +1,14 @@
-﻿using Core.Combat.Scripts.Behaviour;
+﻿using System.Collections.Generic;
+using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Effects.Types.Guarded;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Utils.Collections;
 using Core.Utils.Patterns;
 using JetBrains.Annotations;
 using ListPool;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Skills
 {
@@ -26,36 +27,31 @@ namespace Core.Combat.Scripts.Skills
             _firstTarget = firstTarget;
             _valid = true;
         }
-
-        /// <summary> Dispose the list after use. </summary>
-        [MustUseReturnValue]
-        public ValueListPool<CharacterStateMachine> GetTargetList()
+        
+        public void FillTargetList(List<CharacterStateMachine> fillMe)
         {
             if (Invalid || _caster.Display.IsNone)
             {
                 Debug.LogWarning($"Target Resolver is invalid. GameObject exists: {_caster.Display.IsSome}", _caster.Display.SomeOrDefault());
-                return new ValueListPool<CharacterStateMachine>(0);
+                return;
             }
             
             CombatManager combatManager = _caster.Display.Value.CombatManager;
             bool isCasterLeft = _caster.PositionHandler.IsLeftSide;
             if (_skill.MultiTarget == false && _firstTarget.StateEvaluator.PureEvaluate() is CharacterState.Defeated or CharacterState.Grappled)
-                return new ValueListPool<CharacterStateMachine>(0);
-
-            ValueListPool<CharacterStateMachine> targets;
+                return;
+            
             if (_skill.MultiTarget == false)
             {
-                targets = new ValueListPool<CharacterStateMachine>(1);
-                if (_skill.AllowAllies || _firstTarget.StatusModule.GetAll.FindType<Guarded>().TrySome(out Guarded guarded) == false || guarded.IsDeactivated)
-                    targets.Add(_firstTarget);
+                if (_skill.IsPositive || _firstTarget.StatusReceiverModule.GetAll.FindType<Guarded>().TrySome(out Guarded guarded) == false || guarded.IsDeactivated)
+                    fillMe.Add(_firstTarget);
                 else
-                    targets.Add(guarded.Caster);
+                    fillMe.Add(guarded.Caster);
 
-                return targets;
+                return;
             }
-
-            targets = new ValueListPool<CharacterStateMachine>(4);
-            if (_skill.AllowAllies)
+            
+            if (_skill.IsPositive)
             {
                 for (int index = 0; index < PositionSetup.Length; index++)
                 {
@@ -67,8 +63,8 @@ namespace Core.Combat.Scripts.Skills
                     if (aliveOnPos.IsNone || (_skill.TargetType == TargetType.NotSelf && aliveOnPos.Value == _caster))
                         continue;
 
-                    if (targets.Contains(aliveOnPos.Value) == false)
-                        targets.Add(aliveOnPos.Value);
+                    if (fillMe.Contains(aliveOnPos.Value) == false)
+                        fillMe.Add(aliveOnPos.Value);
                 }
             }
             else
@@ -80,23 +76,22 @@ namespace Core.Combat.Scripts.Skills
                         continue;
 
                     Option<CharacterStateMachine> aliveOnPos = combatManager.PositionManager.GetByPositioning(pos: index, isLeftSide: !isCasterLeft);
-                    if (aliveOnPos.IsSome && targets.Contains(aliveOnPos.Value) == false)
-                        targets.Add(aliveOnPos.Value);
+                    if (aliveOnPos.IsSome && fillMe.Contains(aliveOnPos.Value) == false)
+                        fillMe.Add(aliveOnPos.Value);
                 }
                 
-                for (int index = 0; index < targets.Count; index++)
+                for (int index = 0; index < fillMe.Count; index++)
                 {
-                    CharacterStateMachine character = targets[index];
-                    if (character.StatusModule.GetAll.FindType<Guarded>().TrySome(out Guarded guarded) == false || guarded.IsDeactivated)
+                    CharacterStateMachine character = fillMe[index];
+                    if (character.StatusReceiverModule.GetAll.FindType<Guarded>().TrySome(out Guarded guarded) == false || guarded.IsDeactivated)
                         continue;
                     
-                    if (targets.Contains(guarded.Caster) == false)
-                        targets[index] = guarded.Caster;
+                    if (fillMe.Contains(guarded.Caster) == false)
+                        fillMe[index] = guarded.Caster;
+                    
                     break;
                 }
             }
-            
-            return targets;
         }
     }
 }

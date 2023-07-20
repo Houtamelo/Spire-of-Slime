@@ -17,7 +17,6 @@ using UnityEngine.Audio;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Pause_Menu.Scripts
 {
@@ -436,7 +435,9 @@ namespace Core.Pause_Menu.Scripts
                 PlayerPrefs.SetString(key: PlayerPrefsReferences.Resolution.key, value: parsedResolution.Value.CompactFormat());
             }
             else
+            {
                 Debug.LogWarning(parsedResolution.Reason, _resolutionDropdown);
+            }
         }
 
         private void SetTypeWriterSound(bool active) => TypeWriterSoundHandler.SetValue(active);

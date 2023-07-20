@@ -8,18 +8,18 @@ using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Combat.Scripts.UI;
 using Core.Combat.Scripts.UI.Selected;
+using Core.Main_Characters.Ethel.Combat;
 using Core.Main_Characters.Nema.Combat;
 using Core.Utils.Handlers;
 using Core.Utils.Objects;
 using Core.Utils.Patterns;
-using Data.Main_Characters.Ethel;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Combat.Scripts.Managers
@@ -89,7 +89,7 @@ namespace Core.Combat.Scripts.Managers
                 DoSelectSkill(skillFour);
         }
 
-        public void PlayerControlledCharacterIdle(CharacterStateMachine character)
+        public void PlayerControlledCharacterIdle([NotNull] CharacterStateMachine character)
         {
             if (character.StateEvaluator.PureEvaluate() is CharacterState.Defeated or CharacterState.Corpse or CharacterState.Downed or CharacterState.Grappled or CharacterState.Grappling)
                 return;
@@ -105,7 +105,7 @@ namespace Core.Combat.Scripts.Managers
             PlayerCharacterIdle?.Invoke(character);
         }
 		
-		public void CharacterClicked(CharacterStateMachine clickedCharacter, PointerEventData pointerEventData)
+		public void CharacterClicked([CanBeNull] CharacterStateMachine clickedCharacter, PointerEventData pointerEventData)
         {
             if (animations.EvaluateState() is not QueueState.Idle || clickedCharacter == null)
                 return;
@@ -157,7 +157,7 @@ namespace Core.Combat.Scripts.Managers
             }
         }
 
-        private bool CheckIfClickedNema(CharacterStateMachine clickedCharacter)
+        private bool CheckIfClickedNema([NotNull] CharacterStateMachine clickedCharacter)
         {
             if (clickedCharacter.Script.Key != Nema.GlobalKey || combatManager.CombatSetupInfo.MistExists == false || clickedCharacter.StateEvaluator.PureEvaluate() is CharacterState.Defeated or CharacterState.Corpse)
                 return false;
@@ -178,7 +178,7 @@ namespace Core.Combat.Scripts.Managers
             {
                 if (CombatTextCueManager.AssertInstance(out CombatTextCueManager cueManager))
                 {
-                    CharacterDisplay characterGameObject = clickedCharacter.Display.Value;
+                    DisplayModule characterGameObject = clickedCharacter.Display.Value;
                     CombatCueOptions options = CombatCueOptions.Default(text: "I can't reach Nema!", color: Color.white, characterGameObject);
                     options.CanShowOnTopOfOthers = true;
                     cueManager.EnqueueAboveCharacter(ref options, characterGameObject);

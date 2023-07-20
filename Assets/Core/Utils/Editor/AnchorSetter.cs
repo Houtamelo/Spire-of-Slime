@@ -16,10 +16,10 @@ namespace Core.Utils.Editor
                 if (t == null || pt == null) return;
 
                 Rect rect = pt.rect;
-                Vector2 newAnchorsMin = new Vector2(x: t.anchorMin.x + t.offsetMin.x / rect.width,
-                    y: t.anchorMin.y + t.offsetMin.y / rect.height);
-                Vector2 newAnchorsMax = new Vector2(x: t.anchorMax.x + t.offsetMax.x / rect.width,
-                    y: t.anchorMax.y + t.offsetMax.y / rect.height);
+                Vector2 newAnchorsMin = new Vector2(x: t.anchorMin.x + (t.offsetMin.x / rect.width),
+                    y: t.anchorMin.y + (t.offsetMin.y / rect.height));
+                Vector2 newAnchorsMax = new Vector2(x: t.anchorMax.x + (t.offsetMax.x / rect.width),
+                    y: t.anchorMax.y + (t.offsetMax.y / rect.height));
 
                 t.anchorMin = newAnchorsMin;
                 t.anchorMax = newAnchorsMax;
@@ -33,10 +33,10 @@ namespace Core.Utils.Editor
                 return;
             
             Rect rect = pt.rect;
-            Vector2 newAnchorsMin = new Vector2(x: t.anchorMin.x + t.offsetMin.x / rect.width,
-                y: t.anchorMin.y + t.offsetMin.y / rect.height);
-            Vector2 newAnchorsMax = new Vector2(x: t.anchorMax.x + t.offsetMax.x / rect.width,
-                y: t.anchorMax.y + t.offsetMax.y / rect.height);
+            Vector2 newAnchorsMin = new Vector2(x: t.anchorMin.x + (t.offsetMin.x / rect.width),
+                y: t.anchorMin.y + (t.offsetMin.y / rect.height));
+            Vector2 newAnchorsMax = new Vector2(x: t.anchorMax.x + (t.offsetMax.x / rect.width),
+                y: t.anchorMax.y + (t.offsetMax.y / rect.height));
 
             t.anchorMin = newAnchorsMin;
             t.anchorMax = newAnchorsMax;

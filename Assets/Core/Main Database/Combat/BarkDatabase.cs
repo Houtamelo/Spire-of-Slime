@@ -2,11 +2,12 @@
 using System.Linq;
 using Core.Combat.Scripts.Barks;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
-using Utils.Patterns;
 
 namespace Core.Main_Database.Combat
 {
@@ -26,7 +27,7 @@ namespace Core.Main_Database.Combat
         }
 
 #if UNITY_EDITOR        
-        public void AssignData(Dictionary<(string, BarkType), List<string>> barkDictionary)
+        public void AssignData([NotNull] Dictionary<(string, BarkType), List<string>> barkDictionary)
         {
             _barks = barkDictionary.ToDictionary(e => ((CleanString)e.Key.Item1, e.Key.Item2), e => e.Value.ToArray());
             UnityEditor.EditorUtility.SetDirty(this);

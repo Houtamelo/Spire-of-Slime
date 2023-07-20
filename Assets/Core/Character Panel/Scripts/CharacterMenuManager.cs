@@ -3,19 +3,19 @@ using Core.Character_Panel.Scripts.Perks;
 using Core.Character_Panel.Scripts.Positioning;
 using Core.Character_Panel.Scripts.Skills;
 using Core.Character_Panel.Scripts.Stats;
+using Core.Main_Characters.Ethel.Combat;
 using Core.Main_Characters.Nema.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
 using Core.Utils.Handlers;
 using Core.Utils.Patterns;
-using Data.Main_Characters.Ethel;
 using DG.Tweening;
 using DG.Tweening.Plugins.Core.PathCore;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Character_Panel.Scripts
@@ -151,7 +151,7 @@ namespace Core.Character_Panel.Scripts
                 SelectedCharacter.AddValue(nemaStats, checkIfDefault: true);
         }
 
-        private void OnSaveChanged(Save save)
+        private void OnSaveChanged([CanBeNull] Save save)
         {
             if (save == null)
                 SelectedCharacter.ClearValue();
@@ -159,7 +159,7 @@ namespace Core.Character_Panel.Scripts
                 SelectFirst(save);
         }
 
-        private void SelectFirst(Save save)
+        private void SelectFirst([NotNull] Save save)
         {
             ReadOnlySpan<IReadonlyCharacterStats> allStats = save.GetAllReadOnlyCharacterStats();
             foreach (IReadonlyCharacterStats stats in allStats)
@@ -168,7 +168,7 @@ namespace Core.Character_Panel.Scripts
                 {
                     if (_previousEthelToggleState == false)
                     {
-                        AnimateToggle(true, ref _ethelToggleSequence, _ethelToggleRect, ethelPortrait);
+                        AnimateToggle(value: true, ref _ethelToggleSequence, _ethelToggleRect, ethelPortrait);
                         _previousEthelToggleState = true;
                     }
 
@@ -180,7 +180,7 @@ namespace Core.Character_Panel.Scripts
                 {
                     if (_previousNemaToggleState == false)
                     {
-                        AnimateToggle(true, ref _nemaToggleSequence, _nemaToggleRect, nemaPortrait);
+                        AnimateToggle(value: true, ref _nemaToggleSequence, _nemaToggleRect, nemaPortrait);
                         _previousNemaToggleState = true;
                     }
 
@@ -207,10 +207,8 @@ namespace Core.Character_Panel.Scripts
             }
 
             if (SelectedCharacter.IsNone)
-            {
                 SelectFirst(save);
-            }
-            
+
             _menuPanel.gameObject.SetActive(true);
             _timeScaleBeforeOpening = Option<float>.Some(Time.timeScale);
             Time.timeScale = 0f;

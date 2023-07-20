@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using Core.Utils.Async;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Core.Visual_Novel.Scripts
@@ -19,6 +20,7 @@ namespace Core.Visual_Novel.Scripts
             _coroutine = coroutine;
         }
 
+        [NotNull]
         public static YarnRoutineWrapper FromEnumerator(IEnumerator enumerator, Action onFinish)
         {
             CoroutineWrapper coroutine = new(enumerator, "anonymous", context: null, autoStart: true);

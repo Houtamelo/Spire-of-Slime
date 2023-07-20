@@ -1,4 +1,5 @@
-﻿using Core.Combat.Scripts.Interfaces.Modules;
+﻿using Core.Combat.Scripts.Behaviour.Modules;
+using JetBrains.Annotations;
 
 namespace Core.Combat.Scripts.Behaviour
 {
@@ -8,7 +9,7 @@ namespace Core.Combat.Scripts.Behaviour
         private readonly IChargeModule _chargeModule;
         private readonly IRecoveryModule _recoveryModule;
         private readonly IStunModule _stunModule;
-        private readonly IStatusModule _statusModule;
+        private readonly IStatusReceiverModule _statusModule;
         private readonly ISkillModule _skillModule;
         private readonly IPositionHandler _positionHandler;
         private readonly IStateEvaluator _stateEvaluator;
@@ -22,13 +23,13 @@ namespace Core.Combat.Scripts.Behaviour
         private readonly Utils.Patterns.Option<ILustModule> _lustModule;
         private int _index;
         
-        public ModulesEnumerator(CharacterStateMachine source)
+        public ModulesEnumerator([NotNull] CharacterStateMachine source)
         {
             _aiModule = source.AIModule;
             _chargeModule = source.ChargeModule;
             _recoveryModule = source.RecoveryModule;
             _stunModule = source.StunModule;
-            _statusModule = source.StatusModule;
+            _statusModule = source.StatusReceiverModule;
             _skillModule = source.SkillModule;
             _positionHandler = source.PositionHandler;
             _stateEvaluator = source.StateEvaluator;

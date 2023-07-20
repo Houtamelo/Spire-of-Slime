@@ -1,34 +1,36 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills.Action;
+using Core.Localization.Scripts;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
 using DG.Tweening;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Skills.Interfaces
 {
     public interface ISkill
     {
         CleanString Key { get; }
-        string DisplayName { get; }
-        string FlavorText { get; }
+        LocalizedText DisplayName { get; }
+        LocalizedText FlavorText { get; }
 
-        float BaseCharge { get; }
-        float BaseRecovery { get; }
+        TSpan Charge { get; }
+        TSpan Recovery { get; }
         
-        Option<float> BaseAccuracy { get; }
-        Option<float> BaseDamageMultiplier { get; }
-        Option<float> BaseCriticalChance { get; }
-        Option<float> BaseResiliencePiercing { get; }
+        Option<int> Accuracy { get; }
+        Option<int> Power { get; }
+        Option<int> CriticalChance { get; }
+        Option<int> ResilienceReduction { get; }
         
         PositionSetup CastingPositions { get; }
         PositionSetup TargetPositions { get; }
         
         bool MultiTarget { get; }
-        bool AllowAllies { get; }
+        bool IsPositive { get; }
         
         Sprite IconBackground { get; }
         Sprite IconBaseSprite { get; }
@@ -43,14 +45,14 @@ namespace Core.Combat.Scripts.Skills.Interfaces
         float TargetMovement { get; }
         AnimationCurve TargetAnimationCurve { get; }
 
-        IReadOnlyList<IBaseStatusScript> CasterEffects { get; }
-        IReadOnlyList<IBaseStatusScript> TargetEffects { get; }
+        ReadOnlySpan<IBaseStatusScript> CasterEffects { get; }
+        ReadOnlySpan<IBaseStatusScript> TargetEffects { get; }
         
-        IReadOnlyList<ICustomSkillStat> CustomStats { get; }
+        ReadOnlySpan<ICustomSkillStat> CustomStats { get; }
         TargetType TargetType { get; }
         
         /// <summary> Per combat, if option is none then max use is unlimited. </summary>
-        Option<uint> GetMaxUseCount { get; }
+        Option<int> GetMaxUseCount { get; }
 
         ReadOnlyPaddingSettings GetPaddingSettings();
         

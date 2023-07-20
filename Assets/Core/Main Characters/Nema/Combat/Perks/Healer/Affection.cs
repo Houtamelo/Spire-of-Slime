@@ -2,23 +2,25 @@
 using System.Text;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Effects.Types.Heal;
 using Core.Combat.Scripts.Effects.Types.OvertimeHeal;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
 using Core.Utils.Math;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Nema.Combat.Perks.Healer
 {
     public class Affection : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             AffectionInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -39,7 +41,8 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Healer
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             AffectionInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -49,17 +52,14 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Healer
     
     public class AffectionInstance : PerkInstance, IHealModifier, IOvertimeHealModifier
     {
-        public string SharedId => nameof(AffectionInstance);
-        public int Priority => 5;
-        
-        private const float HealPowerMultiplier = 1.4f;
-        private const float OvertimeHealPowerMultiplier = 1.25f;
+        private const int HealPowerMultiplier = 140;
+        private const int OvertimeHealPowerMultiplier = 125;
 
         public AffectionInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public AffectionInstance(CharacterStateMachine owner, AffectionRecord record) : base(owner, record)
+
+        public AffectionInstance(CharacterStateMachine owner, [NotNull] AffectionRecord record) : base(owner, record)
         {
         }
 
@@ -77,30 +77,34 @@ namespace Core.Main_Characters.Nema.Combat.Perks.Healer
             applierModule.OvertimeHealApplyModifiers.Remove(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new AffectionRecord(Key);
 
-        public void Modify(ref HealToApply effectStruct)
+        public void Modify([NotNull] ref HealToApply effectStruct)
         {
-            foreach (StatusInstance status in effectStruct.Target.StatusModule.GetAll)
+            foreach (StatusInstance status in effectStruct.Target.StatusReceiverModule.GetAll)
             {
                 if (status.EffectType is EffectType.Debuff or EffectType.Poison && status.IsActive)
                 {
-                    effectStruct.Power *= HealPowerMultiplier;
+                    effectStruct.Power = (effectStruct.Power * HealPowerMultiplier) / 100;
                     return;
                 }
             }
         }
 
-        public void Modify(ref OvertimeHealToApply effectStruct)
+        public void Modify([NotNull] ref OvertimeHealToApply effectStruct)
         {
-            foreach (StatusInstance status in effectStruct.Target.StatusModule.GetAll)
+            foreach (StatusInstance status in effectStruct.Target.StatusReceiverModule.GetAll)
             {
                 if (status.EffectType is EffectType.Debuff or EffectType.Poison && status.IsActive)
                 {
-                    effectStruct.HealPerTime = (OvertimeHealPowerMultiplier * effectStruct.HealPerTime).CeilToUInt();
+                    effectStruct.HealPerSecond = (OvertimeHealPowerMultiplier * effectStruct.HealPerSecond) / 100;
                     return;
                 }
             }
         }
+
+        [NotNull] public string SharedId => nameof(AffectionInstance);
+        public int Priority => 5;
     }
 }

@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using Core.Combat.Scripts.Skills;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Main_Database.Combat
 {
@@ -19,10 +18,10 @@ namespace Core.Main_Database.Combat
         
         private readonly Dictionary<CleanString, SkillScriptable> _mappedSkills = new();
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         public static Option<SkillScriptable> GetSkill(CleanString skillKey) => Instance.SkillDatabase._mappedSkills.TryGetValue(skillKey, out SkillScriptable skill) ? Option<SkillScriptable>.Some(skill) : Option.None;
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         public static bool ContainsSkill(CleanString scriptKey) => Instance.SkillDatabase._mappedSkills.ContainsKey(scriptKey);
 
         public void Initialize()
@@ -34,7 +33,7 @@ namespace Core.Main_Database.Combat
         }
         
 #if UNITY_EDITOR        
-        public void AssignData(IEnumerable<SkillScriptable> skills)
+        public void AssignData([NotNull] IEnumerable<SkillScriptable> skills)
         {
             allSkills = skills.ToArray();
             UnityEditor.EditorUtility.SetDirty(this);

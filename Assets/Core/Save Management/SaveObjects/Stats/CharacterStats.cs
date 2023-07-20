@@ -4,16 +4,17 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using Core.Combat.Scripts;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Interfaces;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Main_Database.Combat;
+using Core.Utils.Collections;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.Utils.Math;
 using Core.Utils.Patterns;
 using JetBrains.Annotations;
 using ListPool;
 using UnityEngine;
-using Utils.Patterns;
 using Random = System.Random;
 
 namespace Core.Save_Management.SaveObjects
@@ -23,53 +24,53 @@ namespace Core.Save_Management.SaveObjects
     {
         [DataMember] public CleanString Key { get; init; }
         [DataMember] public Random Randomizer { get; init; }
-        [DataMember] public float Experience { get; set; }
+        [DataMember] public int TotalExperience { get; set; }
 
         [DataMember] public SkillSet SkillSet { get; set; }
         public IReadOnlySkillSet GetSkillSet() => SkillSet;
 
-        [DataMember] public uint DamageLower { get; set; }
-        [DataMember] public uint DamageUpper { get; set; }
+        [DataMember] public int DamageLower { get; set; }
+        [DataMember] public int DamageUpper { get; set; }
 
-        [DataMember] public uint Stamina { get; set; }
-        [DataMember] public float Resilience { get; set; }
+        [DataMember] public int Stamina { get; set; }
+        [DataMember] public int Resilience { get; set; }
         
-        [DataMember] public uint Lust { get; set; }
-        [DataMember] public ClampedPercentage Temptation { get; set; }
-        [DataMember] public uint OrgasmLimit { get; set; }
-        [DataMember] public uint OrgasmCount { get; set; }
-        [DataMember] public float Composure { get; set; }
-        [DataMember] public ClampedPercentage Corruption { get; set; }
+        [DataMember] public int Lust { get; set; }
+        [DataMember] public int Temptation { get; set; }
+        [DataMember] public int OrgasmLimit { get; set; }
+        [DataMember] public int OrgasmCount { get; set; }
+        [DataMember] public int Composure { get; set; }
+        [DataMember] public int Corruption { get; set; }
 
-        [DataMember] public float PoisonResistance { get; set; }
-        [DataMember] public float PoisonApplyChance { get; set; }
+        [DataMember] public int PoisonResistance { get; set; }
+        [DataMember] public int PoisonApplyChance { get; set; }
 
-        [DataMember] public float DebuffResistance { get; set; }
-        [DataMember] public float DebuffApplyChance { get; set; }
+        [DataMember] public int DebuffResistance { get; set; }
+        [DataMember] public int DebuffApplyChance { get; set; }
 
-        [DataMember] public float MoveResistance { get; set; }
-        [DataMember] public float MoveApplyChance { get; set; }
+        [DataMember] public int MoveResistance { get; set; }
+        [DataMember] public int MoveApplyChance { get; set; }
 
-        [DataMember] public float StunRecoverySpeed { get; set; }
+        [DataMember] public int StunMitigation { get; set; }
         
-        [DataMember] public float Speed { get; set; }
-        [DataMember] public float Accuracy { get; set; }
-        [DataMember] public float CriticalChance { get; set; }
-        [DataMember] public float Dodge { get; set; }
+        [DataMember] public int Speed { get; set; }
+        [DataMember] public int Accuracy { get; set; }
+        [DataMember] public int CriticalChance { get; set; }
+        [DataMember] public int Dodge { get; set; }
 
-        [DataMember] public Dictionary<PrimaryUpgrade, uint> PrimaryUpgrades { get; init; }
-        [DataMember] public Dictionary<SecondaryUpgrade, uint> SecondaryUpgrades { get; init; }
+        [DataMember] public Dictionary<PrimaryUpgrade, int> PrimaryUpgrades { get; init; }
+        [DataMember] public Dictionary<SecondaryUpgrade, int> SecondaryUpgrades { get; init; }
 
-        [DataMember] public uint AvailablePerkPoints { get; set; }
-        [DataMember] public uint AvailablePrimaryPoints { get; set; }
-        [DataMember] public uint AvailableSecondaryPoints { get; set; }
+        [DataMember] public int AvailablePerkPoints { get; set; }
+        [DataMember] public int AvailablePrimaryPoints { get; set; }
+        [DataMember] public int AvailableSecondaryPoints { get; set; }
 
-        [DataMember] public Dictionary<uint, List<PrimaryUpgrade>> PrimaryUpgradeOptions { get; init; }
-        [DataMember] public Dictionary<uint, List<SecondaryUpgrade>> SecondaryUpgradeOptions { get; init; }
+        [DataMember] public Dictionary<int, PrimaryUpgrade[]> PrimaryUpgradeOptions { get; init; }
+        [DataMember] public Dictionary<int, SecondaryUpgrade[]> SecondaryUpgradeOptions { get; init; }
         
-        [DataMember] public Dictionary<Race, uint> SexualExpByRace { get; init; }
+        [DataMember] public Dictionary<Race, int> SexualExpByRace { get; init; }
         
-        public uint Level => (Experience / ExperienceCalculator.ExperienceNeededForLevelUp).FloorToUInt();
+        public int Level => (TotalExperience / ExperienceCalculator.ExperienceNeededForLevelUp);
         
         private Option<ICharacterScript> _cachedScript = Option<ICharacterScript>.None;
 
@@ -90,49 +91,55 @@ namespace Core.Save_Management.SaveObjects
         }
 
         [MustUseReturnValue]
-        public ValueListPool<CleanString> GetUnlockedPerksAndSkills(Core.Save_Management.SaveObjects.Save save)
+        public CustomValuePooledList<CleanString> GetUnlockedPerksAndSkills([NotNull] Save save)
         {
-            ValueListPool<CleanString> list = new(32);
+            CustomValuePooledList<CleanString> list = new(capacity: 32);
             CleanString perkPrefix = VariablesName.PerkPrefix(Key);
             CleanString skillPrefix = VariablesName.SkillPrefix(Key);
             
             foreach ((CleanString key, bool value) in save.Booleans)
+            {
                 if (value == true && (key.StartsWith(ref perkPrefix) || key.StartsWith(ref skillPrefix)))
                     list.Add(key);
-            
+            }
+
             return list;
         }
 
         [MustUseReturnValue]
-        public ValueListPool<CleanString> GetUnlockedPerks(Core.Save_Management.SaveObjects.Save save)
+        public CustomValuePooledList<CleanString> GetUnlockedPerks([NotNull] Save save)
         {
-            ValueListPool<CleanString> list = new(32);
+            CustomValuePooledList<CleanString> list = new(capacity: 32);
             CleanString perkPrefix = VariablesName.PerkPrefix(Key);
             
             foreach ((CleanString key, bool value) in save.Booleans)
+            {
                 if (value == true && key.StartsWith(ref perkPrefix))
                     list.Add(key);
-            
+            }
+
             return list;
         }
         
         [MustUseReturnValue]
-        public ValueListPool<CleanString> GetUnlockedSkills(Core.Save_Management.SaveObjects.Save save)
+        public CustomValuePooledList<CleanString> GetUnlockedSkills([NotNull] Save save)
         {
-            ValueListPool<CleanString> list = new(32);
+            CustomValuePooledList<CleanString> list = new(capacity: 32);
             CleanString skillPrefix = VariablesName.SkillPrefix(Key);
             
             foreach ((CleanString key, bool value) in save.Booleans)
+            {
                 if (value == true && key.StartsWith(ref skillPrefix))
                     list.Add(key);
-            
+            }
+
             return list;
         }
 
         [MustUseReturnValue]
-        public ValueListPool<CleanString> GetEnabledPerks(Core.Save_Management.SaveObjects.Save save)
+        public CustomValuePooledList<CleanString> GetEnabledPerks([NotNull] Save save)
         {
-            ValueListPool<CleanString> list = new(32);
+            CustomValuePooledList<CleanString> list = new(capacity: 32);
             foreach (CleanString perkKey in GetUnlockedPerks(save))
             {
                 CleanString activePerk = VariablesName.EnabledPerkName(characterKey: Key, perkKey);
@@ -143,181 +150,189 @@ namespace Core.Save_Management.SaveObjects
             return list;
         }
 
-        public bool IsPerkUnlocked(CleanString key, Core.Save_Management.SaveObjects.Save save)
+        public bool IsPerkUnlocked(CleanString key, [NotNull] Save save)
         {
             foreach (CleanString perk in GetUnlockedPerks(save))
+            {
                 if (perk == key)
                     return true;
+            }
 
             return false;
         }
         
-        public bool IsSkillUnlocked(CleanString key, Core.Save_Management.SaveObjects.Save save)
+        public bool IsSkillUnlocked(CleanString key, [NotNull] Save save)
         {
             foreach (CleanString skill in GetUnlockedSkills(save))
+            {
                 if (skill == key)
                     return true;
+            }
 
             return false;
         }
 
-        public uint GetUsedPrimaryPoints()
+        public int GetUsedPrimaryPoints()
         {
-            uint usedPoints = 0;
-            foreach (uint upgradeCount in PrimaryUpgrades.Values)
+            int usedPoints = 0;
+            foreach (int upgradeCount in PrimaryUpgrades.Values)
                 usedPoints += upgradeCount;
 
             return usedPoints;
         }
 
-        public uint GetUsedSecondaryPoints()
+        public int GetUsedSecondaryPoints()
         {
-            uint usedPoints = 0;
-            foreach (uint upgradeCount in SecondaryUpgrades.Values)
+            int usedPoints = 0;
+            foreach (int upgradeCount in SecondaryUpgrades.Values)
                 usedPoints += upgradeCount;
 
             return usedPoints;
         }
 
-        public void SetValue(GeneralStat stat, float newValue)
+        public void SetValue(GeneralStat stat, int newValue)
         {
+            
             switch (stat)
             {
-                case GeneralStat.DamageLower:       (DamageLower, DamageUpper) = IStatsModule.ClampRoundedDamage(newValue.FloorToUInt(), DamageUpper); break;
-                case GeneralStat.DamageUpper:       (DamageLower, DamageUpper) = IStatsModule.ClampRoundedDamage(DamageLower,            newValue.FloorToUInt()); break;
-                case GeneralStat.Stamina:           Stamina = newValue.FloorToUInt(); break;
-                case GeneralStat.Lust:              Lust = ILustModule.ClampLust(newValue.FloorToUInt()); break;
-                case GeneralStat.OrgasmLimit:       OrgasmLimit = newValue.FloorToUInt(); break;
-                case GeneralStat.OrgasmCount:       OrgasmCount = ILustModule.ClampOrgasmCount(newValue.FloorToUInt(), OrgasmLimit); break;
-                case GeneralStat.Composure:         Composure = newValue; break;
-                case GeneralStat.Speed:             Speed = newValue; break;
-                case GeneralStat.Accuracy:          Accuracy = newValue; break;
-                case GeneralStat.CriticalChance:    CriticalChance = newValue; break;
-                case GeneralStat.Dodge:             Dodge = newValue; break;
-                case GeneralStat.Resilience:        Resilience = newValue; break;
-                case GeneralStat.PoisonResistance:  PoisonResistance = newValue; break;
-                case GeneralStat.PoisonApplyChance: PoisonApplyChance = newValue; break;
-                case GeneralStat.DebuffResistance:  DebuffResistance = newValue; break;
-                case GeneralStat.DebuffApplyChance: DebuffApplyChance = newValue; break;
-                case GeneralStat.MoveResistance:    MoveResistance = newValue; break;
-                case GeneralStat.MoveApplyChance:   MoveApplyChance = newValue; break;
-                case GeneralStat.StunRecoverySpeed: StunRecoverySpeed = newValue; break;
-                case GeneralStat.Temptation:        Temptation = newValue; break;
-                case GeneralStat.Corruption:        Corruption = newValue; break;
-                default:                            throw new ArgumentOutOfRangeException(nameof(stat), stat, null);
+                case GeneralStat.Stamina:           Stamina    = IStaminaModule.ClampMaxStamina(newValue); break;
+                case GeneralStat.Resilience:        Resilience = IStaminaModule.ClampResilience(newValue); break;
+                case GeneralStat.StunMitigation:    StunMitigation = IStunModule.ClampStunMitigation(newValue); break;
+                case GeneralStat.Lust:              Lust        = ILustModule.ClampLust(newValue);                     break;
+                case GeneralStat.OrgasmLimit:       OrgasmLimit = ILustModule.ClampOrgasmLimit(newValue);              break;
+                case GeneralStat.OrgasmCount:       OrgasmCount = ILustModule.ClampOrgasmCount(newValue, OrgasmLimit); break;
+                case GeneralStat.Composure:         Composure   = ILustModule.ClampComposure(newValue);                break;
+                case GeneralStat.Temptation:        Temptation  = ILustModule.ClampTemptation(newValue);               break;
+                case GeneralStat.Corruption:        Corruption  = ILustModule.ClampCorruption(newValue);               break;
+                case GeneralStat.PoisonResistance:  PoisonResistance = IResistancesModule.ClampResistance(newValue); break;
+                case GeneralStat.DebuffResistance:  DebuffResistance = IResistancesModule.ClampResistance(newValue); break;
+                case GeneralStat.MoveResistance:    MoveResistance   = IResistancesModule.ClampResistance(newValue); break;
+                case GeneralStat.PoisonApplyChance: PoisonApplyChance = IStatusApplierModule.ClampPoisonApplyChance(newValue); break;
+                case GeneralStat.DebuffApplyChance: DebuffApplyChance = IStatusApplierModule.ClampDebuffApplyChance(newValue); break;
+                case GeneralStat.MoveApplyChance:   MoveApplyChance   = IStatusApplierModule.ClampMoveApplyChance(newValue);   break;
+                case GeneralStat.DamageLower:       (DamageLower, DamageUpper) = IStatsModule.ClampRawDamage(newValue, DamageUpper); break;
+                case GeneralStat.DamageUpper:       (DamageLower, DamageUpper) = IStatsModule.ClampRawDamage(DamageLower, newValue); break;
+                case GeneralStat.Speed:             Speed                      = IStatsModule.ClampSpeed(newValue);                       break;
+                case GeneralStat.Accuracy:          Accuracy                   = IStatsModule.ClampAccuracy(newValue);                    break;
+                case GeneralStat.CriticalChance:    CriticalChance             = IStatsModule.ClampCriticalChance(newValue);              break;
+                case GeneralStat.Dodge:             Dodge                      = IStatsModule.ClampDodge(newValue);                       break;
+                default: throw new ArgumentOutOfRangeException(nameof(stat), stat, message: null);
             }
         }
 
-        public float GetValue(PrimaryUpgrade upgrade) => upgrade switch
+        public int GetValue(PrimaryUpgrade upgrade) => upgrade switch
         {
-            PrimaryUpgrade.Accuracy   => Accuracy + UpgradeHelper.GetUpgradeFull(PrimaryUpgrades[PrimaryUpgrade.Accuracy],       PrimaryUpgrade.Accuracy),
-            PrimaryUpgrade.Dodge      => Dodge + UpgradeHelper.GetUpgradeFull(PrimaryUpgrades[PrimaryUpgrade.Dodge],             PrimaryUpgrade.Dodge),
-            PrimaryUpgrade.Critical   => CriticalChance + UpgradeHelper.GetUpgradeFull(PrimaryUpgrades[PrimaryUpgrade.Critical], PrimaryUpgrade.Critical),
-            PrimaryUpgrade.Resilience => Resilience + UpgradeHelper.GetUpgradeFull(PrimaryUpgrades[PrimaryUpgrade.Resilience],   PrimaryUpgrade.Resilience),
-            _                         => throw new ArgumentException($"Invalid primary upgrade: {upgrade}")
+            PrimaryUpgrade.Accuracy   => IStatsModule.ClampAccuracy            (Accuracy + UpgradeHelper.GetUpgradeFull(PrimaryUpgrades[PrimaryUpgrade.Accuracy],   PrimaryUpgrade.Accuracy)),
+            PrimaryUpgrade.Dodge      => IStatsModule.ClampDodge                  (Dodge + UpgradeHelper.GetUpgradeFull(PrimaryUpgrades[PrimaryUpgrade.Dodge],      PrimaryUpgrade.Dodge)),
+            PrimaryUpgrade.Critical   => IStatsModule.ClampCriticalChance(CriticalChance + UpgradeHelper.GetUpgradeFull(PrimaryUpgrades[PrimaryUpgrade.Critical],   PrimaryUpgrade.Critical)),
+            PrimaryUpgrade.Resilience => IStaminaModule.ClampResilience      (Resilience + UpgradeHelper.GetUpgradeFull(PrimaryUpgrades[PrimaryUpgrade.Resilience], PrimaryUpgrade.Resilience)),
+            _ => throw new ArgumentOutOfRangeException(nameof(upgrade), upgrade, message: null)
         };
 
-        public float GetValue(SecondaryUpgrade upgrade) => upgrade switch
+        public int GetValue(SecondaryUpgrade upgrade) => upgrade switch
         {
-            SecondaryUpgrade.PoisonResistance  => PoisonResistance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.PoisonResistance],   SecondaryUpgrade.PoisonResistance),
-            SecondaryUpgrade.DebuffResistance  => DebuffResistance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.DebuffResistance],   SecondaryUpgrade.DebuffResistance),
-            SecondaryUpgrade.MoveResistance    => MoveResistance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.MoveResistance],       SecondaryUpgrade.MoveResistance),
-            SecondaryUpgrade.StunRecoverySpeed => StunRecoverySpeed + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.StunRecoverySpeed], SecondaryUpgrade.StunRecoverySpeed),
-            SecondaryUpgrade.Composure         => Composure + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.Composure],                 SecondaryUpgrade.Composure),
-            SecondaryUpgrade.PoisonApplyChance => PoisonApplyChance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.PoisonApplyChance], SecondaryUpgrade.PoisonApplyChance),
-            SecondaryUpgrade.DebuffApplyChance => DebuffApplyChance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.DebuffApplyChance], SecondaryUpgrade.DebuffApplyChance),
-            SecondaryUpgrade.MoveApplyChance   => MoveApplyChance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.MoveApplyChance],     SecondaryUpgrade.MoveApplyChance),
-            _                                  => throw new ArgumentException($"Invalid secondary upgrade: {upgrade}")
+            SecondaryUpgrade.PoisonResistance  => IResistancesModule.ClampResistance          (PoisonResistance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.PoisonResistance],  SecondaryUpgrade.PoisonResistance)),
+            SecondaryUpgrade.DebuffResistance  => IResistancesModule.ClampResistance          (DebuffResistance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.DebuffResistance],  SecondaryUpgrade.DebuffResistance)),
+            SecondaryUpgrade.MoveResistance    => IResistancesModule.ClampResistance            (MoveResistance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.MoveResistance],    SecondaryUpgrade.MoveResistance)),
+            SecondaryUpgrade.StunMitigation    => IStunModule.ClampStunMitigation               (StunMitigation + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.StunMitigation],    SecondaryUpgrade.StunMitigation)),
+            SecondaryUpgrade.Composure         => ILustModule.ClampComposure                         (Composure + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.Composure],         SecondaryUpgrade.Composure)),
+            SecondaryUpgrade.PoisonApplyChance => IStatusApplierModule.ClampPoisonApplyChance(PoisonApplyChance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.PoisonApplyChance], SecondaryUpgrade.PoisonApplyChance)),
+            SecondaryUpgrade.DebuffApplyChance => IStatusApplierModule.ClampDebuffApplyChance(DebuffApplyChance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.DebuffApplyChance], SecondaryUpgrade.DebuffApplyChance)),
+            SecondaryUpgrade.MoveApplyChance   => IStatusApplierModule.ClampMoveApplyChance    (MoveApplyChance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.MoveApplyChance],   SecondaryUpgrade.MoveApplyChance)),
+            _ => throw new ArgumentOutOfRangeException(nameof(upgrade), upgrade, message: null)
         };
 
-        public float GetValue(GeneralStat stat)
+        public int GetValue(GeneralStat stat)
         {
             return stat switch
             {
-                GeneralStat.Experience         => Experience,
-                GeneralStat.Speed              => Speed,
-                GeneralStat.Stamina            => Stamina,
-                GeneralStat.Resilience         => Resilience + UpgradeHelper.GetUpgradeFull(PrimaryUpgrades[PrimaryUpgrade.Resilience], PrimaryUpgrade.Resilience),
-                GeneralStat.DamageLower        => DamageLower,
-                GeneralStat.DamageUpper        => DamageUpper,
-                GeneralStat.Lust               => Lust,
-                GeneralStat.Temptation         => Temptation,
-                GeneralStat.Corruption         => Corruption,
-                GeneralStat.Composure          => Composure + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.Composure], SecondaryUpgrade.Composure),
-                GeneralStat.OrgasmLimit        => OrgasmLimit,
-                GeneralStat.OrgasmCount        => OrgasmCount,
-                GeneralStat.Accuracy           => Accuracy + UpgradeHelper.GetUpgradeFull(PrimaryUpgrades[PrimaryUpgrade.Accuracy],                       PrimaryUpgrade.Accuracy),
-                GeneralStat.CriticalChance     => CriticalChance + UpgradeHelper.GetUpgradeFull(PrimaryUpgrades[PrimaryUpgrade.Critical],                 PrimaryUpgrade.Critical),
-                GeneralStat.Dodge              => Dodge + UpgradeHelper.GetUpgradeFull(PrimaryUpgrades[PrimaryUpgrade.Dodge],                             PrimaryUpgrade.Dodge),
-                GeneralStat.StunRecoverySpeed  => StunRecoverySpeed + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.StunRecoverySpeed], SecondaryUpgrade.StunRecoverySpeed),
-                GeneralStat.PoisonResistance   => PoisonResistance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.PoisonResistance],   SecondaryUpgrade.PoisonResistance),
-                GeneralStat.PoisonApplyChance  => PoisonApplyChance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.PoisonApplyChance], SecondaryUpgrade.PoisonApplyChance),
-                GeneralStat.DebuffResistance   => DebuffResistance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.DebuffResistance],   SecondaryUpgrade.DebuffResistance),
-                GeneralStat.DebuffApplyChance  => DebuffApplyChance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.DebuffApplyChance], SecondaryUpgrade.DebuffApplyChance),
-                GeneralStat.MoveResistance     => MoveResistance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.MoveResistance],       SecondaryUpgrade.MoveResistance),
-                GeneralStat.MoveApplyChance    => MoveApplyChance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.MoveApplyChance],     SecondaryUpgrade.MoveApplyChance),
+                GeneralStat.Experience         => TotalExperience,
                 GeneralStat.PrimaryPoints      => AvailablePrimaryPoints,
                 GeneralStat.SecondaryPoints    => AvailableSecondaryPoints,
                 GeneralStat.PerkPoints         => AvailablePerkPoints,
-                GeneralStat.ArousalApplyChance => 0f,
+                GeneralStat.Speed              => IStatsModule.ClampSpeed(Speed),
+                GeneralStat.Stamina            => IStaminaModule.ClampMaxStamina(Stamina),
+                GeneralStat.DamageLower        => IStatsModule.ClampRawDamage(DamageLower, DamageUpper).lower,
+                GeneralStat.DamageUpper        => IStatsModule.ClampRawDamage(DamageLower, DamageUpper).upper,
+                GeneralStat.Lust               => ILustModule.ClampLust(Lust),
+                GeneralStat.Temptation         => ILustModule.ClampTemptation(Temptation),
+                GeneralStat.Corruption         => ILustModule.ClampCorruption(Corruption),
+                GeneralStat.OrgasmLimit        => ILustModule.ClampOrgasmLimit(OrgasmLimit),
+                GeneralStat.OrgasmCount        => ILustModule.ClampOrgasmCount(OrgasmCount, OrgasmLimit),
+                GeneralStat.Resilience         => IStaminaModule.ClampResilience             (Resilience        + UpgradeHelper.GetUpgradeFull(PrimaryUpgrades[PrimaryUpgrade.Resilience], PrimaryUpgrade.Resilience)),
+                GeneralStat.Accuracy           => IStatsModule.ClampAccuracy                 (Accuracy          + UpgradeHelper.GetUpgradeFull(PrimaryUpgrades[PrimaryUpgrade.Accuracy],   PrimaryUpgrade.Accuracy)),
+                GeneralStat.CriticalChance     => IStatsModule.ClampCriticalChance           (CriticalChance    + UpgradeHelper.GetUpgradeFull(PrimaryUpgrades[PrimaryUpgrade.Critical],   PrimaryUpgrade.Critical)),
+                GeneralStat.Dodge              => IStatsModule.ClampDodge                    (Dodge             + UpgradeHelper.GetUpgradeFull(PrimaryUpgrades[PrimaryUpgrade.Dodge],      PrimaryUpgrade.Dodge)),
+                GeneralStat.StunMitigation     => IStunModule.ClampStunMitigation            (StunMitigation    + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.StunMitigation],    SecondaryUpgrade.StunMitigation)),
+                GeneralStat.Composure          => ILustModule.ClampComposure                 (Composure         + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.Composure],         SecondaryUpgrade.Composure)),
+                GeneralStat.PoisonResistance   => IResistancesModule.ClampResistance         (PoisonResistance  + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.PoisonResistance],  SecondaryUpgrade.PoisonResistance)),
+                GeneralStat.DebuffResistance   => IResistancesModule.ClampResistance         (DebuffResistance  + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.DebuffResistance],  SecondaryUpgrade.DebuffResistance)),
+                GeneralStat.MoveResistance     => IResistancesModule.ClampResistance         (MoveResistance    + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.MoveResistance],    SecondaryUpgrade.MoveResistance)),
+                GeneralStat.PoisonApplyChance  => IStatusApplierModule.ClampPoisonApplyChance(PoisonApplyChance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.PoisonApplyChance], SecondaryUpgrade.PoisonApplyChance)),
+                GeneralStat.DebuffApplyChance  => IStatusApplierModule.ClampDebuffApplyChance(DebuffApplyChance + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.DebuffApplyChance], SecondaryUpgrade.DebuffApplyChance)),
+                GeneralStat.MoveApplyChance    => IStatusApplierModule.ClampMoveApplyChance  (MoveApplyChance   + UpgradeHelper.GetUpgradeFull(SecondaryUpgrades[SecondaryUpgrade.MoveApplyChance],   SecondaryUpgrade.MoveApplyChance)),
+                GeneralStat.ArousalApplyChance => 0,
                 _                              => throw new ArgumentOutOfRangeException(nameof(stat), stat, message:$"Unhandled stat: {stat}")
             };
         }
 
-        public (uint lower, uint upper) GetDamage() => (DamageLower, DamageUpper);
+        public (int lower, int upper) GetDamage() => IStatsModule.ClampRawDamage(DamageLower, DamageUpper);
 
-        public List<PrimaryUpgrade> GetPrimaryUpgradeOptions(uint currentTier) => UpgradeHelper.GetPrimaryUpgradeOptions(currentTier, PrimaryUpgradeOptions, Randomizer);
-        public List<SecondaryUpgrade> GetSecondaryUpgradeOptions(uint currentTier) => UpgradeHelper.GetSecondaryUpgradeOptions(currentTier, SecondaryUpgradeOptions, Randomizer);
+        public ReadOnlySpan<PrimaryUpgrade> GetPrimaryUpgradeOptions(int currentTier)     => UpgradeHelper.GetPrimaryUpgradeOptions  (currentTier, PrimaryUpgradeOptions,   Randomizer);
+        public ReadOnlySpan<SecondaryUpgrade> GetSecondaryUpgradeOptions(int currentTier) => UpgradeHelper.GetSecondaryUpgradeOptions(currentTier, SecondaryUpgradeOptions, Randomizer);
 
+        [NotNull]
         public CharacterStats DeepClone()
         {
+            int clampedOrgasmLimit = ILustModule.ClampOrgasmLimit(OrgasmLimit);
+            (int clampedLowerDamage, int clampedUpperDamage) = IStatsModule.ClampRawDamage(DamageLower, DamageUpper);
+            
             return new CharacterStats
             {
                 Key = Key,
                 Randomizer = Randomizer.DeepClone(),
                 SkillSet = SkillSet.DeepClone(),
-                Experience = Experience,
+                TotalExperience = TotalExperience,
                 
-                Stamina = Stamina,
-                Resilience = Resilience,
+                Stamina    = IStaminaModule.ClampMaxStamina(Stamina),
+                Resilience = IStaminaModule.ClampResilience(Resilience),
                 
-                Lust = Lust,
-                Temptation = Temptation,
-                OrgasmCount = OrgasmCount,
-                OrgasmLimit = OrgasmLimit,
-                Composure = Composure,
-                Corruption = Corruption,
+                Lust        = ILustModule.ClampLust(Lust),
+                Temptation  = ILustModule.ClampTemptation(Temptation),
+                OrgasmCount = ILustModule.ClampOrgasmCount(OrgasmCount, clampedOrgasmLimit),
+                OrgasmLimit = clampedOrgasmLimit,
+                Composure   = ILustModule.ClampComposure(Composure),
+                Corruption  = ILustModule.ClampCorruption(Corruption),
 
-                PoisonResistance = PoisonResistance,
-                PoisonApplyChance = PoisonApplyChance,
+                PoisonResistance = IResistancesModule.ClampResistance(PoisonResistance),
+                DebuffResistance = IResistancesModule.ClampResistance(DebuffResistance),
+                MoveResistance   = IResistancesModule.ClampResistance(MoveResistance),
                 
-                DebuffResistance = DebuffResistance,
-                DebuffApplyChance = DebuffApplyChance,
+                PoisonApplyChance = IStatusApplierModule.ClampPoisonApplyChance(PoisonApplyChance),
+                DebuffApplyChance = IStatusApplierModule.ClampDebuffApplyChance(DebuffApplyChance),
+                MoveApplyChance   = IStatusApplierModule.ClampMoveApplyChance(MoveApplyChance),
                 
-                MoveResistance = MoveResistance,
-                MoveApplyChance = MoveApplyChance,
+                StunMitigation = IStunModule.ClampStunMitigation(StunMitigation),
                 
-                StunRecoverySpeed = StunRecoverySpeed,
+                Speed          = IStatsModule.ClampSpeed(Speed),
+                Accuracy       = IStatsModule.ClampAccuracy(Accuracy),
+                CriticalChance = IStatsModule.ClampCriticalChance(CriticalChance),
+                Dodge          = IStatsModule.ClampDodge(Dodge),
                 
-                Speed = Speed,
-                Accuracy = Accuracy,
-                CriticalChance = CriticalChance,
-                Dodge = Dodge,
+                DamageLower = clampedLowerDamage,
+                DamageUpper = clampedUpperDamage,
                 
-                DamageLower = DamageLower,
-                DamageUpper = DamageUpper,
+                PrimaryUpgrades   = new Dictionary<PrimaryUpgrade, int>(PrimaryUpgrades),
+                SecondaryUpgrades = new Dictionary<SecondaryUpgrade, int>(SecondaryUpgrades),
                 
-                PrimaryUpgrades = new Dictionary<PrimaryUpgrade, uint>(PrimaryUpgrades),
-                SecondaryUpgrades = new Dictionary<SecondaryUpgrade, uint>(SecondaryUpgrades),
-                
-                AvailablePerkPoints = AvailablePerkPoints,
-                AvailablePrimaryPoints = AvailablePrimaryPoints,
+                AvailablePerkPoints      = AvailablePerkPoints,
+                AvailablePrimaryPoints   = AvailablePrimaryPoints,
                 AvailableSecondaryPoints = AvailableSecondaryPoints,
                 
-                PrimaryUpgradeOptions = PrimaryUpgradeOptions.ToDictionary(pair => pair.Key, pair => new List<PrimaryUpgrade>(pair.Value)),
-                SecondaryUpgradeOptions = SecondaryUpgradeOptions.ToDictionary(pair => pair.Key, pair => new List<SecondaryUpgrade>(pair.Value)),
+                PrimaryUpgradeOptions   = PrimaryUpgradeOptions.ToDictionary  (keySelector: pair => pair.Key, elementSelector: pair => pair.Value.ToArrayNonAlloc()),
+                SecondaryUpgradeOptions = SecondaryUpgradeOptions.ToDictionary(keySelector: pair => pair.Key, elementSelector: pair => pair.Value.ToArrayNonAlloc()),
                 
-                SexualExpByRace = new Dictionary<Race, uint>(SexualExpByRace),
+                SexualExpByRace = new Dictionary<Race, int>(SexualExpByRace),
             };
         }
 

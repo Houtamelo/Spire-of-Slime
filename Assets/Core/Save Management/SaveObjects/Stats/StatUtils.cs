@@ -1,7 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using Core.Combat.Scripts;
+using Core.Combat.Scripts.Enums;
+using Core.Localization.Scripts;
 using Core.Utils.Extensions;
 using Core.Utils.Math;
+using JetBrains.Annotations;
+using KGySoft.CoreLibraries;
 using UnityEngine;
 
 namespace Core.Save_Management.SaveObjects
@@ -10,99 +17,135 @@ namespace Core.Save_Management.SaveObjects
     {
         private static readonly StringBuilder Builder = new();
         
-        public static string Format(this GeneralStat stat, float value)
+        [NotNull]
+        public static string Format(this GeneralStat stat, int value)
         {
             return stat switch
             {
                 GeneralStat.DamageLower        => value.ToString("0"),
                 GeneralStat.DamageUpper        => value.ToString("0"),
                 GeneralStat.OrgasmLimit        => value.ToString("0"),
-                GeneralStat.MoveResistance     => value.ToPercentageString(),
+                GeneralStat.MoveResistance     => value.WithSymbol(),
                 GeneralStat.Stamina            => value.ToString("0"),
                 GeneralStat.Lust               => value.ToString("0"),
-                GeneralStat.Temptation         => value.ToPercentageString(),
-                GeneralStat.Resilience         => value.ToPercentageString(),
-                GeneralStat.PoisonResistance   => value.ToPercentageString(),
-                GeneralStat.DebuffResistance   => value.ToPercentageString(),
-                GeneralStat.StunRecoverySpeed  => value.ToPercentageString(),
-                GeneralStat.Composure          => value.ToPercentageString(),
-                GeneralStat.Speed              => value.ToPercentageString(),
-                GeneralStat.Accuracy           => value.ToPercentageString(),
-                GeneralStat.CriticalChance     => value.ToPercentageString(),
-                GeneralStat.Dodge              => value.ToPercentageString(),
-                GeneralStat.Experience         => value.ToString("0.00"),
+                GeneralStat.Temptation         => value.ToPercentageStringBase100(),
+                GeneralStat.Resilience         => value.ToPercentageStringBase100(),
+                GeneralStat.PoisonResistance   => value.WithSymbol(),
+                GeneralStat.DebuffResistance   => value.WithSymbol(),
+                GeneralStat.StunMitigation     => value.WithSymbol(),
+                GeneralStat.Composure          => value.WithSymbol(),
+                GeneralStat.Speed              => value.ToString("0"),
+                GeneralStat.Accuracy           => value.WithSymbol(),
+                GeneralStat.CriticalChance     => value.WithSymbol(),
+                GeneralStat.Dodge              => value.WithSymbol(),
+                GeneralStat.Experience         => value.ToString("0"),
                 GeneralStat.PrimaryPoints      => value.ToString("0"),
                 GeneralStat.SecondaryPoints    => value.ToString("0"),
                 GeneralStat.PerkPoints         => value.ToString("0"),
                 GeneralStat.OrgasmCount        => value.ToString("0"),
-                GeneralStat.PoisonApplyChance  => value.ToPercentageString(),
-                GeneralStat.DebuffApplyChance  => value.ToPercentageString(),
-                GeneralStat.MoveApplyChance    => value.ToPercentageString(),
-                GeneralStat.ArousalApplyChance => value.ToPercentageString(),
-                GeneralStat.Corruption         => value.ToPercentageString(),
+                GeneralStat.PoisonApplyChance  => value.WithSymbol(),
+                GeneralStat.DebuffApplyChance  => value.WithSymbol(),
+                GeneralStat.MoveApplyChance    => value.WithSymbol(),
+                GeneralStat.ArousalApplyChance => value.WithSymbol(),
+                GeneralStat.Corruption         => value.ToPercentageStringBase100(),
                 _                              => throw new ArgumentOutOfRangeException(nameof(stat), stat, null)
             };
         }
         
-        public static string AltFormat(this GeneralStat stat, float value)
+        [NotNull]
+        public static string AltFormat(this GeneralStat stat, int value)
         {
             return stat switch
             {
                 GeneralStat.DamageLower        => value.ToString("0"),
                 GeneralStat.DamageUpper        => value.ToString("0"),
                 GeneralStat.OrgasmLimit        => value.ToString("0"),
-                GeneralStat.MoveResistance     => value.ToPercentlessStringWithSymbol(digits: 1, decimalDigits: 0),
+                GeneralStat.MoveResistance     => value.WithSymbol(),
                 GeneralStat.Stamina            => value.ToString("0"),
                 GeneralStat.Lust               => value.ToString("0"),
-                GeneralStat.Temptation         => Builder.Override(Mathf.RoundToInt(value * 100f).ToString("0"), " / 100").ToString(),
-                GeneralStat.Resilience         => value.ToPercentlessStringWithSymbol(digits: 1, decimalDigits: 0),
-                GeneralStat.PoisonResistance   => value.ToPercentlessStringWithSymbol(digits: 1, decimalDigits: 0),
-                GeneralStat.DebuffResistance   => value.ToPercentlessStringWithSymbol(digits: 1, decimalDigits: 0),
-                GeneralStat.StunRecoverySpeed  => value.ToPercentageString(),
-                GeneralStat.Composure          => value.ToPercentlessStringWithSymbol(digits: 1, decimalDigits: 0),
-                GeneralStat.Speed              => value.ToPercentageString(),
-                GeneralStat.Accuracy           => value.ToPercentlessStringWithSymbol(digits: 1, decimalDigits: 0),
-                GeneralStat.CriticalChance     => value.ToPercentlessStringWithSymbol(digits: 1, decimalDigits: 0),
-                GeneralStat.Dodge              => value.ToPercentlessStringWithSymbol(digits: 1, decimalDigits: 0),
-                GeneralStat.Experience         => value.ToString("0.00"),
+                GeneralStat.Temptation         => value.ToPercentageStringBase100(),
+                GeneralStat.Resilience         => value.ToPercentageStringBase100(),
+                GeneralStat.PoisonResistance   => value.WithSymbol(),
+                GeneralStat.DebuffResistance   => value.WithSymbol(),
+                GeneralStat.StunMitigation     => value.WithSymbol(),
+                GeneralStat.Composure          => value.WithSymbol(),
+                GeneralStat.Speed              => value.ToString("0"),
+                GeneralStat.Accuracy           => value.WithSymbol(),
+                GeneralStat.CriticalChance     => value.WithSymbol(),
+                GeneralStat.Dodge              => value.WithSymbol(),
+                GeneralStat.Experience         => value.ToString("0"),
                 GeneralStat.PrimaryPoints      => value.ToString("0"),
                 GeneralStat.SecondaryPoints    => value.ToString("0"),
                 GeneralStat.PerkPoints         => value.ToString("0"),
                 GeneralStat.OrgasmCount        => value.ToString("0"),
-                GeneralStat.PoisonApplyChance  => value.ToPercentlessStringWithSymbol(digits: 1, decimalDigits: 0),
-                GeneralStat.DebuffApplyChance  => value.ToPercentlessStringWithSymbol(digits: 1, decimalDigits: 0),
-                GeneralStat.MoveApplyChance    => value.ToPercentlessStringWithSymbol(digits: 1, decimalDigits: 0),
-                GeneralStat.ArousalApplyChance => value.ToPercentlessStringWithSymbol(digits: 1, decimalDigits: 0),
-                GeneralStat.Corruption         => value.ToPercentageString(),
-                _                              => throw new ArgumentOutOfRangeException(nameof(stat), stat, null)
+                GeneralStat.PoisonApplyChance  => value.WithSymbol(),
+                GeneralStat.DebuffApplyChance  => value.WithSymbol(),
+                GeneralStat.MoveApplyChance    => value.WithSymbol(),
+                GeneralStat.ArousalApplyChance => value.WithSymbol(),
+                GeneralStat.Corruption         => value.ToPercentageStringBase100(),
+                _                              => throw new ArgumentOutOfRangeException(nameof(stat), stat, message: null)
             };
         }
 
-        public static string Format(this PrimaryUpgrade upgrade, float value)
+        public static LocalizedText UpperCaseName(this PrimaryUpgrade upgrade) => upgrade.ToCombatStat().UpperCaseName();
+        
+        public static LocalizedText UpperCaseName(this SecondaryUpgrade upgrade) => upgrade.ToCombatStat().UpperCaseName();
+
+        public static LocalizedText LowerCaseName(this PrimaryUpgrade upgrade) => upgrade.ToCombatStat().LowerCaseName();
+
+        public static LocalizedText LowerCaseName(this SecondaryUpgrade upgrade) => upgrade.ToCombatStat().LowerCaseName();
+
+        public static CombatStat ToCombatStat(this PrimaryUpgrade upgrade) =>
+            upgrade switch
+            {
+                PrimaryUpgrade.Accuracy   => CombatStat.Accuracy,
+                PrimaryUpgrade.Dodge      => CombatStat.Dodge,
+                PrimaryUpgrade.Critical   => CombatStat.CriticalChance,
+                PrimaryUpgrade.Resilience => CombatStat.Resilience,
+                _                         => throw new ArgumentOutOfRangeException(nameof(upgrade), upgrade, message: null)
+            };
+
+        public static CombatStat ToCombatStat(this SecondaryUpgrade upgrade) =>
+            upgrade switch
+            {
+                SecondaryUpgrade.StunMitigation    => CombatStat.StunMitigation,
+                SecondaryUpgrade.MoveResistance    => CombatStat.MoveResistance,
+                SecondaryUpgrade.DebuffResistance  => CombatStat.DebuffResistance,
+                SecondaryUpgrade.PoisonResistance  => CombatStat.PoisonResistance,
+                SecondaryUpgrade.Composure         => CombatStat.Composure,
+                SecondaryUpgrade.PoisonApplyChance => CombatStat.PoisonApplyChance,
+                SecondaryUpgrade.DebuffApplyChance => CombatStat.DebuffApplyChance,
+                SecondaryUpgrade.MoveApplyChance   => CombatStat.MoveApplyChance,
+                _                                  => throw new ArgumentOutOfRangeException(nameof(upgrade), upgrade, message: null)
+            };
+
+        [NotNull]
+        public static string Format(this PrimaryUpgrade upgrade, int value)
         {
             return upgrade switch
             {
-                PrimaryUpgrade.Accuracy   => value.ToPercentageString(),
-                PrimaryUpgrade.Dodge      => value.ToPercentageString(),
-                PrimaryUpgrade.Critical   => value.ToPercentageString(),
-                PrimaryUpgrade.Resilience => value.ToPercentageString(),
-                _                         => throw new ArgumentOutOfRangeException(nameof(upgrade), upgrade, null)
+                PrimaryUpgrade.Accuracy   => value.WithSymbol(),
+                PrimaryUpgrade.Dodge      => value.WithSymbol(),
+                PrimaryUpgrade.Critical   => value.WithSymbol(),
+                PrimaryUpgrade.Resilience => value.ToPercentageStringBase100(),
+                _                         => throw new ArgumentOutOfRangeException(nameof(upgrade), upgrade, message: null)
             };
         }
 
-        public static string Format(this SecondaryUpgrade upgrade, float value)
+        [NotNull]
+        public static string Format(this SecondaryUpgrade upgrade, int value)
         {
             return upgrade switch
             {
-                SecondaryUpgrade.Composure         => value.ToPercentageString(),
-                SecondaryUpgrade.StunRecoverySpeed => value.ToPercentageString(),
-                SecondaryUpgrade.MoveResistance    => value.ToPercentageString(),
-                SecondaryUpgrade.DebuffResistance  => value.ToPercentageString(),
-                SecondaryUpgrade.PoisonResistance  => value.ToPercentageString(),
-                SecondaryUpgrade.PoisonApplyChance => value.ToPercentageString(),
-                SecondaryUpgrade.DebuffApplyChance => value.ToPercentageString(),
-                SecondaryUpgrade.MoveApplyChance   => value.ToPercentageString(),
-                _                                  => throw new ArgumentOutOfRangeException(nameof(upgrade), upgrade, null)
+                SecondaryUpgrade.Composure         => value.WithSymbol(),
+                SecondaryUpgrade.StunMitigation    => value.WithSymbol(),
+                SecondaryUpgrade.MoveResistance    => value.WithSymbol(),
+                SecondaryUpgrade.DebuffResistance  => value.WithSymbol(),
+                SecondaryUpgrade.PoisonResistance  => value.WithSymbol(),
+                SecondaryUpgrade.PoisonApplyChance => value.WithSymbol(),
+                SecondaryUpgrade.DebuffApplyChance => value.WithSymbol(),
+                SecondaryUpgrade.MoveApplyChance   => value.WithSymbol(),
+                _                                  => throw new ArgumentOutOfRangeException(nameof(upgrade), upgrade, message: null)
             };
         }
 
@@ -123,14 +166,14 @@ namespace Core.Save_Management.SaveObjects
             return upgrade switch
             {
                 SecondaryUpgrade.Composure         => GeneralStat.Composure,
-                SecondaryUpgrade.StunRecoverySpeed => GeneralStat.StunRecoverySpeed,
+                SecondaryUpgrade.StunMitigation    => GeneralStat.StunMitigation,
                 SecondaryUpgrade.MoveResistance    => GeneralStat.MoveResistance,
                 SecondaryUpgrade.DebuffResistance  => GeneralStat.DebuffResistance,
                 SecondaryUpgrade.PoisonResistance  => GeneralStat.PoisonResistance,
                 SecondaryUpgrade.PoisonApplyChance => GeneralStat.PoisonApplyChance,
                 SecondaryUpgrade.DebuffApplyChance => GeneralStat.DebuffApplyChance,
                 SecondaryUpgrade.MoveApplyChance   => GeneralStat.MoveApplyChance,
-                _                                  => throw new ArgumentOutOfRangeException(nameof(upgrade), upgrade, null)
+                _                                  => throw new ArgumentOutOfRangeException(nameof(upgrade), upgrade, message: null)
             };
         }
 
@@ -152,7 +195,7 @@ namespace Core.Save_Management.SaveObjects
                 GeneralStat.Accuracy           => "stat_tooltip_accuracy",
                 GeneralStat.CriticalChance     => "stat_tooltip_criticalchance",
                 GeneralStat.Dodge              => "stat_tooltip_dodge",
-                GeneralStat.StunRecoverySpeed  => "stat_tooltip_stunrecoveryspeed",
+                GeneralStat.StunMitigation     => "stat_tooltip_stunrecoveryspeed",
                 GeneralStat.PoisonResistance   => "stat_tooltip_poisonresistance",
                 GeneralStat.PoisonApplyChance  => "stat_tooltip_poisonapplychance",
                 GeneralStat.DebuffResistance   => "stat_tooltip_debuffresistance",
@@ -164,7 +207,7 @@ namespace Core.Save_Management.SaveObjects
                 GeneralStat.PrimaryPoints      => string.Empty,
                 GeneralStat.SecondaryPoints    => string.Empty,
                 GeneralStat.PerkPoints         => string.Empty,
-                _                              => throw new ArgumentOutOfRangeException(nameof(stat), stat, null)
+                _                              => throw new ArgumentOutOfRangeException(nameof(stat), stat, message: null)
             };
         }
     }

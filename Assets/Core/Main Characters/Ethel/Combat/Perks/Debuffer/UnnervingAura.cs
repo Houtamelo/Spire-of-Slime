@@ -11,13 +11,16 @@ using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
 {
     public class UnnervingAura : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             UnnervingAuraInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -25,7 +28,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
         }
     }
     
-    public record UnnervingAuraRecord(CleanString Key, float AccumulatedTime) : PerkRecord(Key)
+    public record UnnervingAuraRecord(CleanString Key, TSpan AccumulatedTime) : PerkRecord(Key)
     {
         public override bool IsDataValid(StringBuilder errors, ICollection<CharacterRecord> allCharacters)
         {
@@ -38,7 +41,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             UnnervingAuraInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -48,22 +52,20 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
     
     public class UnnervingAuraInstance : PerkInstance, ITick
     {
-        private const float IntervalBetweenDebuff = 3f;
-        private const float DebuffDuration = 3f;
-        private const float DebuffModifier = -0.1f;
-        private const float BaseApplyChance = 1f;
+        private static readonly TSpan IntervalBetweenDebuffs = TSpan.FromSeconds(3.0);
+        private const int DebuffModifier = -10;
+        private const int BaseApplyChance = 100;
+        private static readonly TSpan DebuffDuration = TSpan.FromSeconds(3.0);
 
-        private static readonly BuffOrDebuffScript Debuff = new(Permanent: false, DebuffDuration, BaseApplyChance, default, DebuffModifier);
+        private static readonly BuffOrDebuffScript Debuff = new(Permanent: false, DebuffDuration, BaseApplyChance, Stat: default, DebuffModifier);
         
-        private float _accumulatedTime;
+        private TSpan _accumulatedTime;
+        
         public UnnervingAuraInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
         
-        public UnnervingAuraInstance(CharacterStateMachine owner, UnnervingAuraRecord record) : base(owner, record)
-        {
-            _accumulatedTime = record.AccumulatedTime;
-        }
+        public UnnervingAuraInstance(CharacterStateMachine owner, [NotNull] UnnervingAuraRecord record) : base(owner, record) => _accumulatedTime = record.AccumulatedTime;
 
         protected override void OnSubscribe()
         {
@@ -75,15 +77,16 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
             Owner.SubscribedTickers.Remove(this);
         }
         
+        [NotNull]
         public override PerkRecord GetRecord() => new UnnervingAuraRecord(Key, _accumulatedTime);
 
-        public void Tick(float timeStep)
+        public void Tick(TSpan timeStep)
         {
             _accumulatedTime += timeStep;
-            if (_accumulatedTime < IntervalBetweenDebuff || Owner.Display.IsNone)
+            if (_accumulatedTime < IntervalBetweenDebuffs || Owner.Display.IsNone)
                 return;
             
-            _accumulatedTime -= IntervalBetweenDebuff;
+            _accumulatedTime -= IntervalBetweenDebuffs;
             CombatManager combatManager = Owner.Display.Value.CombatManager;
             
             int activeCount = 0;
@@ -93,7 +96,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
             if (activeCount == 0)
                 return;
                 
-            int randomIndex = Random.Range(0, activeCount);
+            int randomIndex = Save.Random.Next(activeCount);
             int currentIndex = 0;
                 
             foreach (CharacterStateMachine enemy in combatManager.Characters.GetEnemies(Owner))
@@ -105,7 +108,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
                 }
 
                 CombatStat stat = CombatUtils.GetRandomCombatStat();
-                BuffOrDebuffToApply debuffStruct = (BuffOrDebuffToApply)Debuff.GetStatusToApply(Owner, enemy, false, null);
+                BuffOrDebuffToApply debuffStruct = (BuffOrDebuffToApply)Debuff.GetStatusToApply(caster: Owner, target: enemy, crit: false, skill: null);
                 debuffStruct.Stat = stat;
                 BuffOrDebuffScript.ProcessModifiersAndTryApply(debuffStruct);
                 return;

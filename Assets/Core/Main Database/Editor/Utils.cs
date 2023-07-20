@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.IO;
+using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
 
@@ -8,8 +8,8 @@ namespace Core.Main_Database.Editor
 {
     public static class Utils
     {
-        [Pure]
-        public static bool TryFindAssetWithType<T>(out T obj) where T : Object
+        [System.Diagnostics.Contracts.Pure]
+        public static bool TryFindAssetWithType<T>([CanBeNull] out T obj) where T : Object
         {
             string typeName = typeof(T).Name;
             string filter = $"t:{typeName}";
@@ -29,7 +29,7 @@ namespace Core.Main_Database.Editor
             return false;
         }
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure, NotNull]
         public static List<T> FindAssetsByType<T>() where T : Object
         {
             List<T> assets = new List<T>();
@@ -49,7 +49,7 @@ namespace Core.Main_Database.Editor
             return assets;
         }
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure, NotNull]
         public static List<T> FindComponentsByType<T>() where T : MonoBehaviour
         {
             List<T> assets = new List<T>();
@@ -69,7 +69,7 @@ namespace Core.Main_Database.Editor
             return assets;
         }
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure, NotNull]
         public static List<T> FindAssetsByType<T>(string extension) where T : Object
         {
             List<T> assets = new List<T>();
@@ -92,7 +92,7 @@ namespace Core.Main_Database.Editor
             return assets;
         }
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure, NotNull]
         public static List<T> GetAllAssetsOfTypeInFoldersWithName<T>(string folderName, string topMostFolder) where T : Object
         {
             string[] folders = AssetDatabase.GetSubFolders(topMostFolder);
@@ -122,7 +122,7 @@ namespace Core.Main_Database.Editor
             return assets;
         }
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure, NotNull]
         public static List<T> GetAllAssetsOfTypeWhereNameStartsWith<T>(string pattern) where T : Object
         {
             List<T> assets = FindAssetsByType<T>();

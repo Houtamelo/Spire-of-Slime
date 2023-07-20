@@ -4,7 +4,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Utilities;
-using Utils.Patterns;
 
 namespace Core.Pause_Menu.Scripts
 {

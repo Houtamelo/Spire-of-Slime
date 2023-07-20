@@ -4,12 +4,12 @@ using Core.Save_Management;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Screen_Buttons.Scripts
@@ -58,7 +58,7 @@ namespace Core.Screen_Buttons.Scripts
             Save.Handler.Changed -= OnSaveChanged;
         }
 
-        private void OnSaveChanged(Save save)
+        private void OnSaveChanged([CanBeNull] Save save)
         {
             if (save != null)
                 CheckStatus(save.IsNemaClearingMist, save.NemaExhaustion);
@@ -84,15 +84,15 @@ namespace Core.Screen_Buttons.Scripts
             CheckStatus(status.SetToClearMist.current, status.Exhaustion.current);
         }
 
-        private void CheckStatus(bool isClearingMist, ClampedPercentage exhaustion)
+        private void CheckStatus(bool isClearingMist, int exhaustion)
         {
-            (LocalizedText mistTooltip, LocalizedText clearingTooltip, Sprite sprite) = (isClearingMist, (float)exhaustion) switch
+            (LocalizedText mistTooltip, LocalizedText clearingTooltip, Sprite sprite) = (isClearingMist, exhaustion) switch
             {
-                (_, >= Save.HighExhaustion)      => (Trans_MistHigh, Trans_NemaExhausted, offSprite),
-                (false, _)                       => (Trans_MistHigh, Trans_NemaNotClearingMist, offSprite), 
-                (true, >= Save.MediumExhaustion) => (Trans_MistMedium, Trans_NemaClearingMist, onSprite),
-                (true, >= Save.LowExhaustion)    => (Trans_MistLow, Trans_NemaClearingMist, onSprite),
-                (true, _)                        => (Trans_MistNone, Trans_NemaClearingMist, onSprite)
+                (isClearingMist: _,    exhaustion: >= NemaStatus.HighExhaustion)   => (Trans_MistHigh, Trans_NemaExhausted, offSprite),
+                (isClearingMist: false, _)                                         => (Trans_MistHigh, Trans_NemaNotClearingMist, offSprite), 
+                (isClearingMist: true, exhaustion: >= NemaStatus.MediumExhaustion) => (Trans_MistMedium, Trans_NemaClearingMist, onSprite),
+                (isClearingMist: true, exhaustion: >= NemaStatus.LowExhaustion)    => (Trans_MistLow, Trans_NemaClearingMist, onSprite),
+                (isClearingMist: true, _)                                          => (Trans_MistNone, Trans_NemaClearingMist, onSprite)
             };
 
             icon.sprite = sprite;

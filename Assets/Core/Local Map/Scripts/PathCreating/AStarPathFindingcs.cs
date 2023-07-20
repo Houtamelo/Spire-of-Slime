@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Core.Local_Map.Scripts.Coordinates;
 using Core.Local_Map.Scripts.Enums;
+using JetBrains.Annotations;
 using KGySoft.CoreLibraries;
 using NetFabric.Hyperlinq;
 using Priority_Queue;
@@ -11,9 +12,9 @@ namespace Core.Local_Map.Scripts.PathCreating
 {
     public static class AStarPathFinding
     {
-        public static int Heuristic(HexagonObject.Cell a, HexagonObject.Cell b) => PathUtils.ManhattanDistance(a.position, b.position) * 5;
+        public static int Heuristic([NotNull] HexagonObject.Cell a, [NotNull] HexagonObject.Cell b) => PathUtils.ManhattanDistance(a.position, b.position) * 5;
 
-        public static bool TryFindPath(HexagonObject.Cell start, HexagonObject.Cell goal, IReadOnlyDictionary<Axial, (HexagonObject.Cell cell, float weight)> weightMap, out List<HexagonObject.Cell> finalPath)
+        public static bool TryFindPath([NotNull] HexagonObject.Cell start, HexagonObject.Cell goal, IReadOnlyDictionary<Axial, (HexagonObject.Cell cell, float weight)> weightMap, [NotNull] out List<HexagonObject.Cell> finalPath)
         {
             Dictionary<HexagonObject.Cell, float> costSoFar = new();
             finalPath = new List<HexagonObject.Cell>();

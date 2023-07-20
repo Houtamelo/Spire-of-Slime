@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Core.Local_Map.Scripts.Coordinates;
 using Core.Local_Map.Scripts.Enums;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Core.Local_Map.Scripts.PathCreating
@@ -71,6 +72,7 @@ namespace Core.Local_Map.Scripts.PathCreating
 			Tiles.Clear();
 		}
 
+		[NotNull]
 		public List<Axial> Neighbours(Axial tile) 
 		{
 			List<Axial> ret = new();
@@ -85,6 +87,7 @@ namespace Core.Local_Map.Scripts.PathCreating
 			return ret;
 		}
 
+		[NotNull]
 		public List<Axial> TilesInRange(Axial center, int range)
 		{
 			List<Axial> ret = new();
@@ -156,8 +159,10 @@ namespace Core.Local_Map.Scripts.PathCreating
 		private void GenParallelogramShape() 
 		{
 			for (int q = 0; q <= MapWidth; q++)
+			{
 				for (int r = 0; r <= MapHeight; r++)
 					Tiles.Add(new Axial(q1: q, r1: r) + Offset);
+			}
 		}
 
 		public void GenTriShape()
@@ -165,8 +170,10 @@ namespace Core.Local_Map.Scripts.PathCreating
 			int mapSize = Mathf.Max(MapWidth, MapHeight);
 
 			for (int q = 0; q <= mapSize; q++)
+			{
 				for (int r = 0; r <= mapSize - q; r++)
 					Tiles.Add(new Axial(q1: q, r1: r) + Offset);
+			}
 		}
 		#endregion
 	}

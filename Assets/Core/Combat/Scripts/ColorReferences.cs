@@ -37,8 +37,8 @@ namespace Core.Combat.Scripts
         public static readonly Color Stun = FromHex("#fcd74a");
         public static readonly (string start, string end) StunRichText = ("<color=#fcd74a>", "</color>");
         
-        public static Color StunRecovery => Stun;
-        public static (string start, string end) StunRecoveryRichText => StunRichText;
+        public static Color StunMitigation => Stun;
+        public static (string start, string end) StunMitigationRichText => StunRichText;
         
         public static readonly Color Guarded = FromHex("#5ca1eb");
         public static readonly (string start, string end) GuardedRichText = ("<color=#5ca1eb>", "</color>");
@@ -143,14 +143,14 @@ namespace Core.Combat.Scripts
                 CombatStat.Dodge              => Dodge,
                 CombatStat.Resilience         => Resilience,
                 CombatStat.Composure          => Composure,
-                CombatStat.StunSpeed          => StunRecovery,
+                CombatStat.StunMitigation     => StunMitigation,
                 CombatStat.DamageMultiplier   => Damage,
                 CombatStat.Speed              => Speed,
                 CombatStat.DebuffApplyChance  => DebuffApplyChance,
                 CombatStat.PoisonApplyChance  => PoisonApplyChance,
                 CombatStat.MoveApplyChance    => MoveApplyChance,
                 CombatStat.ArousalApplyChance => ArousalApplyChance,
-                _                             => throw new ArgumentOutOfRangeException(nameof(stat), stat, null)
+                _                             => throw new ArgumentOutOfRangeException(nameof(stat), stat, message: null)
             };
         }
 

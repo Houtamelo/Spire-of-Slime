@@ -60,21 +60,12 @@ namespace Core.Utils.Patterns
         public static implicit operator Option<T>(NoneOption _) => default;
         public static implicit operator Option<T>(Option _) => default;
 
-        public bool Equals(Option<T> other)
-        {
-            return IsSome == other.IsSome && EqualityComparer<T>.Default.Equals(_value, other._value);
-        }
+        public bool Equals(Option<T> other) => IsSome == other.IsSome && EqualityComparer<T>.Default.Equals(_value, other._value);
 
-        public override bool Equals(object obj)
-        {
-            return obj is Option<T> other && Equals(other);
-        }
+        public override bool Equals(object obj) => obj is Option<T> other && Equals(other);
 
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(IsSome, IsSome ? _value : default);
-        }
-        
+        public override int GetHashCode() => HashCode.Combine(IsSome, IsSome ? _value : default);
+
         public static bool operator ==(Option<T> left, Option<T> right) => left.Equals(right);
         public static bool operator !=(Option<T> left, Option<T> right) => !left.Equals(right);
     }

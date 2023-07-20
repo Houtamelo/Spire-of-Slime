@@ -1,4 +1,5 @@
-﻿using Sirenix.OdinInspector;
+﻿using JetBrains.Annotations;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace Core.Visual_Novel.Scripts.Animations
@@ -15,6 +16,7 @@ namespace Core.Visual_Novel.Scripts.Animations
         [SerializeField]
         private float duration = 1;
 
+        [NotNull]
         public override YieldInstruction Play()
         {
             animator.SetTrigger(PlayHash);

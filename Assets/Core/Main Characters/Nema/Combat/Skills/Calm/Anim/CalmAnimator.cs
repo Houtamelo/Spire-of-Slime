@@ -1,13 +1,13 @@
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Behaviour.Rendering;
 using Core.Combat.Scripts.Skills.Action;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.Utils.Objects;
 using Core.Utils.Patterns;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Main_Characters.Nema.Combat.Skills.Calm.Anim
 {
@@ -63,13 +63,11 @@ namespace Core.Main_Characters.Nema.Combat.Skills.Calm.Anim
                 }
 
                 if (target.IsNone)
-                {
                     foreach (ActionResult result in casterContext.Value.Results)
                     {
                         target = Option<CharacterStateMachine>.Some(result.Target);
                         break;
                     }
-                }
             }
 
             effects.gameObject.SetActive(true);
@@ -78,7 +76,7 @@ namespace Core.Main_Characters.Nema.Combat.Skills.Calm.Anim
             _sequence = DOTween.Sequence().OnUpdate(_onSequenceUpdate).OnComplete(_onSequenceComplete);
             _sequence.AppendInterval(GetActualDuration());
 
-            if (_currentTarget.IsSome && _currentTarget.Value.Display.AssertSome(out CharacterDisplay targetDisplay) && targetDisplay.GetBounds().TrySome(out Bounds targetBounds))
+            if (_currentTarget.IsSome && _currentTarget.Value.Display.AssertSome(out DisplayModule targetDisplay) && targetDisplay.GetBounds().TrySome(out Bounds targetBounds))
             {
                 Vector3 desiredPosition = effects.position;
                 desiredPosition.x = targetBounds.center.x;

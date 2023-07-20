@@ -2,10 +2,10 @@
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Managers
 {
@@ -55,7 +55,7 @@ namespace Core.Combat.Scripts.Managers
             _animationSequence = DefaultAnnounce(announcer: this, text, delayBeforeStart, totalDuration, speed);
         }
 
-        public static Sequence DefaultAnnounce(Announcer announcer, string text, Option<float> delayBeforeStart, float totalDuration, float speed)
+        public static Sequence DefaultAnnounce([NotNull] Announcer announcer, string text, Option<float> delayBeforeStart, float totalDuration, float speed)
         {
             announcer.animator.speed = speed;
             totalDuration -= FadeDuration;
@@ -70,7 +70,7 @@ namespace Core.Combat.Scripts.Managers
             return sequence;
         }
 
-        public void Announce(PlannedSkill plan, float startDuration, float popDuration, float speed)
+        public void Announce([NotNull] PlannedSkill plan, float startDuration, float popDuration, float speed)
         {
             _animationSequence.KillIfActive();
             _animationSequence = plan.Skill.Announce(announcer: this, plan, startDuration, popDuration, speed);

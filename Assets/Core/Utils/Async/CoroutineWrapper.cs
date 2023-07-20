@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Diagnostics;
+using JetBrains.Annotations;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -39,7 +40,7 @@ namespace Core.Utils.Async
         ///
         /// If autoStart is true (default) the task is automatically started
         /// upon construction.
-        public CoroutineWrapper(IEnumerator c, string routineName, Object context = null, bool autoStart = true)
+        public CoroutineWrapper(IEnumerator c, string routineName, [CanBeNull] Object context = null, bool autoStart = true)
         {
             // save current stack trace for debugging purposes
             StackTraceAtCreation = new StackTrace(fNeedFileInfo: true);

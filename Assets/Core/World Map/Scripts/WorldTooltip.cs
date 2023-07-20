@@ -7,7 +7,6 @@ using Sirenix.Serialization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 // ReSharper disable HeuristicUnreachableCode
 #pragma warning disable CS0162

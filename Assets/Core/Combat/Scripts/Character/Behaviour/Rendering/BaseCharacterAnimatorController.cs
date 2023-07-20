@@ -3,7 +3,6 @@ using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Behaviour.Rendering
 {

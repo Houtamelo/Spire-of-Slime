@@ -4,10 +4,10 @@ using Core.ResourceManagement;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using Core.Visual_Novel.Scripts.Animations;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Main_Database.Visual_Novel
 {
@@ -22,7 +22,7 @@ namespace Core.Main_Database.Visual_Novel
         private static CgDatabase Instance => DatabaseManager.Instance.CgDatabase;
 
         public static Option<Sprite> GetCg(string fileName) => GetCg(Instance, fileName);
-        public static Option<Sprite> GetCg(CgDatabase database, string fileName)
+        public static Option<Sprite> GetCg([NotNull] CgDatabase database, string fileName)
         {
             fileName = fileName.ToAlphaNumericLower();
             if (database._cgDictionary.TryGetValue(fileName, out Sprite cg))
@@ -31,10 +31,10 @@ namespace Core.Main_Database.Visual_Novel
             return Option<Sprite>.None;
         }
 
-        public Option<string> GetCgAnimationFilePath(string fileName) 
+        public Option<string> GetCgAnimationFilePath([NotNull] string fileName) 
             => _animationFilePaths.TryGetValue(fileName.ToLowerInvariant(), out string filePath) ? Option<string>.Some(filePath) : Option<string>.None;
 
-        public static Option<ResourceHandle<VisualNovelAnimation>> GetCgAnimationPrefab(string fileName)
+        public static Option<ResourceHandle<VisualNovelAnimation>> GetCgAnimationPrefab([NotNull] string fileName)
         {
             CgDatabase database = Instance;
             Option<string> filePath = database.GetCgAnimationFilePath(fileName);
@@ -45,7 +45,7 @@ namespace Core.Main_Database.Visual_Novel
         }
 
 #if UNITY_EDITOR
-        public void AssignData(List<Sprite> hashSet, Dictionary<string, string> animationFilePaths)
+        public void AssignData([NotNull] List<Sprite> hashSet, Dictionary<string, string> animationFilePaths)
         {
             _cgDictionary = hashSet.ToDictionary(c => c.name.ToAlphaNumericLower(), c => c);
             _animationFilePaths = animationFilePaths;

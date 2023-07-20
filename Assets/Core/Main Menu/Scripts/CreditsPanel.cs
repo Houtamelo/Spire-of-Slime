@@ -25,9 +25,7 @@ namespace Core.Main_Menu.Scripts
             yield return new WaitForSecondsRealtime(1);
 
             if (_tween is not { active: true })
-            {
                 _tween = scrollRect.DOVerticalNormalizedPos(endValue: 0, duration: speed).SetSpeedBased();
-            }
         }
 
         private void OnEnable()
@@ -57,13 +55,9 @@ namespace Core.Main_Menu.Scripts
             {
                 scrollRect = GetComponent<ScrollRect>();
                 if (scrollRect == null)
-                {
                     Debug.LogError("ScrollRect is null");
-                }
                 else
-                {
                     UnityEditor.EditorUtility.SetDirty(target: this);
-                }
             }
         }
 #endif

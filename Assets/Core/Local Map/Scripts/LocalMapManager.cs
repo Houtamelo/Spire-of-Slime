@@ -10,25 +10,26 @@ using Core.Local_Map.Scripts.Enums;
 using Core.Local_Map.Scripts.Events;
 using Core.Local_Map.Scripts.HexagonObject;
 using Core.Local_Map.Scripts.PathCreating;
+using Core.Main_Characters.Ethel.Combat;
 using Core.Main_Characters.Nema.Combat;
 using Core.Main_Database.Local_Map;
 using Core.Save_Management;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Async;
 using Core.Utils.Collections;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.Utils.Math;
 using Core.Utils.Objects;
 using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
-using Data.Main_Characters.Ethel;
 using DG.Tweening;
-using ListPool;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utils.Patterns;
+using UnityEngine.UI;
 using static Core.Local_Map.Scripts.Coordinates.PathUtils;
 using Random = UnityEngine.Random;
 using Save = Core.Save_Management.SaveObjects.Save;
@@ -98,7 +99,7 @@ namespace Core.Local_Map.Scripts
 
         public Sprite GetIcon(IconType type) => _icons[type];
         
-        private Tween SetPlayerTile(Cell cell)
+        private Tween SetPlayerTile([NotNull] Cell cell)
         {
             CurrentPlayerTile = cell;
             _playerMoveTween = _playerIcon.GoToCell(CurrentPlayerTile).OnComplete(_onPlayerMoveTile);
@@ -106,7 +107,7 @@ namespace Core.Local_Map.Scripts
             return _cameraAnimator.LerpCamera(worldPos: cell.transform.position, speed: CameraLerpDuration, isSpeedBased: false);
         }
 
-        private void SetPlayerTileImmediateEventless(Cell cell)
+        private void SetPlayerTileImmediateEventless([NotNull] Cell cell)
         {
             cell.ClearEvent();
             cell.SetAlreadyExplored(true);
@@ -128,16 +129,16 @@ namespace Core.Local_Map.Scripts
             {
                 NemaStatus status = save.GetFullNemaStatus();
                 
-                if (status.SetToClearMist.current && status.Exhaustion.current < Save.HighExhaustion)
-                    save.ChangeNemaExhaustion(+0.02f);
+                if (status.SetToClearMist.current && status.Exhaustion.current < NemaStatus.HighExhaustion)
+                    save.ChangeNemaExhaustion(+2);
 
-                Option<int> baseDelta = (status.SetToClearMist.current, (float)status.Exhaustion.current) switch
+                Option<int> baseDelta = (status.SetToClearMist.current, status.Exhaustion.current) switch
                 {
-                    (false, _)                       => 5,
-                    (true, >= Save.HighExhaustion)   => 5,
-                    (true, >= Save.MediumExhaustion) => 3,
-                    (true, >= Save.LowExhaustion)    => 1,
-                    _                                => Option.None
+                    (false, _)                             => 5,
+                    (true, >= NemaStatus.HighExhaustion)   => 5,
+                    (true, >= NemaStatus.MediumExhaustion) => 3,
+                    (true, >= NemaStatus.LowExhaustion)    => 1,
+                    _                                               => Option.None
                 };
 
                 if (baseDelta.IsSome)
@@ -172,8 +173,7 @@ namespace Core.Local_Map.Scripts
             if (CurrentPlayerTile == null || Save.AssertInstance(out Save save) == false)
                 return;
             
-            FixedEnumerable<Cell> previousInVision = _previousCellsInVision.FixedEnumerate();
-            ValueListPool<Cell>.Enumerator previousEnumerator = previousInVision.GetEnumerator();
+            using FixedEnumerator<Cell> previousInVision = _previousCellsInVision.FixedEnumerate();
             using PooledObject<HashSet<Cell>> _ = GetCellsInVision(CurrentPlayerTile, VisionLength, out HashSet<Cell> cellsInVision);
             foreach (Cell cell in cellsInVision)
             {
@@ -181,21 +181,13 @@ namespace Core.Local_Map.Scripts
                 _previousCellsInVision.Add(cell);
             }
             
-            try
+            foreach (Cell cell in previousInVision)
             {
-                while (previousEnumerator.MoveNext())
-                {
-                    Cell cell = previousEnumerator.Current;
-                    if (cellsInVision.Contains(cell))
-                        continue;
+                if (cellsInVision.Contains(cell))
+                    continue;
                     
-                    cell!.SetVisible(visible: false);
-                    _previousCellsInVision.Remove(cell);
-                }
-            }
-            finally
-            {
-                previousInVision.Dispose();
+                cell.SetVisible(visible: false);
+                _previousCellsInVision.Remove(cell);
             }
         }
 
@@ -208,9 +200,10 @@ namespace Core.Local_Map.Scripts
             }
         }
 
+        [NotNull]
         public LocalMapRecord GenerateRecord() => LocalMapRecord.FromLocalMap(localMapManager: this);
 
-        public void CellPointerEnter(Cell cell)
+        public void CellPointerEnter([NotNull] Cell cell)
         {
             cellMouseOverAudioSource.Play();
             if (cell.IsObstacle || cell.AlreadyExplored || !CurrentPlayerTile.IsNeighbor(cell))
@@ -221,7 +214,7 @@ namespace Core.Local_Map.Scripts
             _arrowAnimator.gameObject.SetActive(true);
         }
 
-        public void CellPointerExit(Cell cell)
+        public void CellPointerExit([NotNull] Cell cell)
         {
             if (_arrowAnimator.transform.parent == cell.transform)
             {
@@ -230,7 +223,7 @@ namespace Core.Local_Map.Scripts
             }
         }
 
-        public void GenerateMap(Option<WorldPath> source, IReadOnlyList<PathBetweenNodesBlueprint> nodes, in FullPathInfo fullPathInfo, LocationEnum origin, LocationEnum destination)
+        public void GenerateMap(Option<WorldPath> source, ReadOnlySpan<PathBetweenNodesBlueprint> nodes, in FullPathInfo fullPathInfo, LocationEnum origin, LocationEnum destination)
         {
             if (Save.AssertInstance(out Save save) == false)
                 return;
@@ -251,7 +244,7 @@ namespace Core.Local_Map.Scripts
             List<HexagonPath> allPaths = new();
             Axial firstCellPosition = Axial.Zero;
             Axial secondCellPosition = fullPathInfo.PolarEndAngle.PolarToAxialLength(length: 1);
-            Axial lastNode = Axial.FromPolarAngleDeg(fullPathInfo.PolarEndAngle, length: totalLength);
+            Axial lastNode = Axial.FromPolarAngleDeg(fullPathInfo.PolarEndAngle, totalLength);
 
             Dictionary<Axial, Cell> map = GenerateMapLayout(firstCellPosition, lastNode, mapSize + nodes.Max(selector: info => info.Length), GameObjectMap);
             foreach (Cell cell in map.Values)
@@ -294,7 +287,7 @@ namespace Core.Local_Map.Scripts
             GC.Collect();
         }
 
-        public void GenerateMap(LocalMapRecord record)
+        public void GenerateMap([NotNull] LocalMapRecord record)
         {
             if (MusicManager.AssertInstance(out MusicManager musicManager))
                 musicManager.NotifyEvent(MusicEvent.Exploration);
@@ -314,11 +307,13 @@ namespace Core.Local_Map.Scripts
             GC.Collect();
         }
 
-        private static void AssignEventsToCells(List<HexagonPath> allPaths)
+        private static void AssignEventsToCells([NotNull] List<HexagonPath> allPaths)
         {
             Dictionary<Cell, HashSet<HexagonPath>> cellsOnMultiplePaths = new();
             foreach (HexagonPath outerPath in allPaths) // checking cells that are on multiple paths
+            {
                 foreach (Cell outerCell in outerPath.Cells)
+                {
                     foreach (HexagonPath innerPath in allPaths)
                     {
                         if (innerPath == outerPath)
@@ -342,6 +337,8 @@ namespace Core.Local_Map.Scripts
                             break;
                         }
                     }
+                }
+            }
 
             foreach ((Cell cell, HashSet<HexagonPath> containerPaths) in cellsOnMultiplePaths)
             {
@@ -365,11 +362,13 @@ namespace Core.Local_Map.Scripts
                 path.AssignEvents(alreadyPicked: alreadyAssigned);
         }
 
-        private static void SetObstacles(in FullPathInfo fullPathInfo, List<HexagonPath> allPaths, Dictionary<Axial, Cell> map, List<(Cell dangerCell, Cell restCell)> mainTiles, Cell behindFirstCell)
+        private static void SetObstacles(in FullPathInfo fullPathInfo, [NotNull] List<HexagonPath> allPaths, [NotNull] Dictionary<Axial, Cell> map, List<(Cell dangerCell, Cell restCell)> mainTiles, Cell behindFirstCell)
         {
             foreach (HexagonPath path in allPaths)
+            {
                 foreach (Cell tile in path.Cells)
                     tile.TrySetObstacle(false);
+            }
 
             foreach (Cell cell in map.Values)
             {
@@ -416,8 +415,8 @@ namespace Core.Local_Map.Scripts
             }
         }
 
-        private static void GeneratePaths(IReadOnlyList<PathBetweenNodesBlueprint> nodes, PathInfo pathInfo, Cell secondNode,
-                                          IReadOnlyList<(Cell dangerCell, Cell restCell)> mainTiles, ref Dictionary<Axial, Cell> map, ref List<HexagonPath> allPaths)
+        private static void GeneratePaths(ReadOnlySpan<PathBetweenNodesBlueprint> nodes, PathInfo pathInfo, Cell secondNode, 
+                                          List<(Cell dangerCell, Cell restCell)> mainTiles, ref Dictionary<Axial, Cell> map, ref List<HexagonPath> allPaths)
         {
             Cell nodeStart = secondNode;
             for (int index = 0; index < mainTiles.Count - 1; index++)
@@ -428,17 +427,18 @@ namespace Core.Local_Map.Scripts
                 Cell pathEnd = nextPair.dangerCell;
                 int totalDistance = ManhattanDistance(nodeStart.position, pathEnd.position);
 
-                using var _ = GetValidNeighbors(mainTiles: mainTiles, map: map, startNeighbors: out List<(Direction direction, Axial axial)> startNeighbors, start: nodeStart);
-                using var _1 = GetMirror(originals: startNeighbors, mirror: out List<Direction> mirroredEnds);
+                using CustomValuePooledList<(Direction direction, Axial axial)> startNeighbors = GetValidNeighbors(mainTiles, map, nodeStart);
+                using CustomValuePooledList<Direction> mirroredEnds = GetMirror(originals: startNeighbors.AsSpan());
+                
                 List<int> startIndexes = new() { 0, 1, 2 };
 
-                float startCenterDirectionAngle = GetCenterDirectionOffTuple(directions: startNeighbors).ToPolarAngle();
-                float endCenterDirectionAngle = GetCenterDirection(directions: mirroredEnds).ToPolarAngle();
+                float startCenterDirectionAngle = GetCenterDirectionOffTuple(startNeighbors.AsSpan()).ToPolarAngle();
+                float endCenterDirectionAngle = GetCenterDirection(mirroredEnds.AsSpan()).ToPolarAngle();
 
                 (PathInfo pathInfo, Axial startPos, Cell[] intermediaryNodes)[] nodePaths = new (PathInfo, Axial, Cell[])[pathsToNode];
                 for (int i = 0; i < nodePaths.Length; i++)
                 {
-                    int neighborIndex = startIndexes.TakeRandom();
+                    int neighborIndex = startIndexes.TakeRandom<int, List<int>>();
                     (Direction startDirection, Axial pathStart) = startNeighbors[neighborIndex];
                     float firstDirectionAngle = MathExtensions.GetSmallestClockwiseAngle(start: startCenterDirectionAngle, end: startDirection.ToPolarAngle());
                     (float, float) firstRange = firstDirectionAngle switch
@@ -449,8 +449,8 @@ namespace Core.Local_Map.Scripts
                     };
 
                     float firstAngle = startDirection.ToPolarAngle() + Random.Range(minInclusive: firstRange.Item1, maxInclusive: firstRange.Item2);
-                    float firstMultiplier =  0.75f + Mathf.Abs(firstDirectionAngle) * 0.00416667f; // same as dividing by 240 but more efficient
-                    int firstLength = Mathf.CeilToInt((totalDistance / 3f) * (1.25f - Random.value / 2f) * firstMultiplier);
+                    float firstMultiplier =  0.75f + (Mathf.Abs(firstDirectionAngle) * 0.00416667f); // same as dividing by 240 but more efficient
+                    int firstLength = Mathf.CeilToInt((totalDistance / 3f) * (1.25f - (Random.value / 2f)) * firstMultiplier);
                     Axial firstIntermediary = firstAngle.PolarToAxialLength(length: firstLength) + pathStart;
 
                     Direction endDirection = mirroredEnds[neighborIndex];
@@ -463,8 +463,8 @@ namespace Core.Local_Map.Scripts
                     };
 
                     float secondAngle = endDirection.ToPolarAngle() + Random.Range(minInclusive: secondRange.Item1, maxInclusive: secondRange.Item2);
-                    float secondMultiplier =  0.75f + Mathf.Abs(secondDirectionAngle) * 0.00416667f; // same as dividing by 240 but more efficient
-                    int secondLength = Mathf.CeilToInt((totalDistance / 3f) * (1.25f - Random.value / 2f) * secondMultiplier);
+                    float secondMultiplier =  0.75f + (Mathf.Abs(secondDirectionAngle) * 0.00416667f); // same as dividing by 240 but more efficient
+                    int secondLength = Mathf.CeilToInt((totalDistance / 3f) * (1.25f - (Random.value / 2f)) * secondMultiplier);
                     Axial secondIntermediary = secondAngle.PolarToAxialLength(length: secondLength) + pathEnd.position;
                     nodePaths[i] = (pathInfo, pathStart, new[] { map[firstIntermediary], map[secondIntermediary] });
                 }
@@ -564,21 +564,25 @@ namespace Core.Local_Map.Scripts
                 nodeStart = nextPair.restCell;
             }
 
-            static PooledObject<List<(Direction direction, Axial axial)>> GetValidNeighbors(IReadOnlyList<(Cell dangerCell, Cell restCell)> mainTiles, 
-                Dictionary<Axial, Cell> map, out List<(Direction direction, Axial axial)> startNeighbors, Cell start)
+            return;
+
+            [MustUseReturnValue]
+            static CustomValuePooledList<(Direction direction, Axial axial)> GetValidNeighbors(List<(Cell dangerCell, Cell restCell)> mainTiles, Dictionary<Axial, Cell> map, [NotNull] Cell start)
             {
-                PooledObject<List<(Direction direction, Axial axial)>> pool = start.position.GetClockWiseOrderedNeighbors(neighbors: out startNeighbors);
+                CustomValuePooledList<(Direction, Axial)> startNeighbors = start.position.GetClockWiseOrderedNeighbors();
                 for (int i = 0; i < startNeighbors.Count; i++)
                 {
                     (Direction _, Axial axial) = startNeighbors.ToArray()[i];
                     Cell tile = map[axial];
                     bool equalsMain = false;
                     foreach ((Cell dangerAxial, Cell restAxial) in mainTiles)
+                    {
                         if (dangerAxial == tile || restAxial == tile)
                         {
                             equalsMain = true;
                             break;
                         }
+                    }
 
                     if (tile.ForcedObstacle || equalsMain)
                     {
@@ -587,9 +591,10 @@ namespace Core.Local_Map.Scripts
                     }
                 }
 
-                return pool;
+                return startNeighbors;
             }
-            static Direction GetCenterDirectionOffTuple<T>(List<(Direction direction, T)> directions)
+            
+            static Direction GetCenterDirectionOffTuple(ReadOnlySpan<(Direction direction, Axial)> directions)
             {
                 Direction best = directions[0].direction;
                 float bestDistance = float.MaxValue;
@@ -608,7 +613,8 @@ namespace Core.Local_Map.Scripts
 
                 return best;
             }
-            static Direction GetCenterDirection(List<Direction> directions)
+            
+            static Direction GetCenterDirection(ReadOnlySpan<Direction> directions)
             {
                 Direction best = directions[0];
                 float bestDistance = float.MaxValue;
@@ -627,16 +633,17 @@ namespace Core.Local_Map.Scripts
 
                 return best;
             }
-            static PooledObject<List<Direction>> GetMirror<T>(List<(Direction direction, T)> originals, out List<Direction> mirror)
+            
+            static CustomValuePooledList<Direction> GetMirror(ReadOnlySpan<(Direction direction, Axial)> originals)
             {
-                PooledObject<List<Direction>> pool = UnityEngine.Pool.ListPool<Direction>.Get(out mirror);
-                Direction[] array = new Direction[3];
+                CustomValuePooledList<Direction> mirror = new(capacity: 3);
+                Span<Direction> array = stackalloc Direction[3];
                 for (int i = 0; i < 3; i++) 
                     mirror.Add(originals[i].direction.GetOpposite());
 
-                Direction originalCenter = GetCenterDirectionOffTuple(directions: originals);
+                Direction originalCenter = GetCenterDirectionOffTuple(originals);
                 int indexOfOriginalCenter = originals[0].direction == originalCenter ? 0 : originals[1].direction == originalCenter ? 1 : 2; //messy but avoids memory allocation
-                Direction mirrorCenter = GetCenterDirection(directions: mirror);
+                Direction mirrorCenter = GetCenterDirection(mirror.AsSpan());
                 array[indexOfOriginalCenter] = mirrorCenter;
                 for (int index = 0; index < mirror.Count; index++)
                 {
@@ -668,10 +675,10 @@ namespace Core.Local_Map.Scripts
                 foreach (Direction direction in array) 
                     mirror.Add(direction);
 
-                return pool;
+                return mirror;
             }
 
-            static PooledObject<Dictionary<Axial, (Cell cell, float weight)>> GenerateRandomWeightMap(IReadOnlyDictionary<Axial, Cell> source, out Dictionary<Axial, (Cell cell, float weight)> weightMap)
+            static PooledObject<Dictionary<Axial, (Cell cell, float weight)>> GenerateRandomWeightMap([NotNull] IReadOnlyDictionary<Axial, Cell> source, out Dictionary<Axial, (Cell cell, float weight)> weightMap)
             {
                 PooledObject<Dictionary<Axial, (Cell cell, float weight)>> pool = DictionaryPool<Axial, (Cell cell, float weight)>.Get(out weightMap);
                 foreach (Cell cell in source.Values)
@@ -681,7 +688,7 @@ namespace Core.Local_Map.Scripts
             }
         }
 
-        private static void CheckMainTilesAccessibility(List<(Cell dangerCell, Cell restCell)> mainTiles, IReadOnlyDictionary<Axial, Cell> map)
+        private static void CheckMainTilesAccessibility([NotNull] List<(Cell dangerCell, Cell restCell)> mainTiles, IReadOnlyDictionary<Axial, Cell> map)
         {
             foreach ((Cell dangerTile, Cell restTile) in mainTiles)
             {
@@ -703,7 +710,7 @@ namespace Core.Local_Map.Scripts
                     
                     adjacent.SetForcedObstacle(true);
                     Axial axialDirection = direction.ToAxial();
-                    Axial wall = dangerTile.position + axialDirection * 2;
+                    Axial wall = dangerTile.position + (axialDirection * 2);
                     while (map.TryGetValue(wall, out Cell wallTile))
                     {
                         wallTile.SetForcedObstacle(true);
@@ -718,7 +725,7 @@ namespace Core.Local_Map.Scripts
                     
                     adjacent.SetForcedObstacle(true);
                     Axial axialDirection = direction.ToAxial();
-                    Axial wall = restTile.position + axialDirection * 2;
+                    Axial wall = restTile.position + (axialDirection * 2);
                     while (map.TryGetValue(wall, out Cell wallTile))
                     {
                         wallTile.SetForcedObstacle(true);
@@ -728,6 +735,7 @@ namespace Core.Local_Map.Scripts
             }
         }
 
+        [NotNull]
         private static Dictionary<Axial, Cell> GenerateMapLayout(Axial firstNode, Axial lastNode, int mapSize, HexagonMap gameObjectMap)
         {
             Offset firstOff = firstNode.ToOffset();
@@ -741,11 +749,11 @@ namespace Core.Local_Map.Scripts
             return map;
         }
 
-        private static void SetMainNodesEvents(LocationEnum destination, IReadOnlyList<PathBetweenNodesBlueprint> nodes, float polarEndAngle, Axial firstNode, Axial secondNode,
-                                               ref List<(Cell dangerCell, Cell restCell)> mainTiles, Axial lastDangerAxial, ref Dictionary<Axial, Cell> map)
+        private static void SetMainNodesEvents(LocationEnum destination, ReadOnlySpan<PathBetweenNodesBlueprint> nodes, float polarEndAngle, Axial firstNode, Axial secondNode,
+                                               [NotNull] ref List<(Cell dangerCell, Cell restCell)> mainTiles, Axial lastDangerAxial, [NotNull] ref Dictionary<Axial, Cell> map)
         {
             (Axial _, Axial restAxial) = (firstNode, secondNode);
-            for (int index = 0; index < nodes.Count - 1; index++)
+            for (int index = 0; index < nodes.Length - 1; index++)
             {
                 PathBetweenNodesBlueprint nodeInfo = nodes[index];
                 Axial nextDangerAxial = polarEndAngle.PolarToAxialLength(length: nodeInfo.Length - 1) + restAxial;
@@ -765,7 +773,7 @@ namespace Core.Local_Map.Scripts
                 restAxial = nextRestAxial;
             }
 
-            PathBetweenNodesBlueprint lastNodeInfo = nodes.Last();
+            PathBetweenNodesBlueprint lastNodeInfo = nodes[^1];
 
             Cell lastDangerCell = map[lastDangerAxial];
             lastDangerCell.SetVisuals(lastNodeInfo.DangerCellInfo, lastNodeInfo.DangerCellInfo.GetRandomSprite());

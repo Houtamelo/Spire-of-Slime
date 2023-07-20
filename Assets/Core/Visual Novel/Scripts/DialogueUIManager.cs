@@ -4,8 +4,8 @@ using Core.Utils.Extensions;
 using Core.Utils.Handlers;
 using Core.Utils.Patterns;
 using DG.Tweening;
+using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Visual_Novel.Scripts
 {
@@ -74,6 +74,7 @@ namespace Core.Visual_Novel.Scripts
             }
         }
         
+        [CanBeNull]
         public IEnumerator SetUI(bool active, float duration)
         {
             _fadeUITween.KillIfActive();
@@ -83,7 +84,9 @@ namespace Core.Visual_Novel.Scripts
                 canvasGroup.interactable = true;
                 canvasGroup.blocksRaycasts = true;
                 if (duration <= 0f)
+                {
                     canvasGroup.alpha = 1f;
+                }
                 else
                 {
                     Tween tween = _fadeUITween = canvasGroup.DOFade(endValue: 1f, duration);
@@ -95,7 +98,9 @@ namespace Core.Visual_Novel.Scripts
                 canvasGroup.interactable = false;
                 canvasGroup.blocksRaycasts = false;
                 if (duration <= 0f)
+                {
                     canvasGroup.alpha = 0f;
+                }
                 else
                 {
                     Tween tween = _fadeUITween = canvasGroup.DOFade(endValue: 0f, duration);

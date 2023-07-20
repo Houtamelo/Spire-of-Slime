@@ -1,14 +1,14 @@
-﻿using Core.Combat.Scripts.Interfaces;
-using Core.Combat.Scripts.Interfaces.Modules;
+﻿using Core.Combat.Scripts.Behaviour.Modules;
+using Core.Combat.Scripts.Interfaces;
 using Core.Localization.Scripts;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Screen_Buttons.Scripts
 {
@@ -34,7 +34,7 @@ namespace Core.Screen_Buttons.Scripts
         private Option<AudioSource> _pointerEnterSound;
         public Option<IReadonlyCharacterStats> AssignedCharacter { get; private set; }
             
-        public void SetCharacter(IReadonlyCharacterStats character)
+        public void SetCharacter([NotNull] IReadonlyCharacterStats character)
         {
             gameObject.SetActive(true);
             SetLust(character.Lust);
@@ -56,7 +56,7 @@ namespace Core.Screen_Buttons.Scripts
             portraitBackground.color = color.IsSome ? color.Value : Color.white;
         }
         
-        private void SetLust(uint lust)
+        private void SetLust(int lust)
         {
             if (lust <= 100)
             {

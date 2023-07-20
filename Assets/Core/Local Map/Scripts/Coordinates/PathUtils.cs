@@ -4,9 +4,9 @@ using System.Linq;
 using Core.Local_Map.Scripts.Enums;
 using Core.Local_Map.Scripts.HexagonObject;
 using Core.Utils.Collections;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using JetBrains.Annotations;
-using ListPool;
 using UnityEngine;
 using UnityEngine.Pool;
 using Random = System.Random;
@@ -33,14 +33,14 @@ namespace Core.Local_Map.Scripts.Coordinates
             return distance;
         }
         
-        public static int ManhattanDistance(Cell left, Cell right)
+        public static int ManhattanDistance([NotNull] Cell left, [NotNull] Cell right)
         {
             Axial vec = left.position - right.position;
             int distance = (Mathf.Abs(value: vec.q) + Mathf.Abs(value: vec.q + vec.r) + Mathf.Abs(value: vec.r)) / 2;
             return distance;
         }
 
-        public static PooledObject<HashSet<Axial>> GetNeighbors(Axial currentPosition, int maxDistance, out HashSet<Axial> neighbors)
+        public static PooledObject<HashSet<Axial>> GetNeighbors(Axial currentPosition, int maxDistance, [NotNull] out HashSet<Axial> neighbors)
         {
             PooledObject<HashSet<Axial>> pool = HashSetPool<Axial>.Get(out neighbors);
             for (int q = -maxDistance; q <= maxDistance; q++)
@@ -58,20 +58,22 @@ namespace Core.Local_Map.Scripts.Coordinates
 
         #region Mapping
 
-        private static void RemoveIfNeighbor(ref HashSet<Axial> collection, Axial position)
+        private static void RemoveIfNeighbor([NotNull] ref HashSet<Axial> collection, Axial position)
         {
             foreach (Axial cube in collection.ToArray())
+            {
                 if (cube.IsNeighborOrEqual(other: ref position))
                     collection.Remove(cube);
+            }
         }
         
-        private static void RemoveIfNeighbor(ref HashSet<Axial> candidates, HashSet<Axial> excludingPositions)
+        private static void RemoveIfNeighbor(ref HashSet<Axial> candidates, [NotNull] HashSet<Axial> excludingPositions)
         {
             foreach (Axial cube in excludingPositions)
                 RemoveIfNeighbor(collection: ref candidates, position: cube);
         }
 
-        private static void KeepClosestToTangent(ref HashSet<Axial> candidates, Axial tangent, Axial goal)
+        private static void KeepClosestToTangent([NotNull] ref HashSet<Axial> candidates, Axial tangent, Axial goal)
         {
             Dictionary<int, List<Axial>> dictionary = new();
             foreach (Axial candidate in candidates)
@@ -129,14 +131,14 @@ namespace Core.Local_Map.Scripts.Coordinates
             int rGrid = Mathf.RoundToInt(f: r);
             q -= qGrid;
             r -= rGrid;
-            return Math.Abs(value: q) >= Math.Abs(value: r) ? new Vector2Int(x: qGrid + Mathf.RoundToInt(f: q + 0.5f * r), y: rGrid) :
-                new Vector2Int(x: qGrid, y: rGrid + Mathf.RoundToInt(f: r + 0.5f * q));
+            return Math.Abs(value: q) >= Math.Abs(value: r) ? new Vector2Int(x: qGrid + Mathf.RoundToInt(f: q + (0.5f * r)), y: rGrid) :
+                new Vector2Int(x: qGrid, y: rGrid + Mathf.RoundToInt(f: r + (0.5f * q)));
         }
 
         public static Axial GetTangent(Axial begin, Axial end, float originalAngle, float curveDelta, float size)
         {
-            float tangentAngle = originalAngle + curveDelta * 45;
-            int distance = Mathf.CeilToInt(ManhattanDistance(begin, end) / (2 - Math.Abs(value: curveDelta) / 90));
+            float tangentAngle = originalAngle + (curveDelta * 45);
+            int distance = Mathf.CeilToInt(ManhattanDistance(begin, end) / (2 - (Math.Abs(value: curveDelta) / 90)));
             return tangentAngle.PolarToAxialLength(distance);
         }
 
@@ -149,18 +151,20 @@ namespace Core.Local_Map.Scripts.Coordinates
             return Vector2.SignedAngle(from: Vector2.right, to: direction);
         }
         
-        public static PooledObject<HashSet<Axial>> GetRing(Axial center, int radius, out HashSet<Axial> results)
+        public static PooledObject<HashSet<Axial>> GetRing(Axial center, int radius, [NotNull] out HashSet<Axial> results)
         {
             PooledObject<HashSet<Axial>> pool = HashSetPool<Axial>.Get(out results);
-            Axial hex = center + ToAxial(direction: Direction.NorthWest) * radius;
+            Axial hex = center + (ToAxial(Direction.NorthWest) * radius);
             results.Add(hex);
             for (int i = 0; i < 6; i++)
+            {
                 for (int j = 0; j < radius; j++)
                 {
                     hex = GetNeighbor(center: hex, direction: (Direction) i);
                     results.Add(hex);
                 }
-            
+            }
+
             return pool;
         }
 
@@ -227,21 +231,25 @@ namespace Core.Local_Map.Scripts.Coordinates
             };
         }
 
-        public static Axial GetNeighbor(this Axial center, Direction direction) => center + ToAxial(direction: direction);
+        public static Axial GetNeighbor(this Axial center, Direction direction) => center + ToAxial(direction);
 
-        public static Dictionary<int, Axial> NodesBetween(int left, int right, IReadOnlyDictionary<int, Axial> collectionToCheck)
+        [NotNull]
+        public static Dictionary<int, Axial> NodesBetween(int left, int right, [NotNull] IReadOnlyDictionary<int, Axial> collectionToCheck)
         {
             Dictionary<int, Axial> dictionary = new();
             int lowest = Math.Min(val1: left, val2: right);
             int max = Math.Max(val1: left, val2: right);
             foreach ((int key, Axial value) in collectionToCheck)
+            {
                 if (key >= lowest || key <= max)
                     dictionary[key: key] = value;
+            }
 
             return dictionary;
         }
 
-        public static (Dictionary<int, Axial> path, float weight)[] WeighByAverageDistance(this List<Dictionary<int, Axial>> paths, Axial reference)
+        [NotNull]
+        public static (Dictionary<int, Axial> path, float weight)[] WeighByAverageDistance([NotNull] this List<Dictionary<int, Axial>> paths, Axial reference)
         {
             (Dictionary<int, Axial> path, float weight)[] weights = new (Dictionary<int, Axial> path, float weight)[paths.Count];
             
@@ -259,7 +267,7 @@ namespace Core.Local_Map.Scripts.Coordinates
             return weights;
         }
 
-        public static Dictionary<int, Axial> GetAverageCloserTo(this List<Dictionary<int, Axial>> paths, Axial reference)
+        public static Dictionary<int, Axial> GetAverageCloserTo([NotNull] this List<Dictionary<int, Axial>> paths, Axial reference)
         {
             Dictionary<int, Axial> best = paths[index: 0];
             int bestDistance = int.MaxValue;
@@ -280,7 +288,7 @@ namespace Core.Local_Map.Scripts.Coordinates
             return best;
         }
 
-        public static void AvoidNeighboring(this List<Axial> positions, params Axial[] tilesToAvoid)
+        public static void AvoidNeighboring([NotNull] this List<Axial> positions, params Axial[] tilesToAvoid)
         {
             for (int i = 0; i < positions.Count; i++)
             {
@@ -298,7 +306,7 @@ namespace Core.Local_Map.Scripts.Coordinates
             }
         }
 
-        public static void AvoidNeighboring(this HashSet<Axial> positions, params Axial[] tilesToAvoid)
+        public static void AvoidNeighboring([NotNull] this HashSet<Axial> positions, params Axial[] tilesToAvoid)
         {
             foreach (Axial pos in positions.ToArray())
             {
@@ -316,22 +324,23 @@ namespace Core.Local_Map.Scripts.Coordinates
 
         public static NeighborEnumerator GetClosestNeighbors(this Axial center) => new(center);
 
-        public static PooledObject<List<(Direction, Axial)>> GetClockWiseOrderedNeighbors(this Axial center, out List<(Direction, Axial)> neighbors)
+        public static CustomValuePooledList<(Direction, Axial)> GetClockWiseOrderedNeighbors(this Axial center)
         {
-            PooledObject<List<(Direction, Axial)>> pool = UnityEngine.Pool.ListPool<(Direction, Axial)>.Get(out neighbors);
-            neighbors.Add((Direction.NorthEast, center + ToAxial(direction: Direction.NorthEast)));
-            neighbors.Add((Direction.East, center + ToAxial(direction: Direction.East)));
-            neighbors.Add((Direction.SouthEast, center + ToAxial(direction: Direction.SouthEast)));
-            neighbors.Add((Direction.SouthWest, center + ToAxial(direction: Direction.SouthWest)));
-            neighbors.Add((Direction.West, center + ToAxial(direction: Direction.West)));
-            neighbors.Add((Direction.NorthWest, center + ToAxial(direction: Direction.NorthWest)));
-
-            return pool;
+            CustomValuePooledList<(Direction, Axial)> neighbors = new(capacity: 6);
+            neighbors.Add((Direction.NorthEast, center + ToAxial(Direction.NorthEast)));
+            neighbors.Add((Direction.East, center + ToAxial(Direction.East)));
+            neighbors.Add((Direction.SouthEast, center + ToAxial(Direction.SouthEast)));
+            neighbors.Add((Direction.SouthWest, center + ToAxial(Direction.SouthWest)));
+            neighbors.Add((Direction.West, center + ToAxial(Direction.West)));
+            neighbors.Add((Direction.NorthWest, center + ToAxial(Direction.NorthWest)));
+            
+            return neighbors;
         }
 
+        [NotNull]
         public static int[] GetPickOrder(int begin, int end)
         {
-            using PooledObject<List<int>> pool1 = UnityEngine.Pool.ListPool<int>.Get(out List<int> range);
+            using PooledObject<List<int>> pool1 = ListPool<int>.Get(out List<int> range);
             if (begin < end)
                 for (int i = begin; i <= end; i++)
                     range.Add(i);
@@ -342,14 +351,14 @@ namespace Core.Local_Map.Scripts.Coordinates
                 range.Add(begin);
             
             int length = Mathf.Abs(value: begin - end);
-            int previous = range.TakeAt(index: range.Count / 2);
-            using PooledObject<List<int>> pool = UnityEngine.Pool.ListPool<int>.Get(out List<int> pickList);
+            int previous = range.TakeAt<int, List<int>>(range.Count / 2);
+            using PooledObject<List<int>> pool = ListPool<int>.Get(out List<int> pickList);
             pickList.Add(previous);
             while (range.Count != 0)
             {
                 int count = range.Count;
                 float relativeLength = (float) count / length;
-                int extracted = range.TakeAt(index: Mathf.Clamp(value: Mathf.FloorToInt((end - previous) * relativeLength), min: 0, max: count - 1));
+                int extracted = range.TakeAt<int, List<int>>(Mathf.Clamp(Mathf.FloorToInt((end - previous) * relativeLength), min: 0, max: count - 1));
                 previous = extracted;
                 pickList.Add(extracted);
 
@@ -357,7 +366,7 @@ namespace Core.Local_Map.Scripts.Coordinates
                 if (count != 0)
                 {
                     relativeLength = (float) count / length;
-                    extracted = range.TakeAt(index: Mathf.Clamp(value: Mathf.FloorToInt((previous - begin) * relativeLength), min: 0, max: count - 1));
+                    extracted = range.TakeAt<int, List<int>>(Mathf.Clamp(Mathf.FloorToInt((previous - begin) * relativeLength), min: 0, max: count - 1));
                     previous = extracted;
                     pickList.Add(extracted);
                 }
@@ -366,7 +375,7 @@ namespace Core.Local_Map.Scripts.Coordinates
             return pickList.ToArray();
         }
 
-        public static float GetAverageDistanceTo(this Dictionary<int, Axial> dictionary, Axial reference)
+        public static float GetAverageDistanceTo([NotNull] this Dictionary<int, Axial> dictionary, Axial reference)
         {
             float distance = 0;
             foreach ((int _, Axial value) in dictionary) 
@@ -376,7 +385,7 @@ namespace Core.Local_Map.Scripts.Coordinates
             return distance;
         }
         
-        public static (int, Axial) FindClosest(Dictionary<int, Axial> dictionary, int index)
+        public static (int, Axial) FindClosest([NotNull] Dictionary<int, Axial> dictionary, int index)
         {
             Axial closest = default;
             int closestIndex = 0;
@@ -395,14 +404,14 @@ namespace Core.Local_Map.Scripts.Coordinates
             return (closestIndex, closest);
         }
         
-        public static Dictionary<int, Axial> ExtractFirst(this SortedList<float, Dictionary<int, Axial>> list)
+        public static Dictionary<int, Axial> ExtractFirst([NotNull] this SortedList<float, Dictionary<int, Axial>> list)
         {
             Dictionary<int, Axial> dic = list.Values[index: 0];
             list.RemoveAt(index: 0);
             return dic;
         }
         
-        public static Dictionary<int, Axial> ExtractRandom(this SortedList<float, Dictionary<int, Axial>> list)
+        public static Dictionary<int, Axial> ExtractRandom([NotNull] this SortedList<float, Dictionary<int, Axial>> list)
         {
             int index = Random.Next(minValue: 0, maxValue: list.Count);
             Dictionary<int, Axial> dic = list.Values[index: index];
@@ -410,7 +419,8 @@ namespace Core.Local_Map.Scripts.Coordinates
             return dic;
         }
 
-        public static (Dictionary<int, Axial> path, float)[] WeighSorted(this SortedList<float, Dictionary<int, Axial>> list)
+        [NotNull]
+        public static (Dictionary<int, Axial> path, float)[] WeighSorted([NotNull] this SortedList<float, Dictionary<int, Axial>> list)
         {
             int count = list.Count;
             (Dictionary<int, Axial> path, float weight)[] weights = new (Dictionary<int, Axial> path, float weight)[count];
@@ -423,7 +433,8 @@ namespace Core.Local_Map.Scripts.Coordinates
             return weights;
         }
 
-        public static Dictionary<Axial, Cell> GenerateTiles(this HashSet<Axial> positions, HexagonMap map)
+        [NotNull]
+        public static Dictionary<Axial, Cell> GenerateTiles([NotNull] this HashSet<Axial> positions, HexagonMap map)
         {
             Dictionary<Axial, Cell> cells = new(positions.Count);
             foreach (Axial position in positions)
@@ -432,9 +443,9 @@ namespace Core.Local_Map.Scripts.Coordinates
             return cells;
         }
 
-        public static PooledObject<List<Axial>> GetDirectPathBetween(Axial left, Axial right, out List<Axial> path)
+        public static PooledObject<List<Axial>> GetDirectPathBetween(Axial left, Axial right, [NotNull] out List<Axial> path)
         {
-            PooledObject<List<Axial>> pool = UnityEngine.Pool.ListPool<Axial>.Get(out path);
+            PooledObject<List<Axial>> pool = ListPool<Axial>.Get(out path);
             using PooledObject<List<Axial>> secondPool = GetDirectionCollection(left: left, right: right, dir: out List<Axial> directions);
             
             path.Add(left);
@@ -443,7 +454,7 @@ namespace Core.Local_Map.Scripts.Coordinates
             Axial current = left;
             for (int i = 0; i < count; i++)
             {
-                current += directions.TakeRandom();
+                current += directions.TakeRandom<Axial, List<Axial>>();
                 path.Add(current);
             }
             
@@ -452,7 +463,7 @@ namespace Core.Local_Map.Scripts.Coordinates
 
         private static PooledObject<List<Axial>> GetDirectionCollection(Axial left, Axial right, out List<Axial> dir)
         {
-            PooledObject<List<Axial>> directionsPool = UnityEngine.Pool.ListPool<Axial>.Get(out List<Axial> directions);
+            PooledObject<List<Axial>> directionsPool = ListPool<Axial>.Get(out List<Axial> directions);
             Axial vector = right - left;
             Axial qr = new(q1: 1, r1: -1),
                 qs = new(q1: 1, r1: 0),
@@ -533,7 +544,7 @@ namespace Core.Local_Map.Scripts.Coordinates
         public static PooledObject<List<(Direction, int)>> GetDirectionCount(Axial left, Axial right,
             out List<(Direction, int)> results)
         {
-            PooledObject<List<(Direction, int)>> pool = UnityEngine.Pool.ListPool<(Direction, int)>.Get(out List<(Direction, int)> directions);
+            PooledObject<List<(Direction, int)>> pool = ListPool<(Direction, int)>.Get(out List<(Direction, int)> directions);
             Axial vector = right - left;
             int q = vector.q, r = vector.r, s = vector.s;
             switch (q > 0, r > 0, s > 0)
@@ -607,13 +618,13 @@ namespace Core.Local_Map.Scripts.Coordinates
         public static PooledObject<List<Axial>> GetParallelDirections(Axial left, Axial right, out List<Axial> results)
         {
             int referenceDistance = ManhattanDistance(left, right);
-            PooledObject<List<Axial>> poolToReturn = UnityEngine.Pool.ListPool<Axial>.Get(out results);
-            Axial east = ToAxial(direction: Direction.East);
-            Axial southEast = ToAxial(direction: Direction.SouthEast);
-            Axial northEast = ToAxial(direction: Direction.NorthEast);
-            Axial west = ToAxial(direction: Direction.West);
-            Axial southWest = ToAxial(direction: Direction.SouthWest);
-            Axial northWest = ToAxial(direction: Direction.NorthWest);
+            PooledObject<List<Axial>> poolToReturn = ListPool<Axial>.Get(out results);
+            Axial east = ToAxial(Direction.East);
+            Axial southEast = ToAxial(Direction.SouthEast);
+            Axial northEast = ToAxial(Direction.NorthEast);
+            Axial west = ToAxial(Direction.West);
+            Axial southWest = ToAxial(Direction.SouthWest);
+            Axial northWest = ToAxial(Direction.NorthWest);
             if (ManhattanDistance(east + left, right) == referenceDistance)
                 results.Add(east);
             if (ManhattanDistance(southEast + left, right) == referenceDistance)
@@ -638,15 +649,17 @@ namespace Core.Local_Map.Scripts.Coordinates
             {
                 (Direction direction, int count) = directions[index: 0];
                 for (int i = 1; i < count; i++)
-                    tiles.Add(left + ToAxial(direction: direction) * i);
+                    tiles.Add(left + (ToAxial(direction) * i));
             }
             else
             {
                 (Direction outsideDir, int outsideCount) = directions[index: 0];
                 (Direction insideDir, int insideCount) = directions[index: 1];
                 for (int i = 0; i < outsideCount; i++)
+                {
                     for (int j = 0; j < insideCount; j++)
-                        tiles.Add(left + ToAxial(direction: outsideDir) * i + ToAxial(direction: insideDir) * j);
+                        tiles.Add(left + (ToAxial(outsideDir) * i) + (ToAxial(insideDir) * j));
+                }
 
                 tiles.Remove(right);
                 tiles.Remove(left);
@@ -705,7 +718,7 @@ namespace Core.Local_Map.Scripts.Coordinates
         private static readonly HashSet<Cell> ReusableSet = new(); 
 
         [MustUseReturnValue]
-        public static PooledObject<HashSet<Cell>> GetCellsInVision(Cell currentCell, int visionLength, out HashSet<Cell> cellsInVision)
+        public static PooledObject<HashSet<Cell>> GetCellsInVision(Cell currentCell, int visionLength, [NotNull] out HashSet<Cell> cellsInVision)
         {
             PooledObject<HashSet<Cell>> pool = HashSetPool<Cell>.Get(out cellsInVision);
             cellsInVision.Add(currentCell);
@@ -713,28 +726,22 @@ namespace Core.Local_Map.Scripts.Coordinates
             ReusableSet.Add(currentCell);
             for (int i = 0; i < visionLength; i++)
             {
-                FixedEnumerable<Cell> fixedEnumerable = ReusableSet.FixedEnumerate();
-                ValueListPool<Cell>.Enumerator fixedEnumerator = fixedEnumerable.GetEnumerator();
+                FixedEnumerator<Cell> fixedEnumerator = ReusableSet.FixedEnumerate();
                 ReusableSet.Clear();
-                try
-                {
-                    while (fixedEnumerator.MoveNext())
-                    {
-                        Cell cell = fixedEnumerator.Current;
-                        if (cell!.IsObstacle)
-                            continue;
 
-                        foreach (Cell neighbor in cell.Neighbors.Values)
-                        {
-                            cellsInVision.Add(neighbor);
-                            ReusableSet.Add(neighbor);
-                        }
+                foreach (Cell cell in fixedEnumerator) // foreach should dispose the enumerator
+                {
+                    if (cell.IsObstacle)
+                        continue;
+
+                    foreach (Cell neighbor in cell.Neighbors.Values)
+                    {
+                        cellsInVision.Add(neighbor);
+                        ReusableSet.Add(neighbor);
                     }
                 }
-                finally
-                {
-                    fixedEnumerable.Dispose();
-                }
+                
+                Debug.Assert(fixedEnumerator.Allocated == false); // should be disposed
             }
 
             return pool;

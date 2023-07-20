@@ -1,7 +1,7 @@
 ﻿using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
-using Utils.Patterns;
 using Yarn.Unity;
 
 namespace Core.Visual_Novel.Scripts
@@ -27,6 +27,7 @@ namespace Core.Visual_Novel.Scripts
                 _currentDialogueFlag.SetDone(interrupted: false);
         }
 
+        [NotNull]
         public DialogueTracker Play(string sceneName)
         {
             if (_currentDialogueFlag is { IsDone: false }) 
@@ -38,7 +39,7 @@ namespace Core.Visual_Novel.Scripts
             return _currentDialogueFlag;
         }
         
-        public bool SceneExists(string sceneName)
+        public bool SceneExists([CanBeNull] string sceneName)
         {
             if (string.IsNullOrEmpty(sceneName))
                 return false;

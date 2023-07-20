@@ -10,12 +10,14 @@ using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 
 namespace Core.Local_Map.Data.Paths.Chapel___Grove.Events.Wounded_Crabdra
 {
     public class MutationPlusDamage : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             MutationPlusDamageInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -36,21 +38,19 @@ namespace Core.Local_Map.Data.Paths.Chapel___Grove.Events.Wounded_Crabdra
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
-        {
-            return new MutationPlusDamageInstance(owner, this);
-        }
+        [NotNull]
+        public override PerkInstance CreateInstance(CharacterStateMachine owner, DirectCharacterEnumerator allCharacters) => new MutationPlusDamageInstance(owner, this);
     }
 
     public class MutationPlusDamageInstance : PerkInstance, ISkillModifier
     {
-        private const float DamageMultiplier = 1.1f;
+        private const int DamageMultiplier = 110;
         
         public MutationPlusDamageInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
 
-        public MutationPlusDamageInstance(CharacterStateMachine owner, PerkRecord record) : base(owner, record)
+        public MutationPlusDamageInstance(CharacterStateMachine owner, [NotNull] PerkRecord record) : base(owner, record)
         {
         }
 
@@ -66,12 +66,14 @@ namespace Core.Local_Map.Data.Paths.Chapel___Grove.Events.Wounded_Crabdra
             for (int i = 0; i < count; i++)
             {
                 ref TargetProperties targetProperties = ref skillStruct.TargetProperties[i];
-                if (targetProperties.DamageModifier.TrySome(out float baseModifier) && targetProperties.Target.Script.Race is Race.Mutation)
-                    targetProperties.DamageModifier = baseModifier * DamageMultiplier;
+                if (targetProperties.Power.TrySome(out int basePower) && targetProperties.Target.Script.Race is Race.Mutation)
+                    targetProperties.Power = (basePower * DamageMultiplier) / 100;
             }
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new MutationPlusDamageRecord(Key);
+        [NotNull]
         public string SharedId => nameof(MutationPlusDamage);
         public int Priority => 2;
     }

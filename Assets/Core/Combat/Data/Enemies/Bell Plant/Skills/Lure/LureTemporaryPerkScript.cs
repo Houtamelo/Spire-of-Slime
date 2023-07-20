@@ -9,14 +9,15 @@ using Core.Combat.Scripts.Perks;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Data.Enemies.Bell_Plant.Skills.Lure
 {
     public class LureTemporaryPerkScript : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             LureTemporaryPerkInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -28,7 +29,8 @@ namespace Core.Combat.Data.Enemies.Bell_Plant.Skills.Lure
     {
         public override bool IsDataValid(StringBuilder errors, ICollection<CharacterRecord> allCharacters) => true;
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             LureTemporaryPerkInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -46,7 +48,7 @@ namespace Core.Combat.Data.Enemies.Bell_Plant.Skills.Lure
         {
         }
         
-        public LureTemporaryPerkInstance(CharacterStateMachine owner, LureTemporaryPerkRecord record) : base(owner, record)
+        public LureTemporaryPerkInstance(CharacterStateMachine owner, [NotNull] LureTemporaryPerkRecord record) : base(owner, record)
         {
         }
 
@@ -60,16 +62,17 @@ namespace Core.Combat.Data.Enemies.Bell_Plant.Skills.Lure
             Owner.Events.SelfAttackedListeners.Remove(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new LureTemporaryPerkRecord(Key);
 
         public void OnSelfAttacked(ref ActionResult result)
         {
-            if (result.Caster.PositionHandler.IsLeftSide == result.Target.PositionHandler.IsLeftSide || result.Skill.AllowAllies || result.Caster.LustModule.IsNone || result.Missed)
+            if (result.Caster.PositionHandler.IsLeftSide == result.Target.PositionHandler.IsLeftSide || result.Skill.IsPositive || result.Caster.LustModule.IsNone || result.Missed)
                 return;
             
             result.Caster.LustModule.Value.ChangeLust(delta: +12);
             
-            if (Owner.Display.TrySome(out CharacterDisplay display) == false)
+            if (Owner.Display.TrySome(out DisplayModule display) == false)
                 return;
             
             CombatAnimation animation = new(Param_LureSplash, Option<CasterContext>.None, Option<TargetContext>.Some(new TargetContext(result)), LureSplashID);

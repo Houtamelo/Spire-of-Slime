@@ -11,7 +11,10 @@ using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 using ListPool;
 using UnityEngine;
 
@@ -19,7 +22,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
 {
     public class NoQuarters : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             NoQuartersInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -40,7 +44,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             NoQuartersInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -50,18 +55,16 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
     
     public class NoQuartersInstance : PerkInstance, IStunModifier, ISkillModifier
     {
-        private const float BonusDamagePerDebuffStack = 0.075f;
-        private const float MaxDamage = 0.3f;
-        private const float BonusDamageIfStunned = 0.1f;
-        private const float JoltDurationModifier = 0.5f;
-        public string SharedId => nameof(NoQuartersInstance);
-        public int Priority => 0;
-        
+        private const int BonusDamagePerDebuffStack = 7;
+        private const int MaxDamage = 28;
+        private const int BonusDamageIfStunned = 10;
+        private const int JoltStunPowerModifier = 50;
+
         public NoQuartersInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public NoQuartersInstance(CharacterStateMachine owner, NoQuartersRecord record) : base(owner, record)
+
+        public NoQuartersInstance(CharacterStateMachine owner, [NotNull] NoQuartersRecord record) : base(owner, record)
         {
         }
 
@@ -77,48 +80,50 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Debuffer
             Owner.StatusApplierModule.StunApplyModifiers.Remove(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new NoQuartersRecord(Key);
 
-        public void Modify(ref StunToApply effectStruct)
+        public void Modify([NotNull] ref StunToApply effectStruct)
         {
             if (effectStruct.FromSkill == false || effectStruct.GetSkill().Key != EthelSkills.Jolt)
                 return;
-
-            effectStruct.Duration += JoltDurationModifier;
+            
+            effectStruct.StunPower += JoltStunPowerModifier;
         }
-        
+
         public void Modify(ref SkillStruct skillStruct)
         {
-            ref ValueListPool<TargetProperties> targetProperties = ref skillStruct.TargetProperties;
+            ref CustomValuePooledList<TargetProperties> targetProperties = ref skillStruct.TargetProperties;
             int count = targetProperties.Count;
             for (int i = 0; i < count; i++)
             {
                 ref TargetProperties property = ref targetProperties[i];
                 CharacterStateMachine target = property.Target;
                 
-                float extraDamage = 0;
-                foreach (StatusInstance status in target.StatusModule.GetAll)
+                int extraDamage = 0;
+                foreach (StatusInstance status in target.StatusReceiverModule.GetAll)
+                {
                     if (status.EffectType is EffectType.Debuff && status.IsActive)
                         extraDamage += BonusDamagePerDebuffStack;
-                
+                }
+
                 extraDamage = Mathf.Min(extraDamage, MaxDamage);
                 
-                if (property.DamageModifier.IsNone)
+                if (property.Power.IsNone)
                     continue;
 
-                float damageMultiplier = property.DamageModifier.Value;
-                damageMultiplier += extraDamage;
+                int power = property.Power.Value;
+                power = power + extraDamage;
                 
-                if (target.StunModule.GetRemaining() > 0)
-                    damageMultiplier += BonusDamageIfStunned;
+                if (target.StunModule.GetRemaining().Ticks > 0)
+                    power += BonusDamageIfStunned;
                 
-                property.DamageModifier = damageMultiplier;
-#if UNITY_EDITOR
-                Debug.Assert(property.DamageModifier == damageMultiplier, $"property.DamageModifier: {property.DamageModifier}, damageMultiplier: {damageMultiplier}");
-                Debug.Assert(property == targetProperties[i], $"property: {property}, targetProperties[i]: {targetProperties[i]}");
-                Debug.Assert(skillStruct.TargetProperties[i] == property, $"skillStruct.TargetProperties[i]: {skillStruct.TargetProperties[i]}, property: {property}");
-#endif
+                property.Power = power;
             }
         }
+
+        [NotNull]
+        public string SharedId => nameof(NoQuartersInstance);
+        public int Priority => 0;
     }
 }

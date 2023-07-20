@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Game_Manager.Scripts
 {
@@ -38,6 +39,7 @@ namespace Core.Game_Manager.Scripts
             return CreateCue();
         }
 
+        [NotNull]
         private WorldTextCue CreateCue()
         {
             WorldTextCue cue = cuePrefab.InstantiateWithFixedLocalScale(cueParent);

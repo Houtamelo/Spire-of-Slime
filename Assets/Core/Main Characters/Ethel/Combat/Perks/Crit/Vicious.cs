@@ -10,6 +10,7 @@ using Core.Combat.Scripts.Skills.Action;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 using ListPool;
 using UnityEngine;
 
@@ -17,7 +18,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Crit
 {
     public class Vicious : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             ViciousInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -38,7 +40,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Crit
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             ViciousInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -46,27 +49,22 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Crit
         }
     }
 
-    public class ViciousInstance : PerkInstance, IBaseFloatAttributeModifier, IActionCompletedListener
+    public class ViciousInstance : PerkInstance, IBaseAttributeModifier, IActionCompletedListener
     {
-        public string SharedId => nameof(ViciousInstance);
-        public int Priority => 0;
-        private const float CritPerStack = 0.1f;
-        
+        private const int CritPerStack = 10;
+
         private int _counter;
 
         public ViciousInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public ViciousInstance(CharacterStateMachine owner, ViciousRecord record) : base(owner, record)
-        {
-            _counter = record.Counter;
-        }
+
+        public ViciousInstance(CharacterStateMachine owner, [NotNull] ViciousRecord record) : base(owner, record) => _counter = record.Counter;
 
         protected override void OnSubscribe()
         {
             Owner.Events.ActionCompletedListeners.Add(this);
-            Owner.StatsModule.SubscribeCriticalChance(this, false);
+            Owner.StatsModule.SubscribeCriticalChance(this, allowDuplicates: false);
         }
 
         protected override void OnUnsubscribe()
@@ -75,9 +73,10 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Crit
             Owner.StatsModule.UnsubscribeCriticalChance(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new ViciousRecord(Key, _counter);
 
-        public void OnActionCompleted(ListPool<ActionResult> results)
+        public void OnActionCompleted([NotNull] ListPool<ActionResult> results)
         {
             foreach (ActionResult actionResult in results)
             {
@@ -85,19 +84,19 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Crit
                     continue;
 
                 if (actionResult.Critical)
-                {
                     _counter = Mathf.Max(_counter - 1, 0);
-                }
                 else if (actionResult.Target.PositionHandler.IsLeftSide != Owner.PositionHandler.IsLeftSide)
-                {
                     _counter++;
-                }
             }
         }
 
-        public void Modify(ref float value, CharacterStateMachine self)
+        public void Modify(ref int value, CharacterStateMachine self)
         {
             value += _counter * CritPerStack;
         }
+
+        [NotNull]
+        public string SharedId => nameof(ViciousInstance);
+        public int Priority => 0;
     }
 }

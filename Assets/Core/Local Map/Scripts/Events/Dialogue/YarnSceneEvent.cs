@@ -9,7 +9,6 @@ using Core.World_Map.Scripts;
 using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Local_Map.Scripts.Events.Dialogue
@@ -43,10 +42,10 @@ namespace Core.Local_Map.Scripts.Events.Dialogue
         [SerializeField, ShowIf(nameof(specifyPath)), LabelText(@"$LabelTwo"), ValidateInput(nameof(IsOneDifferentThanTwo))]
         private LocationEnum two;
 
-        [UsedImplicitly]
+        [UsedImplicitly, NotNull]
         private string LabelOne => IsOneWayPath ? "Origin" : "End/Start Location";
 
-        [UsedImplicitly]
+        [UsedImplicitly, NotNull]
         private string LabelTwo => IsOneWayPath ? "Destination" : "End/Start Location";
         
         private bool IsOneDifferentThanTwo() => one != two;
@@ -69,12 +68,15 @@ namespace Core.Local_Map.Scripts.Events.Dialogue
                 return Option<int>.None;
 
             foreach (VariableRequirement requirement in requirements)
+            {
                 if (!requirement.Validate(save))
                     return Option<int>.None;
+            }
 
             return GetPriority;
         }
         
+        [NotNull]
         public override CoroutineWrapper Execute(TileInfo tileInfo, in Option<float> multiplier) => new(DialogueRoutine(), nameof(DialogueRoutine), this, autoStart: true);
 
         private IEnumerator DialogueRoutine()

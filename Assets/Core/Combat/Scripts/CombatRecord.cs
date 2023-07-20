@@ -6,15 +6,18 @@ using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.WinningCondition;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Core.Combat.Scripts
 {
-    public record CombatRecord(CharacterRecord[] Characters, BackgroundRecord Background, WinningConditionRecord WinningCondition, float ElapsedTime, float AccumulatedExhaustionTime, CombatSetupInfo.Record SetupInfo)
+    public record CombatRecord(CharacterRecord[] Characters, BackgroundRecord Background, WinningConditionRecord WinningCondition, TSpan ElapsedTime, TSpan AccumulatedExhaustionTime, CombatSetupInfo.Record SetupInfo)
     {
         private static readonly List<CharacterRecord> ReusableList = new();
 
-        public static CombatRecord FromCombat(CombatManager combatManager)
+        [NotNull]
+        public static CombatRecord FromCombat([NotNull] CombatManager combatManager)
         {
             ReusableList.Clear();
             foreach (CharacterStateMachine character in combatManager.Characters.GetAllFixed())
@@ -27,7 +30,9 @@ namespace Core.Combat.Scripts
             
             BackgroundRecord backgroundData;
             if (combatManager.Background.IsSome)
+            {
                 backgroundData = combatManager.Background.Value.GetRecord();
+            }
             else
             {
                 Debug.LogWarning("No background generator found while trying to save combat state, cannot save.");
@@ -35,7 +40,7 @@ namespace Core.Combat.Scripts
             }
 
             WinningConditionRecord winningCondition = combatManager.WinningCondition.Serialize();
-            float elapsedTime = combatManager.ElapsedTime;
+            TSpan elapsedTime = combatManager.ElapsedTime;
             return new CombatRecord(ReusableList.ToArray(), backgroundData, winningCondition, elapsedTime, combatManager.AccumulatedExhaustionTime, combatManager.CombatSetupInfo.GetRecord());
         }
 
@@ -58,8 +63,10 @@ namespace Core.Combat.Scripts
             }
 
             for (int index = 0; index < Characters.Length; index++)
+            {
                 if (Characters[index].IsDataValid(errors, Characters) == false)
                     return false;
+            }
 
             if (Background == null)
             {

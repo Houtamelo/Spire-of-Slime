@@ -2,7 +2,6 @@
 using Core.Utils.Patterns;
 using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
 using Object = UnityEngine.Object;
 
 namespace Core.ResourceManagement
@@ -34,7 +33,7 @@ namespace Core.ResourceManagement
             Path = path;
         }
         
-        private ResourceHandle(ResourceRequest request, string path)
+        private ResourceHandle([NotNull] ResourceRequest request, string path)
         {
             _request = request;
             Path = path;
@@ -50,10 +49,12 @@ namespace Core.ResourceManagement
                 Dispose();
             }
             else
+            {
                 _isLoaded = true;
+            }
         }
-        
-        [MustUseReturnValue]
+
+        [MustUseReturnValue, CanBeNull]
         public static ResourceHandle<T> Load(string path)
         {
             T resource = Resources.Load<T>(path);
@@ -65,8 +66,8 @@ namespace Core.ResourceManagement
 
             return new ResourceHandle<T>(resource, path);
         }
-        
-        [MustUseReturnValue]
+
+        [MustUseReturnValue, NotNull]
         public static ResourceHandle<T> LoadAsync(string path)
         {
             ResourceRequest request = Resources.LoadAsync<T>(path);

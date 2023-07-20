@@ -1,12 +1,14 @@
-﻿namespace Core.Combat.Scripts.Effects.BaseTypes
+﻿using Core.Utils.Math;
+
+namespace Core.Combat.Scripts.Effects.BaseTypes
 {
-    public abstract record StatusScriptDurationBased(bool Permanent = false, float BaseDuration = 2) : StatusScript
+    public abstract record StatusScriptDurationBased(bool Permanent, TSpan BaseDuration) : StatusScript
     {
-        public const float DurationMultiplierOnCrit = 1.5f;
+        public const double DurationMultiplierOnCrit = 1.5;
 
         public bool Permanent { get; protected set; } = Permanent;
-        public float BaseDuration { get; protected set; } = BaseDuration;
+        public TSpan BaseDuration { get; protected set; } = BaseDuration;
         
-        public string GetDurationString => Permanent ? "permanent" : $"for {BaseDuration.ToString("0.00")}s";
+        public string GetDurationString => Permanent ? StatusUtils.GetPermanentDurationString() : StatusUtils.GetDurationString(BaseDuration);
     }
 }

@@ -8,7 +8,6 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Utilities;
-using Utils.Patterns;
 
 namespace Core.Pause_Menu.Scripts
 {
@@ -78,8 +77,10 @@ namespace Core.Pause_Menu.Scripts
         private void OnValidate()
         {
             foreach (InputAction action in _inputActionAsset.actionMaps[0].actions)
+            {
                 if (!Enum.TryParse(action.name, out InputEnum _))
                     Debug.LogWarning($"InputAsset does not contain a valid input enum named {action.name}");
+            }
         }
 #endif
     }

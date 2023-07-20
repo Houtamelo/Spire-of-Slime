@@ -11,7 +11,6 @@ using Core.World_Map.Scripts;
 using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Main_Database.Combat
@@ -26,12 +25,10 @@ namespace Core.Main_Database.Combat
         private readonly Dictionary<CleanString, ScriptableCombatSetupInfo> _mappedCombats = new();
 
         public static Option<ScriptableCombatSetupInfo> GetCombat(CleanString key) => GetCombat(Instance.CombatScriptsDatabase, key);
-        public static Option<ScriptableCombatSetupInfo> GetCombat(CombatScriptDatabase database, CleanString key)
-        {
-            return database._mappedCombats.TryGetValue(key, out ScriptableCombatSetupInfo combatSetupInfo)
-                       ? Option<ScriptableCombatSetupInfo>.Some(combatSetupInfo)
-                       : Option<ScriptableCombatSetupInfo>.None;
-        }
+        public static Option<ScriptableCombatSetupInfo> GetCombat([NotNull] CombatScriptDatabase database, CleanString key) =>
+            database._mappedCombats.TryGetValue(key, out ScriptableCombatSetupInfo combatSetupInfo)
+                ? Option<ScriptableCombatSetupInfo>.Some(combatSetupInfo)
+                : Option<ScriptableCombatSetupInfo>.None;
 
         [MustUseReturnValue]
         public static (CombatSetupInfo setupInfo, WinningConditionGenerator winningConditionGenerator, CleanString backgroundKey) GenerateTemporaryDefaultCombatForLocation(BothWays location, float multiplier)
@@ -61,23 +58,22 @@ namespace Core.Main_Database.Combat
             (ICharacterScript, CombatSetupInfo.RecoveryInfo)[] monsterTeam = enemyList.Select(enemyScript => ((ICharacterScript)enemyScript, CombatSetupInfo.RecoveryInfo.Default)).ToArray();
             
             Save save = Save.Current;
-            (ICharacterScript, CombatSetupInfo.RecoveryInfo, float expAtStart, bool bindToSave)[] allies;
+            (ICharacterScript, CombatSetupInfo.RecoveryInfo, int expAtStart, bool bindToSave)[] allies;
             if (save != null)
             {
                 IReadOnlyList<(IReadonlyCharacterStats stats, bool bindToSave)> alliesOrder = save.GetCombatOrderAsStats();
-                allies = alliesOrder.Select(element => (element.stats.GetScript(), CombatSetupInfo.RecoveryInfo.Default, element.stats.Experience, element.bindToSave)).ToArray();
+                allies = alliesOrder.Select(element => (element.stats.GetScript(), CombatSetupInfo.RecoveryInfo.Default, Experience: element.stats.TotalExperience, element.bindToSave)).ToArray();
             }
             else
             {
-                allies = new (ICharacterScript, CombatSetupInfo.RecoveryInfo, float expAtStart, bool bindToSave)[]
+                allies = new (ICharacterScript, CombatSetupInfo.RecoveryInfo, int expAtStart, bool bindToSave)[]
                 {
-                    (CharacterDatabase.DefaultEthel, CombatSetupInfo.RecoveryInfo.Default, expAtStart: 0f, bindToSave: false),
-                    (CharacterDatabase.DefaultNema, CombatSetupInfo.RecoveryInfo.Default, expAtStart: 0f, bindToSave: false)
+                    (CharacterDatabase.DefaultEthel, CombatSetupInfo.RecoveryInfo.Default, expAtStart: 0, bindToSave: false),
+                    (CharacterDatabase.DefaultNema, CombatSetupInfo.RecoveryInfo.Default, expAtStart: 0, bindToSave: false)
                 };
             }
 
-            return (new CombatSetupInfo(allies, monsterTeam, mistExists: true, allowLust: true, GeneralPaddingSettings.Default),
-                    WinningConditionGenerator.Default, backgroundPrefab.Value.Key);
+            return (new CombatSetupInfo(allies, monsterTeam, mistExists: true, allowLust: true, GeneralPaddingSettings.Default), WinningConditionGenerator.Default, backgroundPrefab.Value.Key);
         }
 
         public void Initialize()
@@ -89,7 +85,7 @@ namespace Core.Main_Database.Combat
         }
 
 #if UNITY_EDITOR        
-        public void AssignData(IEnumerable<ScriptableCombatSetupInfo> combatEvents)
+        public void AssignData([NotNull] IEnumerable<ScriptableCombatSetupInfo> combatEvents)
         {
             allCombats = combatEvents.ToArray();
             UnityEditor.EditorUtility.SetDirty(this);

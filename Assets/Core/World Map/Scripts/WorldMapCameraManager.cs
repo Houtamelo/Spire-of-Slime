@@ -1,10 +1,10 @@
 ﻿using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using Utils.Patterns;
 
 namespace Core.World_Map.Scripts
 {
@@ -16,7 +16,7 @@ namespace Core.World_Map.Scripts
         [OdinSerialize, SceneObjectsOnly, Required] 
         private readonly Transform _virtualCameraTransform;
 
-        public void OnDrag(PointerEventData eventData)
+        public void OnDrag([NotNull] PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Right)
                 return;

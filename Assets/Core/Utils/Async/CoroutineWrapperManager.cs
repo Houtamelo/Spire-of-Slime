@@ -31,10 +31,7 @@ namespace Core.Utils.Async
 #pragma warning restore IDE0044 // Add readonly modifier
             private bool _stopped;
 
-            public TaskState(IEnumerator c)
-            {
-                _coroutine = c;
-            }
+            public TaskState(IEnumerator c) => _coroutine = c;
 
             public void Pause()
             {
@@ -67,7 +64,9 @@ namespace Core.Utils.Async
                 while (Running)
                 {
                     if (Paused)
+                    {
                         yield return null;
+                    }
                     else
                     {
                         if (e?.MoveNext() == true)

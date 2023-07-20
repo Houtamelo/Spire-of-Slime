@@ -25,13 +25,9 @@ namespace Core.Combat.Scripts.Skills.Action
             {
                 profile.TryGet(component: out vignette);
                 if (vignette == null)
-                {
                     Debug.Log("Vignette not found");
-                }
                 else
-                {
                     UnityEditor.EditorUtility.SetDirty(target: this);
-                }
             }
         }
         #endif

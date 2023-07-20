@@ -26,7 +26,7 @@ namespace Core.Game_Manager.Scripts
             tmp.horizontalAlignment = textCueOptions.Alignment;
          
             transform.position = textCueOptions.WorldPosition;
-            Vector3 endPosition = textCueOptions.WorldPosition + textCueOptions.Speed * (textCueOptions.StayDuration + textCueOptions.FadeDuration);
+            Vector3 endPosition = textCueOptions.WorldPosition + (textCueOptions.Speed * (textCueOptions.StayDuration + textCueOptions.FadeDuration));
 
             _sequence = DOTween.Sequence().SetUpdate(isIndependentUpdate: true);
             _sequence.Append(transform.DOMove(endPosition, textCueOptions.StayDuration + textCueOptions.FadeDuration));

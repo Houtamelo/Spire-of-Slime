@@ -1,20 +1,22 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Enums;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Utils.Collections;
 using Core.Utils.Extensions;
 using Core.Utils.Math;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using ListPool;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.UI.Highlighted
 {
@@ -62,7 +64,7 @@ namespace Core.Combat.Scripts.UI.Highlighted
         private TMP_Text resilienceTmp, composureTmp;
         
         [SerializeField, Required, SceneObjectsOnly]
-        private TMP_Text stunRecoverySpeedTmp;
+        private TMP_Text stunMitigationTmp;
         
         [SerializeField, Required, SceneObjectsOnly]
         private TMP_Text dodgeTmp;
@@ -92,7 +94,7 @@ namespace Core.Combat.Scripts.UI.Highlighted
 
         private void UpdateInterface() => UpdateInterface(target: inputHandler.HighlightedCharacter.Value);
 
-        private void UpdateInterface(CharacterStateMachine target)
+        private void UpdateInterface([CanBeNull] CharacterStateMachine target)
         {
             ISkill skill = inputHandler.SelectedSkill.Value;
             CharacterStateMachine caster = inputHandler.SelectedCharacter.Value;
@@ -118,27 +120,28 @@ namespace Core.Combat.Scripts.UI.Highlighted
             else
             {
                 portraitAnimator.runtimeAnimatorController = null;
-                portraitImage.sprite = target.Script.LustPromptPortrait;
+                portraitImage.sprite = target.Script.GetPortrait.SomeOrDefault();
             }
 
-            nameTmp.text = target.Script.CharacterName;
-            raceTmp.text = target.Script.Race.UpperCaseName();
+            nameTmp.text = target.Script.CharacterName.Translate().GetText();
+            raceTmp.text = target.Script.Race.UpperCaseName().Translate().GetText();
 
             UpdateStaminaAndResilience(target);
             UpdateDodge(target.StatsModule);
 
             IResistancesModule resistances = target.ResistancesModule;
-            UpdateStunRecoverySpeed(resistances);
             UpdateDebuffResistance(resistances);
             UpdatePoisonResistance(resistances);
             UpdateMoveResistance(resistances);
             
+            UpdateStunMitigation(target.StunModule);
+            
             UpdateLustStats(target);
             
-            IReadOnlyList<ISkill> skills = target.Script.Skills;
+            ReadOnlySpan<ISkill> skills = target.Script.Skills;
             int i = 0;
-            for (; i < skills.Count && i < skillDisplayers.Length; i++)
-                skillDisplayers[i].text = skills[index: i].DisplayName;
+            for (; i < skills.Length && i < skillDisplayers.Length; i++)
+                skillDisplayers[i].text = skills[i].DisplayName.Translate().GetText();
             for (; i < skillDisplayers.Length; i++) 
                 skillDisplayers[i].text = string.Empty;
 
@@ -150,7 +153,7 @@ namespace Core.Combat.Scripts.UI.Highlighted
             }
             
             SkillStruct skillStruct = SkillStruct.CreateInstance(skill, caster, target);
-            ref ValueListPool<TargetProperties> allProperties = ref skillStruct.TargetProperties;
+            ref CustomValuePooledList<TargetProperties> allProperties = ref skillStruct.TargetProperties;
             if (allProperties.Count == 0)
             {
                 targetingInfoBox.Hide();
@@ -158,21 +161,18 @@ namespace Core.Combat.Scripts.UI.Highlighted
             else
             {
                 ReadOnlyProperties targetProperties = allProperties[0].ToReadOnly();
-                Option<float> rawHitChance = SkillUtils.GetHitChance(ref skillStruct, targetProperties);
-                Option<float> rawCriticalChance = SkillUtils.GetCriticalChance(ref skillStruct, targetProperties);
-                Option<(uint lowerDamage, uint upperDamage)> rawDamage = SkillUtils.GetDamage(ref skillStruct, targetProperties, crit: false);
+                Option<int> rawHitChance = SkillCalculator.FinalHitChance(ref skillStruct, targetProperties);
+                Option<int> rawCriticalChance = SkillCalculator.FinalCriticalChance(ref skillStruct, targetProperties);
+                Option<(int lowerDamage, int upperDamage)> rawDamage = SkillCalculator.FinalDamage(ref skillStruct, targetProperties, crit: false);
 
                 skillStruct.ApplyCustomStats();
                 caster.SkillModule.ModifySkill(ref skillStruct);
 
-                Option<float> hitChance = SkillUtils.GetHitChance(ref skillStruct, targetProperties);
-                Option<float> criticalChance = SkillUtils.GetCriticalChance(ref skillStruct, targetProperties);
-                Option<(uint lowerDamage, uint upperDamage)> damage = SkillUtils.GetDamage(ref skillStruct, targetProperties, crit: false);
+                Option<int> hitChance = SkillCalculator.FinalHitChance(ref skillStruct, targetProperties);
+                Option<int> criticalChance = SkillCalculator.FinalCriticalChance(ref skillStruct, targetProperties);
+                Option<(int lowerDamage, int upperDamage)> damage = SkillCalculator.FinalDamage(ref skillStruct, targetProperties, crit: false);
 
                 ComparisonResult hitChanceComparison;
-                ComparisonResult criticalChanceComparison;
-                ComparisonResult damageComparison;
-
                 if (rawHitChance == hitChance)
                     hitChanceComparison = ComparisonResult.Equals;
                 else if (hitChance.IsSome && (rawHitChance.IsNone || rawHitChance.Value < hitChance.Value))
@@ -180,6 +180,7 @@ namespace Core.Combat.Scripts.UI.Highlighted
                 else
                     hitChanceComparison = ComparisonResult.Smaller;
 
+                ComparisonResult criticalChanceComparison;
                 if (rawCriticalChance == criticalChance)
                     criticalChanceComparison = ComparisonResult.Equals;
                 else if (criticalChance.IsSome && (rawCriticalChance.IsNone || rawCriticalChance.Value < criticalChance.Value))
@@ -187,6 +188,7 @@ namespace Core.Combat.Scripts.UI.Highlighted
                 else
                     criticalChanceComparison = ComparisonResult.Smaller;
 
+                ComparisonResult damageComparison;
                 if (rawDamage == damage)
                     damageComparison = ComparisonResult.Equals;
                 else if (damage.IsSome && (rawDamage.IsNone || rawDamage.Value.lowerDamage < damage.Value.lowerDamage || rawDamage.Value.upperDamage < damage.Value.upperDamage))
@@ -197,22 +199,21 @@ namespace Core.Combat.Scripts.UI.Highlighted
                 targetingInfoBox.UpdateInterface(ref skillStruct, hitChance, hitChanceComparison, criticalChance, criticalChanceComparison, damage, damageComparison);
             }
 
-            if (caster.StateEvaluator.PureEvaluate() is not CharacterState.Idle || caster.Display.AssertSome(out CharacterDisplay display) == false)
+            if (caster.StateEvaluator.PureEvaluate() is not CharacterState.Idle || caster.Display.AssertSome(out DisplayModule display) == false)
             {
                 caster.ForceUpdateTimelineCue();
             }
             else
             {
-                float estimatedRealCharge = skillStruct.Skill.BaseCharge / caster.StatsModule.GetSpeed();
-                display.AllowTimelineIcon(true);
-                Color color = skill.AllowAllies ? ColorReferences.Buff : ColorReferences.Debuff;
-                display.SetTimelineCuePosition(estimatedRealCharge, $"{skill.DisplayName}=>{target.Script.CharacterName}", color);
+                //SerialTimeSpan estimatedRealCharge = new(ticks: (long)(skillStruct.Skill.BaseCharge.Ticks / caster.StatsModule.GetSpeed()));
+                //Color color = skill.AllowAllies ? ColorReferences.Buff : ColorReferences.Debuff;
+                // !todo update new interface here
             }
 
             skillStruct.Dispose();
         }
 
-        private void UpdateStaminaAndResilience(CharacterStateMachine caster)
+        private void UpdateStaminaAndResilience([NotNull] CharacterStateMachine caster)
         {
             if (caster.StaminaModule.TrySome(out IStaminaModule staminaModule) == false)
             {
@@ -225,9 +226,9 @@ namespace Core.Combat.Scripts.UI.Highlighted
             staminaGauge.gameObject.SetActive(true);
             resilienceObject.SetActive(true);
 
-            uint currentMax = staminaModule.ActualMax;
-            uint baseMax = staminaModule.BaseMax;
-            uint current = staminaModule.GetCurrent();
+            int currentMax = staminaModule.ActualMax;
+            int baseMax = staminaModule.BaseMax;
+            int current = staminaModule.GetCurrent();
             staminaGauge.value = (float) current / currentMax;
             Builder.Override(staminaModule.GetCurrent().ToString("0"), " / ", currentMax.ToString("0"));
             
@@ -238,9 +239,9 @@ namespace Core.Combat.Scripts.UI.Highlighted
 
             staminaMouseOverTmp.text = Builder.ToString();
 
-            float currentResilience = staminaModule.GetResilience();
-            float baseResilience = staminaModule.BaseResilience;
-            Builder.Override(currentResilience.ToPercentlessString(digits: 2, decimalDigits: 0));
+            int currentResilience = staminaModule.GetResilience();
+            int baseResilience = staminaModule.BaseResilience;
+            Builder.Override(currentResilience.ToPercentageStringBase100());
 
             if (currentResilience > baseResilience)
                 Builder.Surround(ColorReferences.BuffedRichText);
@@ -250,11 +251,11 @@ namespace Core.Combat.Scripts.UI.Highlighted
             resilienceTmp.text = Builder.ToString();
         }
 
-        private void UpdateLustStats(CharacterStateMachine caster)
+        private void UpdateLustStats([NotNull] CharacterStateMachine caster)
         {
             if (caster.LustModule.TrySome(out ILustModule lustModule) == false)
             {
-                portraitImage.sprite = caster.Script.LustPromptPortrait;
+                portraitImage.sprite = caster.Script.GetPortrait.SomeOrDefault();
                 composureTmp.text = string.Empty;
                 composureObject.SetActive(false);
                 lustMouseOverTmp.gameObject.SetActive(false);
@@ -272,9 +273,9 @@ namespace Core.Combat.Scripts.UI.Highlighted
             temptationGauge.gameObject.SetActive(true);
             orgasmBoxesParent.gameObject.SetActive(true);
 
-            float baseComposure = lustModule.BaseComposure;
-            float currentComposure = lustModule.GetComposure();
-            Builder.Override(currentComposure.ToPercentlessString(digits: 2, decimalDigits: 0));
+            int baseComposure = lustModule.BaseComposure;
+            int currentComposure = lustModule.GetComposure();
+            Builder.Override(currentComposure.WithSymbol());
 
             if (currentComposure > baseComposure)
                 Builder.Surround(ColorReferences.BuffedRichText);
@@ -283,8 +284,8 @@ namespace Core.Combat.Scripts.UI.Highlighted
 
             composureTmp.text = Builder.ToString();
 
-            uint currentLust = lustModule.GetLust();
-            const uint maxLust = ILustModule.MaxLust;
+            int currentLust = lustModule.GetLust();
+            const int maxLust = ILustModule.MaxLust;
             lustMouseOverTmp.text = Builder.Override(currentLust.ToString("0"), " / ", maxLust.ToString("0")).ToString();
 
             if (currentLust < 100)
@@ -301,8 +302,8 @@ namespace Core.Combat.Scripts.UI.Highlighted
             temptationGauge.value = lustModule.GetTemptation() / 100f;
             temptationMouseOverTmp.text = lustModule.GetTemptation().ToString();
 
-            uint orgasmLimit = lustModule.OrgasmLimit;
-            uint orgasmCount = lustModule.GetOrgasmCount();
+            int orgasmLimit = lustModule.GetOrgasmLimit();
+            int orgasmCount = lustModule.GetOrgasmCount();
 
             for (int i = _spawnedOrgasmBoxes.Count; i < orgasmLimit; i++)
             {
@@ -310,10 +311,10 @@ namespace Core.Combat.Scripts.UI.Highlighted
                 _spawnedOrgasmBoxes.Add(box);
             }
 
-            for (int i = (int)orgasmLimit; i < _spawnedOrgasmBoxes.Count; i++)
+            for (int i = orgasmLimit; i < _spawnedOrgasmBoxes.Count; i++)
                 _spawnedOrgasmBoxes[i].gameObject.SetActive(false);
 
-            for (int i = (int)(orgasmLimit - orgasmCount); i < orgasmLimit; i++)
+            for (int i = orgasmLimit - orgasmCount; i < orgasmLimit; i++)
             {
                 Toggle box = _spawnedOrgasmBoxes[i];
                 box.gameObject.SetActive(true);
@@ -328,11 +329,12 @@ namespace Core.Combat.Scripts.UI.Highlighted
             }
         }
         
-        private void UpdateDodge(IStatsModule stats)
+        private void UpdateDodge([NotNull] IStatsModule stats)
         {
-            float baseDodge = stats.BaseDodge;
-            float currentDodge = stats.GetDodge();
-            Builder.Override(currentDodge.ToPercentlessString(digits: 2, decimalDigits: 0));
+            int baseDodge = stats.BaseDodge;
+            int currentDodge = stats.GetDodge();
+            
+            Builder.Override(currentDodge.WithSymbol());
 
             if (currentDodge > baseDodge)
                 Builder.Surround(ColorReferences.BuffedRichText);
@@ -342,25 +344,27 @@ namespace Core.Combat.Scripts.UI.Highlighted
             dodgeTmp.text = Builder.ToString();
         }
         
-        private void UpdateStunRecoverySpeed(IResistancesModule resistances)
+        private void UpdateStunMitigation([NotNull] IStunModule stunModule)
         {
-            float baseStunRecoverySpeed = resistances.BaseStunRecoverySpeed;
-            float currentStunRecoverySpeed = resistances.GetStunRecoverySpeed();
-            Builder.Override(currentStunRecoverySpeed.ToPercentlessString(digits: 2, decimalDigits: 0));
-
-            if (currentStunRecoverySpeed > baseStunRecoverySpeed)
+            int baseStunMitigation = stunModule.BaseStunMitigation;
+            int currentStunMitigation = stunModule.GetStunMitigation();
+            
+            Builder.Override(currentStunMitigation.ToString());
+            
+            if (currentStunMitigation > baseStunMitigation)
                 Builder.Surround(ColorReferences.BuffedRichText);
-            else if (currentStunRecoverySpeed < baseStunRecoverySpeed)
+            else if (currentStunMitigation < baseStunMitigation)
                 Builder.Surround(ColorReferences.DebuffedRichText);
 
-            stunRecoverySpeedTmp.text = Builder.ToString();
+            stunMitigationTmp.text = Builder.ToString();
         }
 
-        private void UpdateDebuffResistance(IResistancesModule resistances)
+        private void UpdateDebuffResistance([NotNull] IResistancesModule resistances)
         {
-            float baseDebuffResistance = resistances.BaseDebuffResistance;
-            float currentDebuffResistance = resistances.GetDebuffResistance();
-            Builder.Override(currentDebuffResistance.ToPercentlessString(digits: 2, decimalDigits: 0));
+            int baseDebuffResistance = resistances.BaseDebuffResistance;
+            int currentDebuffResistance = resistances.GetDebuffResistance();
+            
+            Builder.Override(currentDebuffResistance.WithSymbol());
 
             if (currentDebuffResistance > baseDebuffResistance)
                 Builder.Surround(ColorReferences.BuffedRichText);
@@ -370,11 +374,11 @@ namespace Core.Combat.Scripts.UI.Highlighted
             debuffResistanceTmp.text = Builder.ToString();
         }
 
-        private void UpdateMoveResistance(IResistancesModule resistances)
+        private void UpdateMoveResistance([NotNull] IResistancesModule resistances)
         {
-            float baseMoveResistance = resistances.BaseMoveResistance;
-            float currentMoveResistance = resistances.GetMoveResistance();
-            Builder.Override(currentMoveResistance.ToPercentlessString(digits: 2, decimalDigits: 0));
+            int baseMoveResistance = resistances.BaseMoveResistance;
+            int currentMoveResistance = resistances.GetMoveResistance();
+            Builder.Override(currentMoveResistance.WithSymbol());
 
             if (currentMoveResistance > baseMoveResistance)
                 Builder.Surround(ColorReferences.BuffedRichText);
@@ -384,11 +388,11 @@ namespace Core.Combat.Scripts.UI.Highlighted
             moveResistanceTmp.text = Builder.ToString();
         }
 
-        private void UpdatePoisonResistance(IResistancesModule resistances)
+        private void UpdatePoisonResistance([NotNull] IResistancesModule resistances)
         {
-            float basePoisonResistance = resistances.BasePoisonResistance;
-            float currentPoisonResistance = resistances.GetPoisonResistance();
-            Builder.Override(currentPoisonResistance.ToPercentlessString(digits: 2, decimalDigits: 0));
+            int basePoisonResistance = resistances.BasePoisonResistance;
+            int currentPoisonResistance = resistances.GetPoisonResistance();
+            Builder.Override(currentPoisonResistance.WithSymbol());
             
             if (currentPoisonResistance > basePoisonResistance)
                 Builder.Surround(ColorReferences.BuffedRichText);

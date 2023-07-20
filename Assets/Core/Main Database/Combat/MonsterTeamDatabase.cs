@@ -1,15 +1,17 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Core.Combat.Scripts;
+using Core.Utils.Collections;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
+using JetBrains.Annotations;
 using ListPool;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Main_Database.Combat
 {
@@ -22,14 +24,14 @@ namespace Core.Main_Database.Combat
 
         private Dictionary<BothWays, MonsterTeam[]> _mappedTeams;
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         public static Option<CharacterScriptable[]> GetEnemyTeam(in BothWays tileIdentifier, float multiplier)
         {
             MonsterTeamDatabase database = Instance.MonsterTeamDatabase;
             if (database._mappedTeams.TryGetValue(tileIdentifier, out MonsterTeam[] possibilities) == false)
                 return Option<CharacterScriptable[]>.None;
 
-            ValueListPool<(CharacterScriptable[], float)> enemyWeights = new();
+            CustomValuePooledList<(CharacterScriptable[], float)> enemyWeights = new();
             foreach ((CharacterScriptable[] monsterTeam, float threat) in possibilities)
             {
                 float distance = Mathf.Abs(multiplier - threat);
@@ -50,7 +52,8 @@ namespace Core.Main_Database.Combat
                 return Option<CharacterScriptable[]>.None;
             }
 
-            return Option<CharacterScriptable[]>.Some(enemyWeights.GetWeightedRandom());
+            ReadOnlySpan<(CharacterScriptable[], float)> readOnlyWeights = enemyWeights.AsSpan();
+            return Option<CharacterScriptable[]>.Some(readOnlyWeights.GetWeightedRandom());
         }
 
         public void Initialize()
@@ -71,7 +74,7 @@ namespace Core.Main_Database.Combat
         }
 
 #if UNITY_EDITOR        
-        public void AssignData(IEnumerable<MonsterTeam> monsters)
+        public void AssignData([NotNull] IEnumerable<MonsterTeam> monsters)
         {
             monsterTeams = monsters.ToArray();
             UnityEditor.EditorUtility.SetDirty(this);

@@ -15,7 +15,7 @@ namespace Core.Combat.Scripts.Skills.Action.Overlay
 
         private void OnDestroy() => _tween.KillIfActive();
 
-        public override Sequence Announce(Announcer announcer, PlannedSkill plan, float startDuration, float popDuration, float speed) { throw new System.NotImplementedException(); }
+        public override Sequence Announce(Announcer announcer, PlannedSkill plan, float startDuration, float popDuration, float speed) => throw new System.NotImplementedException();
 
         public override void FadeUp(float duration, PlannedSkill plan)
         {

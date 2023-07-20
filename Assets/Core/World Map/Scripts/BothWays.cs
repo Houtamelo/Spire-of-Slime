@@ -48,9 +48,9 @@ namespace Core.World_Map.Scripts
                 int oneId = (int)one;
                 int twoId = (int)two;
                 if (twoId > oneId)
-                    return oneId ^ 6 + twoId ^ 12;
+                    return oneId ^ (6 + twoId) ^ 12;
 
-                return twoId ^ 6 + oneId ^ 12;
+                return twoId ^ (6 + oneId) ^ 12;
             }
         }
 
@@ -60,10 +60,7 @@ namespace Core.World_Map.Scripts
         public static implicit operator (LocationEnum, LocationEnum)(BothWays bothWays) => (bothWays.One, bothWays.Two);
         public static implicit operator BothWays((LocationEnum, LocationEnum) bothWays) => new(bothWays.Item1, bothWays.Item2);
 
-        public override string ToString()
-        { 
-            return $"{One.FormattedName()} - {Two.FormattedName()}";
-        }
+        public override string ToString() => $"{One.FormattedName()} - {Two.FormattedName()}";
 
         private sealed class BothWaysComparer : IEqualityComparer<BothWays>
         {
@@ -80,9 +77,9 @@ namespace Core.World_Map.Scripts
                 int oneId = (int)one;
                 int twoId = (int)two;
                 if (twoId > oneId)
-                    return oneId ^ 6 + twoId ^ 12;
+                    return oneId ^ (6 + twoId) ^ 12;
 
-                return twoId ^ 6 + oneId ^ 12;
+                return twoId ^ (6 + oneId) ^ 12;
             }
         }
 

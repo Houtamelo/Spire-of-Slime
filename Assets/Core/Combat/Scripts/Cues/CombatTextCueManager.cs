@@ -2,9 +2,9 @@
 using Core.Combat.Scripts.Behaviour;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using Sirenix.Serialization;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Cues
 {
@@ -17,8 +17,9 @@ namespace Core.Combat.Scripts.Cues
         private readonly CombatTextCue _worldTextPrefab;
 
         private readonly List<CombatTextCue> _unboundedCues = new();
-        private readonly Dictionary<CharacterDisplay, CombatTextCue> _characterDictionary = new();
+        private readonly Dictionary<DisplayModule, CombatTextCue> _characterDictionary = new();
         
+        [NotNull]
         private CombatTextCue CreateCue()
         {
             CombatTextCue cue = _worldTextPrefab.InstantiateWithFixedLocalScale(_cueParents).OnCreate();
@@ -26,11 +27,14 @@ namespace Core.Combat.Scripts.Cues
             return cue;
         }
 
+        [NotNull]
         private CombatTextCue GetIdleCue()
         {
             foreach (CombatTextCue cue in _unboundedCues)
+            {
                 if (cue.IsIdle)
                     return cue;
+            }
 
             return CreateCue();
         }
@@ -43,7 +47,7 @@ namespace Core.Combat.Scripts.Cues
             GetIdleCue().Enqueue(ref options);
         }
 
-        public void EnqueueAboveCharacter(ref CombatCueOptions options, CharacterDisplay character)
+        public void EnqueueAboveCharacter(ref CombatCueOptions options, DisplayModule character)
         {
             if (options.CanShowOnTopOfOthers)
             {

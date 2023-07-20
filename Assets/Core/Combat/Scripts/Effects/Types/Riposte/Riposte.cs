@@ -1,126 +1,110 @@
 ﻿using System;
 using System.Buffers;
-using System.Collections.Generic;
-using System.Text;
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Localization.Scripts;
+using Core.Utils.Collections;
+using Core.Utils.Math;
 using JetBrains.Annotations;
 using ListPool;
-using NetFabric.Hyperlinq;
 using UnityEngine;
+using Core.Utils.Patterns;
 
 // ReSharper disable UseArrayEmptyMethod
 
 namespace Core.Combat.Scripts.Effects.Types.Riposte
 {
-    public record RiposteRecord(float Duration, bool IsPermanent, float Power) : StatusRecord(Duration, IsPermanent)
-    {
-        public override bool IsDataValid(StringBuilder errors, ICollection<CharacterRecord> allCharacters) => true;
-    }
-
     public class Riposte : StatusInstance
     {
         private const string Param_Riposte = "Riposte";
         private const float BaseDelay = 0.5f;
         public static float Delay => BaseDelay * IActionSequence.DurationMultiplier;
 
-        public override bool IsPositive => true;
-
-        public readonly float Power;
+        public readonly int Power;
         public readonly ISkill Skill;
 
-        private Riposte(float duration, bool isPermanent, CharacterStateMachine owner, float power) : base(duration: duration, isPermanent: isPermanent, owner: owner)
+        private Riposte(TSpan duration, bool permanent, [NotNull] CharacterStateMachine owner, int power) : base(duration, permanent, owner)
         {
             Power = power;
             Skill = GenerateRiposteSkill(owner);
         }
 
-        public static Utils.Patterns.Option<StatusInstance> CreateInstance(float duration, bool isPermanent, CharacterStateMachine owner, CharacterStateMachine caster, float riposteMultiplier)
+        public static Option<StatusInstance> CreateInstance(TSpan duration, bool isPermanent, CharacterStateMachine owner, CharacterStateMachine caster, int ripostePower)
         {
-            if (duration <= 0 && !isPermanent)
+            if (duration.Ticks <= 0 && isPermanent == false)
             {
-                Debug.LogWarning($"Invalid parameters for {nameof(Riposte)}. Duration: {duration.ToString()}, IsPermanent: {isPermanent.ToString()}");
-                return Utils.Patterns.Option<StatusInstance>.None;
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                Debug.LogWarning($"Invalid parameters for {nameof(Riposte)}. Duration: {duration.Seconds.ToString()}, Permanent: {isPermanent.ToString()}");
+                return Option.None;
             }
             
-            Riposte instance = new(duration, isPermanent, owner, riposteMultiplier);
-            owner.StatusModule.AddStatus(instance, caster);
-            return Utils.Patterns.Option<StatusInstance>.Some(instance);
+            Riposte instance = new(duration, isPermanent, owner, ripostePower);
+            owner.StatusReceiverModule.AddStatus(instance, caster);
+            return Option<StatusInstance>.Some(instance);
         }
 
-        private Riposte(RiposteRecord record, CharacterStateMachine owner) : base(record, owner)
+        public Riposte([NotNull] RiposteRecord record, [NotNull] CharacterStateMachine owner) : base(record, owner)
         {
             Power = record.Power;
             Skill = GenerateRiposteSkill(owner);
         }
 
-        public static Utils.Patterns.Option<StatusInstance> CreateInstance(RiposteRecord record, CharacterStateMachine owner)
-        {
-            Riposte instance = new(record, owner);
-            owner.StatusModule.AddStatus(instance, owner);
-            return Utils.Patterns.Option<StatusInstance>.Some(instance);
-        }
-
         [MustUseReturnValue]
-        public Lease<ActionResult> Activate(CharacterStateMachine target)
+        public CustomValuePooledList<ActionResult> Activate(CharacterStateMachine target)
         {
             SkillStruct skillStruct = SkillStruct.CreateInstance(Skill, Owner, target);
             skillStruct.ApplyCustomStats();
             Owner.SkillModule.ModifySkill(ref skillStruct);
-            ref ValueListPool<TargetProperties> targetProperties = ref skillStruct.TargetProperties;
+            ref CustomValuePooledList<TargetProperties> targetProperties = ref skillStruct.TargetProperties;
             int count = targetProperties.Count;
             for (int index = 0; index < count; index++)
             {
                 ref TargetProperties property = ref targetProperties[index];
-                Utils.Patterns.Option<float> damageModifierOption = property.DamageModifier;
-                if (damageModifierOption.IsNone)
+                Option<int> power = property.Power;
+                if (power.IsNone)
                 {
                     Debug.LogWarning("Riposte skill has no damage modifier!");
                     continue;
                 }
                 
-                property.DamageModifier = damageModifierOption.Value * Power;
-#if UNITY_EDITOR
-                Debug.Assert(property == targetProperties[index],                               $"Property not properly modified: {property} != {targetProperties[index]}");
-                Debug.Assert(property.DamageModifier == targetProperties[index].DamageModifier, $"DamageModifier not properly modified: {property.DamageModifier} != {targetProperties[index].DamageModifier}");
-#endif
+                property.Power = (power.Value * Power) / 100;
             }
 
-            SkillUtils.DoToCaster(ref skillStruct);
-            Lease<ActionResult> results = ArrayPool<ActionResult>.Shared.Lease(count);
+            SkillCalculator.DoToCaster(ref skillStruct);
+            CustomValuePooledList<ActionResult> results = new(count);
             for (int index = 0; index < count; index++)
             {
                 ReadOnlyProperties property = targetProperties[index].ToReadOnly();
-                results.Rented[index] = SkillUtils.DoToTarget(ref skillStruct, in property, isRiposte: true);
+                results.Add(SkillCalculator.DoToTarget(ref skillStruct, in property, isRiposte: true));
             }
 
             skillStruct.Dispose();
             return results;
         }
 
+        [NotNull]
+        public override StatusRecord GetRecord() => new RiposteRecord(Duration, Permanent, Power);
 
-        public override StatusRecord GetRecord() => new RiposteRecord(Duration, IsPermanent, Power);
-
-        private ISkill GenerateRiposteSkill(CharacterStateMachine owner)
-        {
-            return new TemporarySkill
+        [NotNull]
+        private ISkill GenerateRiposteSkill([NotNull] CharacterStateMachine owner) =>
+            new TemporarySkill
             {
                 Key = $"skill_riposte_{owner.Script.Key}",
-                DisplayName = Param_Riposte,
-                FlavorText = string.Empty,
-                BaseCharge = 0,
-                BaseRecovery = 0,
-                BaseAccuracy = 0.75f,
-                BaseDamageMultiplier = 1f,
-                BaseCriticalChance = 0f,
-                BaseResiliencePiercing = Utils.Patterns.Option<float>.None,
-                CastingPositions = new PositionSetup(true, true, true, true),
-                TargetPositions = new PositionSetup(true,  true, true, true),
+                DisplayName = LocalizedText.Empty,
+                FlavorText = LocalizedText.Empty,
+                Charge = TSpan.Zero,
+                Recovery = TSpan.Zero,
+                Accuracy = 75,
+                Power = 100,
+                CriticalChance = 0,
+                ResilienceReduction = Option<int>.None,
+                CastingPositions = new PositionSetup(one: true, two: true, three: true, four: true),
+                TargetPositions = new PositionSetup(one: true,  two: true, three: true, four: true),
                 MultiTarget = false,
-                AllowAllies = false,
+                IsPositive = false,
                 IconBackground = null,
                 IconBaseSprite = null,
                 IconBaseFx = null,
@@ -128,21 +112,20 @@ namespace Core.Combat.Scripts.Effects.Types.Riposte
                 IconHighlightedFx = null,
                 AnimationParameter = Param_Riposte,
                 CasterMovement = 0,
-                CasterAnimationCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f),
+                CasterAnimationCurve = AnimationCurve.Linear(timeStart: 0f, valueStart: 0f, timeEnd: 1f, valueEnd: 1f),
                 TargetMovement = 0,
-                TargetAnimationCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f),
-                TargetEffects = Array.Empty<StatusScript>(),
-                CasterEffects = Array.Empty<StatusScript>(),
-                CustomStats = Array.Empty<ICustomSkillStat>(),
+                TargetAnimationCurve = AnimationCurve.Linear(timeStart: 0f, valueStart: 0f, timeEnd: 1f, valueEnd: 1f),
+                targetEffects = Array.Empty<IBaseStatusScript>(),
+                casterEffects = Array.Empty<IBaseStatusScript>(),
+                customStats = Array.Empty<ICustomSkillStat>(),
                 TargetType = TargetType.NotSelf,
-                GetMaxUseCount = Utils.Patterns.Option<uint>.None,
+                GetMaxUseCount = Option<int>.None,
                 PaddingSettings = ActionPaddingSettings.Default()
             };
-        }
-
 
         public override EffectType EffectType => EffectType.Riposte;
-        public override Utils.Patterns.Option<string> GetDescription() => StatusInstanceDescriptions.Get(this);
+        public override Option<string> GetDescription() => StatusInstanceDescriptions.Get(this);
+        public override bool IsPositive => true;
         public const int GlobalId = Poison.Poison.GlobalId + 1;
     }
     

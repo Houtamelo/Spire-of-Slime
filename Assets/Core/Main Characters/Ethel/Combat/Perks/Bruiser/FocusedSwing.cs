@@ -11,14 +11,18 @@ using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 using ListPool;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
 {
     public class FocusedSwing : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             FocusedSwingInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -39,7 +43,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             FocusedSwingInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -49,22 +54,20 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
 
     public class FocusedSwingInstance : PerkInstance, ISkillModifier
     {
-        public string SharedId => nameof(FocusedSwingInstance);
-        public int Priority => 0;
-        private const float Duration = 4f;
-        private const float Delta = -0.25f;
-        private const float ApplyChance = 1f;
+        private static readonly TSpan Duration = TSpan.FromSeconds(4.0);
+        private const int ApplyChance = 100;
+        private const int Delta = -25;
 
-        private static readonly BuffOrDebuffScript ResilienceDebuff = new(false, Duration, ApplyChance, CombatStat.Resilience, Delta);
+        private static readonly BuffOrDebuffScript ResilienceDebuff = new(Permanent: false, Duration, ApplyChance, CombatStat.Resilience, Delta);
 
         public FocusedSwingInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public FocusedSwingInstance(CharacterStateMachine owner, FocusedSwingRecord record) : base(owner, record)
+
+        public FocusedSwingInstance(CharacterStateMachine owner, [NotNull] FocusedSwingRecord record) : base(owner, record)
         {
         }
-        
+
         protected override void OnSubscribe()
         { 
             Owner.SkillModule.SkillModifiers.Add(this);
@@ -75,6 +78,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
             Owner.SkillModule.SkillModifiers.Add(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new FocusedSwingRecord(Key);
 
         public void Modify(ref SkillStruct skillStruct)
@@ -83,8 +87,12 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Bruiser
             if (skillKey != EthelSkills.Clash && skillKey != EthelSkills.Sever)
                 return;
             
-            ref ValueListPool<IActualStatusScript> targetEffectsReference = ref skillStruct.TargetEffects;
+            ref CustomValuePooledList<IActualStatusScript> targetEffectsReference = ref skillStruct.TargetEffects;
             targetEffectsReference.Add(ResilienceDebuff);
         }
+
+        [NotNull]
+        public string SharedId => nameof(FocusedSwingInstance);
+        public int Priority => 0;
     }
 }

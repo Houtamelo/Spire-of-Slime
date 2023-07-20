@@ -5,6 +5,7 @@ using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Utils.Extensions;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,7 +15,7 @@ namespace Core.Combat.Scripts.Behaviour.UI
     public class Indicators : MonoBehaviour
     {
         [SerializeField, Required]
-        private CharacterDisplay owner;
+        private DisplayModule owner;
 
         [SerializeField, Required]
         private CanvasGroup canvasGroup;
@@ -27,7 +28,7 @@ namespace Core.Combat.Scripts.Behaviour.UI
         
         private CombatManager _combatManager;
 
-        public void SubscribeToCombatManager(CombatManager manager)
+        public void SubscribeToCombatManager([NotNull] CombatManager manager)
         {
             if (_combatManager != null)
                 UnsubscribeToCombatManager(_combatManager);
@@ -38,7 +39,7 @@ namespace Core.Combat.Scripts.Behaviour.UI
             manager.InputHandler.SelectedSkill.Changed += OnSkillSelected;
         }
 
-        private void UnsubscribeToCombatManager(CombatManager manager)
+        private void UnsubscribeToCombatManager([NotNull] CombatManager manager)
         {
             manager.InputHandler.SelectedCharacter.Changed -= OnCharacterSelected;
             manager.InputHandler.HighlightedCharacter.Changed -= OnCharacterMouseOver;
@@ -103,14 +104,10 @@ namespace Core.Combat.Scripts.Behaviour.UI
             CharacterStateMachine highlightedCharacter = _combatManager.InputHandler.HighlightedCharacter.Value;
             ISkill selectedSkill = _combatManager.InputHandler.SelectedSkill.Value;
             if (highlightedCharacter == ownerStateMachine && ownerStateMachine != null)
-            {
                 isHighlighted = true;
-            }
             else if (selectedSkill != null && selectedCharacter != null && highlightedCharacter != null && ownerStateMachine != null && selectedSkill.HitsCollateral(selectedCharacter, ownerStateMachine))
-            {
                 isHighlighted = true;
-            }
-            
+
             if (isHighlighted)
             {
                 highlighted.enabled = true;

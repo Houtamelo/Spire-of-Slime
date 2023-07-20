@@ -9,6 +9,7 @@ using Core.Utils.Async;
 using Core.Utils.Extensions;
 using Core.Utils.Math;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
@@ -59,9 +60,13 @@ namespace Core.Screen_Buttons.Scripts
                     _waitForCombatRoutine = new CoroutineWrapper(WaitForCombatRoutine(), nameof(WaitForCombatRoutine), this, autoStart: true);
             }
             else if (localMapScene.IsValid() && localMapScene.isLoaded && localMapScene.GetRootGameObjects().Any(obj => obj.activeInHierarchy))
+            {
                 gameObject.SetActive(true);
+            }
             else
+            {
                 gameObject.SetActive(false);
+            }
         }
         private void OnDestroy()
         {
@@ -71,7 +76,7 @@ namespace Core.Screen_Buttons.Scripts
             Save.Handler.Changed -= OnSaveChanged;
         }
 
-        private void OnSaveChanged(Save save)
+        private void OnSaveChanged([CanBeNull] Save save)
         {
             if (save != null)
                 UpdateDisplay(save.GetFullNemaStatus());
@@ -95,17 +100,13 @@ namespace Core.Screen_Buttons.Scripts
             {
                 Scene combatScene = SceneManager.GetSceneByName(SceneRef.Combat.Name);
                 if (combatScene.IsValid() == false || combatScene.isLoaded == false || combatScene.GetRootGameObjects().All(obj => obj.activeInHierarchy == false))
-                {
                     gameObject.SetActive(false);
-                }
             }
             else if (scene == SceneRef.Combat)
             {
                 Scene localMapScene = SceneManager.GetSceneByName(SceneRef.LocalMap.Name);
                 if (localMapScene.IsValid() == false || localMapScene.isLoaded == false || localMapScene.GetRootGameObjects().All(obj => obj.activeInHierarchy == false))
-                {
                     gameObject.SetActive(false);
-                }
             }
         }
 
@@ -119,20 +120,18 @@ namespace Core.Screen_Buttons.Scripts
                 yield return null;
 
             if (CombatManager.Instance.TrySome(out combatManager))
-            {
                 gameObject.SetActive(combatManager.CombatSetupInfo.MistExists);
-            }
         }
 
         private void UpdateDisplay(NemaStatus status)
         {
             _tween.KillIfActive();
 
-            float previous = status.Exhaustion.previous;
-            float current = status.Exhaustion.current;
+            int previous = status.Exhaustion.previous;
+            int current = status.Exhaustion.current;
             _tween = slider.DOValue(current, 0.5f).SetEase(Ease.InOutQuad).SetSpeedBased().SetUpdate(isIndependentUpdate: true);
             if (percentageGameObject.activeSelf)
-                percentageText.text = current.ToPercentageString();
+                percentageText.text = current.ToPercentageStringBase100();
 
             int delta = Mathf.RoundToInt((current - previous) * 100f);
             if (delta != 0f && WorldTextCueManager.AssertInstance(out WorldTextCueManager generalPurposeTextCueManager))

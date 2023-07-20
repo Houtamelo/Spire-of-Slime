@@ -1,4 +1,5 @@
 ﻿using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Interfaces;
@@ -6,6 +7,7 @@ using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Interfaces;
+using JetBrains.Annotations;
 
 // ReSharper disable StringLiteralTypo
 
@@ -15,14 +17,9 @@ namespace Core.Combat.Scripts.Effects.Types.Summon
     {
         public ICharacterScript CharacterToSummon { get; protected set; } = CharacterToSummon;
         public float PointsMultiplier { get; protected set; } = PointsMultiplier;
-        
-        public override bool IsPositive => true;
 
-        public override bool PlaysBarkAppliedOnCaster => true;
-        public override bool PlaysBarkAppliedOnEnemy => true;
-        public override bool PlaysBarkAppliedOnAlly => false;
-
-        public override StatusToApply GetStatusToApply(CharacterStateMachine caster, CharacterStateMachine target, bool crit, ISkill skill = null) 
+        [NotNull]
+        public override StatusToApply GetStatusToApply(CharacterStateMachine caster, CharacterStateMachine target, bool crit, [CanBeNull] ISkill skill = null) 
             => new SummonToApply(CharacterToSummon, caster, target, crit, skill, ScriptOrigin: this);
 
         public static StatusResult ProcessModifiersAndTryApply(SummonToApply summonRecord)
@@ -31,13 +28,13 @@ namespace Core.Combat.Scripts.Effects.Types.Summon
             return TryApply(ref summonRecord);
         }
 
-        public override StatusResult ApplyEffect(CharacterStateMachine caster, CharacterStateMachine target, bool crit, ISkill skill = null)
+        public override StatusResult ApplyEffect(CharacterStateMachine caster, CharacterStateMachine target, bool crit, [CanBeNull] ISkill skill = null)
         {
             SummonToApply effectStruct = new(CharacterToSummon, caster, target, crit, skill, ScriptOrigin: this);
             return ProcessModifiersAndTryApply(effectStruct);
         }
 
-        private static StatusResult TryApply(ref SummonToApply effectStruct)
+        private static StatusResult TryApply([NotNull] ref SummonToApply effectStruct)
         {
             if (effectStruct.Caster.Display.IsNone)
                 return StatusResult.Failure(effectStruct.Caster, effectStruct.Target, generatesInstance: false);
@@ -45,8 +42,10 @@ namespace Core.Combat.Scripts.Effects.Types.Summon
             CombatManager combatManager = effectStruct.Caster.Display.Value.CombatManager;
             int count = 0;
             foreach (CharacterStateMachine character in combatManager.Characters.GetOnSide(effectStruct.Caster.PositionHandler.IsLeftSide))
+            {
                 if (character.StateEvaluator.PureEvaluate() is not CharacterState.Defeated)
                     count++;
+            }
 
             if (count >= 4)
                 StatusResult.Failure(effectStruct.Caster, effectStruct.Target, generatesInstance: false);
@@ -60,7 +59,7 @@ namespace Core.Combat.Scripts.Effects.Types.Summon
             effectStruct.Caster.StatusApplierModule.ModifyEffectApplying(ref effectStruct);
         }
 
-        public override float ComputePoints(ref SkillStruct skillStruct, CharacterStateMachine target)
+        public override float ComputePoints(ref SkillStruct skillStruct, [NotNull] CharacterStateMachine target)
         {
             if (target.Display.IsNone)
                 return 0;
@@ -69,14 +68,15 @@ namespace Core.Combat.Scripts.Effects.Types.Summon
             
             int count = 0;
             foreach (CharacterStateMachine character in combatManager.Characters.GetOnSide(skillStruct.Caster.PositionHandler.IsLeftSide))
+            {
                 if (character.StateEvaluator.PureEvaluate() is not CharacterState.Defeated)
                     count++;
-            
+            }
+
             if (count >= 4)
-            {
+
                 //potential bug 
                 return -100000;
-            }
 
             SummonToApply record = new(CharacterToSummon, skillStruct.Caster, target, FromCrit: false, skillStruct.Skill, ScriptOrigin: this);
             ProcessModifiers(record);
@@ -86,19 +86,25 @@ namespace Core.Combat.Scripts.Effects.Types.Summon
             resistancesMultiplier += HeuristicConstants.ProcessSummonResistance(record.CharacterToSummon.MoveResistance);
             resistancesMultiplier /= 3f;
 
-            float staminaMultiplier = record.CharacterToSummon.Stamina * HeuristicConstants.Summon_StaminaMultiplier * (1f / (1f - record.CharacterToSummon.Resilience * HeuristicConstants.Summon_ResilienceMultiplier));
-            float speedMultiplier = record.CharacterToSummon.Speed;
-            float stunRecoverySpeedMultiplier = HeuristicConstants.ProcessSummonStunRecoverySpeed(record.CharacterToSummon.StunRecoverySpeed);
-            float accuracyMultiplier = record.CharacterToSummon.Accuracy * HeuristicConstants.Summon_AccuracyMultiplier + 1;
-            float criticalChanceMultiplier = record.CharacterToSummon.Critical * HeuristicConstants.Summon_CriticalMultiplier + 1;
-            float dodgeMultiplier = record.CharacterToSummon.Dodge * HeuristicConstants.Summon_DodgeMultiplier + 1;
+            float staminaMultiplier = record.CharacterToSummon.Stamina * HeuristicConstants.Summon_StaminaMultiplier * (1f / (1f - ((record.CharacterToSummon.Resilience / 100f) * HeuristicConstants.Summon_ResilienceMultiplier)));
+            float speedMultiplier = record.CharacterToSummon.Speed / 100f;
+            float stunMitigationMultiplier = HeuristicConstants.ProcessSummonResistance(record.CharacterToSummon.StunMitigation);
+            float accuracyMultiplier = ((record.CharacterToSummon.Accuracy / 100f) * HeuristicConstants.Summon_AccuracyMultiplier) + 1;
+            float criticalChanceMultiplier = ((record.CharacterToSummon.CriticalChance / 100f) * HeuristicConstants.Summon_CriticalMultiplier) + 1;
+            float dodgeMultiplier = ((record.CharacterToSummon.Dodge / 100f) * HeuristicConstants.Summon_DodgeMultiplier) + 1;
             float averageDamageMultiplier = HeuristicConstants.Summon_DamageMultiplier * (record.CharacterToSummon.Damage.lower + record.CharacterToSummon.Damage.upper) / 2f;
             
-            return staminaMultiplier * resistancesMultiplier * speedMultiplier * stunRecoverySpeedMultiplier * accuracyMultiplier *
-                   criticalChanceMultiplier * dodgeMultiplier * averageDamageMultiplier * PointsMultiplier;
+            return staminaMultiplier * resistancesMultiplier * speedMultiplier * stunMitigationMultiplier * accuracyMultiplier * criticalChanceMultiplier * dodgeMultiplier * averageDamageMultiplier * PointsMultiplier;
         }
-
+        
         public override EffectType EffectType => EffectType.Summon;
+        [NotNull]
         public override string Description => StatusScriptDescriptions.Get(this);
+        
+        public override bool IsPositive => true;
+
+        public override bool PlaysBarkAppliedOnCaster => true;
+        public override bool PlaysBarkAppliedOnEnemy => true;
+        public override bool PlaysBarkAppliedOnAlly => false;
     }
 }

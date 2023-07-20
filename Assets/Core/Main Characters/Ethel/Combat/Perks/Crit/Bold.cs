@@ -10,13 +10,15 @@ using Core.Combat.Scripts.Skills.Action;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 using ListPool;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Crit
 {
     public class Bold : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             BoldInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -37,7 +39,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Crit
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             BoldInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -45,34 +48,29 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Crit
         }
     }
     
-    public class BoldInstance : PerkInstance, IBaseFloatAttributeModifier, IActionCompletedListener
+    public class BoldInstance : PerkInstance, IBaseAttributeModifier, IActionCompletedListener
     {
-        public string SharedId => nameof(BoldInstance);
-        public int Priority => 999;
-
         private bool _activated;
 
         public BoldInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public BoldInstance(CharacterStateMachine owner, BoldRecord record) : base(owner, record)
-        {
-            _activated = record.Activated;
-        }
+
+        public BoldInstance(CharacterStateMachine owner, [NotNull] BoldRecord record) : base(owner, record) => _activated = record.Activated;
 
         protected override void OnSubscribe()
         {
             Owner.Events.ActionCompletedListeners.Add(this);
-            Owner.StatsModule.SubscribeCriticalChance(this, false);
+            Owner.StatsModule.SubscribeCriticalChance(modifier: this, allowDuplicates: false);
         }
 
         protected override void OnUnsubscribe()
         {
             Owner.Events.ActionCompletedListeners.Remove(this);
-            Owner.StatsModule.UnsubscribeCriticalChance(this);
+            Owner.StatsModule.UnsubscribeCriticalChance(modifier: this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new BoldRecord(Key, _activated);
 
         public void OnActionCompleted(ListPool<ActionResult> results)
@@ -90,12 +88,16 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Crit
             }
         }
 
-        public void Modify(ref float value, CharacterStateMachine self)
+        public void Modify(ref int value, CharacterStateMachine self)
         {
             if (_activated)
                 return;
             
-            value = 999;
+            value = 9999;
         }
+
+        [NotNull]
+        public string SharedId => nameof(BoldInstance);
+        public int Priority => 999;
     }
 }

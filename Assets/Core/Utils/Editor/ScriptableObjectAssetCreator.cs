@@ -15,7 +15,7 @@ namespace Core.Utils.Editor
                 return;
             
             Type type = script.GetClass();
-            ScriptableObject scriptableObject = ScriptableObject.CreateInstance (type: type);
+            ScriptableObject scriptableObject = ScriptableObject.CreateInstance (type);
             string path = Path.GetDirectoryName (path: AssetDatabase.GetAssetPath (assetObject: script));
             AssetDatabase.CreateAsset (asset: scriptableObject, path: $"{path}/{Selection.activeObject.name}.asset");
         }

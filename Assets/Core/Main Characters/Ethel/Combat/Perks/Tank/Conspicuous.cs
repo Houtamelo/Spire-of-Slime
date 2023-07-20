@@ -8,12 +8,14 @@ using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Tank
 {
     public class Conspicuous : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             ConspicuousInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -34,7 +36,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Tank
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             ConspicuousInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -47,14 +50,12 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Tank
         private const float MaxTargetBonus = 0.15f;
         private const float MinTargetBonus = 0.2f;
         private const float ChanceMultiplier = 1.5f;
-        public string SharedId => nameof(ConspicuousInstance);
-        public int Priority => 0;
 
         public ConspicuousInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public ConspicuousInstance(CharacterStateMachine owner, ConspicuousRecord record) : base(owner, record)
+
+        public ConspicuousInstance(CharacterStateMachine owner, [NotNull] ConspicuousRecord record) : base(owner, record)
         {
         }
 
@@ -68,6 +69,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Tank
             Owner.AIModule.MarkModifiers.Remove(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new ConspicuousRecord(Key);
 
         public void ChangeMultiplierTargetChance(CharacterStateMachine caster, CharacterStateMachine target, ref float chance)
@@ -85,5 +87,9 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Tank
         {
             chance += MinTargetBonus;
         }
+
+        [NotNull]
+        public string SharedId => nameof(ConspicuousInstance);
+        public int Priority => 0;
     }
 }

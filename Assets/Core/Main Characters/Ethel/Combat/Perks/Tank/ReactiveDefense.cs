@@ -11,13 +11,15 @@ using Core.Combat.Scripts.Skills.Action;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Tank
 {
     public class ReactiveDefense : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             ReactiveDefenseInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -38,7 +40,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Tank
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             ReactiveDefenseInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -46,23 +49,18 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Tank
         }
     }
     
-    public class ReactiveDefenseInstance : PerkInstance, IBaseFloatAttributeModifier, ISelfAttackedListener
+    public class ReactiveDefenseInstance : PerkInstance, IBaseAttributeModifier, ISelfAttackedListener
     {
-        public string SharedId => nameof(ReactiveDefenseInstance);
-        public int Priority => 0;
-        private const float ValuePerStack = 0.04f;
-        private const float MaxValue = 0.2f;
+        private const int ValuePerStack = 4;
+        private const int MaxValue = 20;
 
         private int _stackCount;
 
         public ReactiveDefenseInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
-        
-        public ReactiveDefenseInstance(CharacterStateMachine owner, ReactiveDefenseRecord record) : base(owner, record)
-        {
-            _stackCount = record.StackCount;
-        }
+
+        public ReactiveDefenseInstance(CharacterStateMachine owner, [NotNull] ReactiveDefenseRecord record) : base(owner, record) => _stackCount = record.StackCount;
 
         protected override void OnSubscribe()
         {
@@ -80,21 +78,24 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Tank
                 Owner.StaminaModule.Value.UnsubscribeResilience(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new ReactiveDefenseRecord(Key, _stackCount);
 
         public void OnSelfAttacked(ref ActionResult result)
         {
-            if (result.Hit && result.Skill.AllowAllies == false &&
+            if (result.Hit && result.Skill.IsPositive == false &&
                 Owner.StateEvaluator.PureEvaluate() is not CharacterState.Defeated and not CharacterState.Corpse and not CharacterState.Downed and not CharacterState.Grappled &&
-                result.DamageDealt.TrySome(out uint damage) && damage > 0)
-            {
+                result.DamageDealt.TrySome(out int damage) && damage > 0)
                 _stackCount++;
-            }
         }
 
-        public void Modify(ref float value, CharacterStateMachine self)
+        public void Modify(ref int value, CharacterStateMachine self)
         {
             value += Mathf.Clamp(_stackCount * ValuePerStack, 0, MaxValue);
         }
+
+        [NotNull]
+        public string SharedId => nameof(ReactiveDefenseInstance);
+        public int Priority => 0;
     }
 }

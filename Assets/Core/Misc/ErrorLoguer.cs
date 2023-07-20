@@ -9,7 +9,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Misc
 {

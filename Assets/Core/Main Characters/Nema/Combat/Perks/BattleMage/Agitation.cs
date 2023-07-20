@@ -2,19 +2,21 @@
 using System.Text;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects.Interfaces;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Nema.Combat.Perks.BattleMage
 {
     public class Agitation : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             AgitationInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -35,7 +37,8 @@ namespace Core.Main_Characters.Nema.Combat.Perks.BattleMage
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             AgitationInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -52,7 +55,7 @@ namespace Core.Main_Characters.Nema.Combat.Perks.BattleMage
         {
         }
         
-        public AgitationInstance(CharacterStateMachine owner, AgitationRecord record) : base(owner, record)
+        public AgitationInstance(CharacterStateMachine owner, [NotNull] AgitationRecord record) : base(owner, record)
         {
         }
 
@@ -72,27 +75,30 @@ namespace Core.Main_Characters.Nema.Combat.Perks.BattleMage
                 lustModule.UnsubscribeComposure(ComposureModifierInstance);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new AgitationRecord(Key);
 
-        private class DamageMultiplierModifier : IBaseFloatAttributeModifier
+        private class DamageMultiplierModifier : IBaseAttributeModifier
         {
+            [NotNull]
             public string SharedId => nameof(AgitationInstance);
             public int Priority => 0;
-            public void Modify(ref float value, CharacterStateMachine self)
+            public void Modify(ref int value, [NotNull] CharacterStateMachine self)
             {
-                float delta = self.StatsModule.GetSpeed() - 1;
+                int delta = self.StatsModule.GetSpeed() - 100;
                 if (delta > 0)
                     value += delta;
             }
         }
         
-        private class ComposureModifier : IBaseFloatAttributeModifier
+        private class ComposureModifier : IBaseAttributeModifier
         {
+            [NotNull]
             public string SharedId => nameof(AgitationInstance);
             public int Priority => 0;
-            public void Modify(ref float value, CharacterStateMachine self)
+            public void Modify(ref int value, [NotNull] CharacterStateMachine self)
             {
-                float delta = self.StatsModule.GetSpeed() - 1;
+                int delta = self.StatsModule.GetSpeed() - 100;
                 if (delta < 0)
                     value += delta;
             }

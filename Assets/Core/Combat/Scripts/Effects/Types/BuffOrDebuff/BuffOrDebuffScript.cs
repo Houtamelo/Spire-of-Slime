@@ -1,38 +1,35 @@
 ﻿using System;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Cues;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Enums;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Save_Management.SaveObjects;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
 using Random = UnityEngine.Random;
 
 namespace Core.Combat.Scripts.Effects.Types.BuffOrDebuff
 {
-    public record BuffOrDebuffScript(bool Permanent, float BaseDuration, float BaseApplyChance, CombatStat Stat, float BaseDelta) : StatusScriptDurationBased(Permanent, BaseDuration)
+    public record BuffOrDebuffScript(bool Permanent, TSpan BaseDuration, int BaseApplyChance, CombatStat Stat, int BaseDelta) : StatusScriptDurationBased(Permanent, BaseDuration)
     {
-        public float BaseApplyChance { get; protected set; } = BaseApplyChance;
+        public int BaseApplyChance { get; protected set; } = BaseApplyChance;
         public CombatStat Stat { get; set; } = Stat;
-        public float BaseDelta { get; set; } = BaseDelta;
+        public int BaseDelta { get; set; } = BaseDelta;
 
-        public override bool IsPositive => BaseDelta > 0;
-        
-        public override bool PlaysBarkAppliedOnCaster => EffectType == EffectType.Buff;
-        public override bool PlaysBarkAppliedOnEnemy => EffectType == EffectType.Debuff;
-        public override bool PlaysBarkAppliedOnAlly => EffectType == EffectType.Buff;
+        [NotNull]
+        public override StatusToApply GetStatusToApply(CharacterStateMachine caster, CharacterStateMachine target, bool crit, [CanBeNull] ISkill skill = null) 
+            => new BuffOrDebuffToApply(caster, target, crit, skill, ScriptOrigin: this, BaseDuration, Permanent, BaseApplyChance, Stat, BaseDelta);
 
-        public override StatusToApply GetStatusToApply(CharacterStateMachine caster, CharacterStateMachine target, bool crit, ISkill skill = null) 
-            => new BuffOrDebuffToApply(caster, target, crit, skill, this, BaseDuration, Permanent, BaseApplyChance, Stat, BaseDelta);
-
-        public override StatusResult ApplyEffect(CharacterStateMachine caster, CharacterStateMachine target, bool crit, ISkill skill = null)
+        public override StatusResult ApplyEffect(CharacterStateMachine caster, CharacterStateMachine target, bool crit, [CanBeNull] ISkill skill = null)
         {
-            BuffOrDebuffToApply buffOrDebuffStruct = new(caster, target, crit, skill, this, BaseDuration, Permanent, BaseApplyChance, Stat, BaseDelta);
+            BuffOrDebuffToApply buffOrDebuffStruct = new(caster, target, crit, skill, ScriptOrigin: this, BaseDuration, Permanent, BaseApplyChance, Stat, BaseDelta);
             return ProcessModifiersAndTryApply(buffOrDebuffStruct);
         }
 
@@ -40,7 +37,9 @@ namespace Core.Combat.Scripts.Effects.Types.BuffOrDebuff
         {
             IStatusApplierModule applierModule = effectStruct.Caster.StatusApplierModule;
             if (effectStruct.Caster == effectStruct.Target || effectStruct.Delta > 0)
-                effectStruct.ApplyChance = 1;
+            {
+                effectStruct.ApplyChance = 100;
+            }
             else
             {
                 effectStruct.ApplyChance += applierModule.BaseDebuffApplyChance;
@@ -52,11 +51,15 @@ namespace Core.Combat.Scripts.Effects.Types.BuffOrDebuff
 
             applierModule.ModifyEffectApplying(ref effectStruct);
             
-            IStatusReceiverModule receiverModule = effectStruct.Target.StatusModule;
+            IStatusReceiverModule receiverModule = effectStruct.Target.StatusReceiverModule;
             receiverModule.ModifyEffectReceiving(ref effectStruct);
             
             if (effectStruct.FromCrit)
-                effectStruct.Duration *= DurationMultiplierOnCrit;
+            {
+                TSpan duration = effectStruct.Duration;
+                duration.Multiply(DurationMultiplierOnCrit);
+                effectStruct.Duration = duration;
+            }
         }
 
         public static StatusResult ProcessModifiersAndTryApply(BuffOrDebuffToApply effectStruct)
@@ -65,14 +68,14 @@ namespace Core.Combat.Scripts.Effects.Types.BuffOrDebuff
             return TryApply(ref effectStruct);
         }
 
-        private static StatusResult TryApply(ref BuffOrDebuffToApply effectStruct)
+        private static StatusResult TryApply([NotNull] ref BuffOrDebuffToApply effectStruct)
         {
             FullCharacterState targetState = effectStruct.Target.StateEvaluator.FullPureEvaluate();
             if (targetState.Defeated || targetState.Corpse || targetState.Grappled)
                 return StatusResult.Failure(effectStruct.Caster, effectStruct.Target, generatesInstance: false);
             
-            bool success = Random.value < effectStruct.ApplyChance;
-            Option<StatusInstance> option = success ? BuffOrDebuff.CreateInstance(effectStruct.Duration, effectStruct.IsPermanent, 
+            bool success = Save.Random.Next(100) < effectStruct.ApplyChance;
+            Option<StatusInstance> option = success ? BuffOrDebuff.CreateInstance(effectStruct.Duration, effectStruct.Permanent, 
                 effectStruct.Target, effectStruct.Caster, effectStruct.Stat, effectStruct.Delta) : Option.None;
 
             EffectType effectType = effectStruct.Delta > 0 ? EffectType.Buff : EffectType.Debuff;
@@ -89,7 +92,7 @@ namespace Core.Combat.Scripts.Effects.Types.BuffOrDebuff
             TryApply(ref effectStruct);
         }
 
-        public override float ComputePoints(ref SkillStruct skillStruct, CharacterStateMachine target)
+        public override float ComputePoints(ref SkillStruct skillStruct, [NotNull] CharacterStateMachine target)
         {
             CharacterState state = target.StateEvaluator.PureEvaluate();
             if (state is CharacterState.Defeated or CharacterState.Corpse or CharacterState.Grappled)
@@ -223,7 +226,7 @@ namespace Core.Combat.Scripts.Effects.Types.BuffOrDebuff
                         
                         break;
                     }
-                    case CombatStat.StunSpeed:
+                    case CombatStat.StunMitigation:
                     {
                         bool noSkillsWithStun = true;
                         foreach (CharacterStateMachine enemy in combatManager.Characters.GetEnemies(target))
@@ -252,13 +255,21 @@ namespace Core.Combat.Scripts.Effects.Types.BuffOrDebuff
                 }
             }
             
-            float applyChance = Mathf.Clamp(effectStruct.ApplyChance, 0f, 1f);
-            float durationMultiplier = effectStruct.IsPermanent ? HeuristicConstants.PermanentMultiplier : effectStruct.Duration * HeuristicConstants.DurationMultiplier;
-            float points = effectStruct.Delta * durationMultiplier * HeuristicConstants.BuffOrDebuffMultiplier * applyChance;
+            float applyChancePercentage = Mathf.Clamp01(effectStruct.ApplyChance / 100f);
+            float deltaPercentage = (effectStruct.Delta / 100f);
+            float durationMultiplier = effectStruct.Permanent ? HeuristicConstants.PermanentMultiplier : (effectStruct.Duration.FloatSeconds * HeuristicConstants.DurationMultiplier);
+            float points = deltaPercentage * durationMultiplier * HeuristicConstants.BuffOrDebuffMultiplier * applyChancePercentage;
             return points;
         }
 
+        [NotNull]
         public override string Description => StatusScriptDescriptions.Get(this);
         public override EffectType EffectType => BaseDelta > 0 ? EffectType.Buff : EffectType.Debuff;
+        
+        public override bool IsPositive => BaseDelta > 0;
+        
+        public override bool PlaysBarkAppliedOnCaster => EffectType == EffectType.Buff;
+        public override bool PlaysBarkAppliedOnEnemy => EffectType == EffectType.Debuff;
+        public override bool PlaysBarkAppliedOnAlly => EffectType == EffectType.Buff;
     }
 }

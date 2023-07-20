@@ -35,8 +35,10 @@ namespace Core.Local_Map.Scripts.PathCreating
                 }
 
                 foreach (HexagonObject.Cell neighbor in cell.Neighbors.Values)
+                {
                     if (twoSet.Contains(neighbor))
                         Score += 1;
+                }
             }
         }
         
@@ -61,8 +63,10 @@ namespace Core.Local_Map.Scripts.PathCreating
                 }
 
                 foreach (HexagonObject.Cell neighbor in cell.Neighbors.Values)
+                {
                     if (twoSet.Contains(neighbor) || threeSet.Contains(neighbor))
                         Score += 1;
+                }
             }
             
             foreach (HexagonObject.Cell cell in twoSet)
@@ -74,8 +78,10 @@ namespace Core.Local_Map.Scripts.PathCreating
                 }
 
                 foreach (HexagonObject.Cell neighbor in cell.Neighbors.Values)
+                {
                     if (threeSet.Contains(neighbor))
                         Score += 1;
+                }
             }
         }
     }

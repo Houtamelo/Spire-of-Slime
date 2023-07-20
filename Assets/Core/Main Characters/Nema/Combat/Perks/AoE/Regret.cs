@@ -2,24 +2,26 @@
 using System.Text;
 using Core.Combat.Scripts;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Effects.Interfaces;
 using Core.Combat.Scripts.Effects.Types.BuffOrDebuff;
 using Core.Combat.Scripts.Enums;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Managers.Enumerators;
 using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
-using Utils.Patterns;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Nema.Combat.Perks.AoE
 {
     public class Regret : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             RegretInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -40,7 +42,8 @@ namespace Core.Main_Characters.Nema.Combat.Perks.AoE
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             RegretInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -48,34 +51,25 @@ namespace Core.Main_Characters.Nema.Combat.Perks.AoE
         }
     }
     
-    public class RegretInstance : PerkInstance, IBaseFloatAttributeModifier
+    public class RegretInstance : PerkInstance, IBaseAttributeModifier
     {
-        public string SharedId => nameof(RegretInstance);
-        public int Priority => 0;
-        private const float DownedComposureModifier = 0.3f;
-        private const float OnKillComposureModifier = -0.15f;
-        private const float Duration = 4f;
-        
-        private static readonly BuffOrDebuffScript Debuff = new(false, Duration, 1f, CombatStat.Composure, OnKillComposureModifier);
+        private const int DownedComposureModifier = 30;
+        private const int OnKillComposureModifier = -15;
+
+        private static readonly BuffOrDebuffScript Debuff = new(Permanent: false, TSpan.FromSeconds(4.0), BaseApplyChance: 100, CombatStat.Composure, OnKillComposureModifier);
 
         private readonly CharacterManager.DefeatedDelegate _onDefeat;
-        
-        public RegretInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
-        {
-            _onDefeat = OnKill;
-        }
-        
-        public RegretInstance(CharacterStateMachine owner, RegretRecord record) : base(owner, record)
-        {
-            _onDefeat = OnKill;
-        }
+
+        public RegretInstance(CharacterStateMachine owner, CleanString key) : base(owner, key) => _onDefeat = OnKill;
+
+        public RegretInstance(CharacterStateMachine owner, [NotNull] RegretRecord record) : base(owner, record) => _onDefeat = OnKill;
 
         private void OnKill(CharacterStateMachine defeated, Option<CharacterStateMachine> lastDamager)
         {
             if (lastDamager.IsNone || lastDamager.Value != Owner)
                 return;
 
-            BuffOrDebuffToApply effectStruct = (BuffOrDebuffToApply) Debuff.GetStatusToApply(Owner, Owner, false, null);
+            BuffOrDebuffToApply effectStruct = (BuffOrDebuffToApply) Debuff.GetStatusToApply(caster: Owner, target: Owner, crit: false, skill: null);
             BuffOrDebuffScript.ProcessModifiersAndTryApply(effectStruct);
         }
 
@@ -85,7 +79,7 @@ namespace Core.Main_Characters.Nema.Combat.Perks.AoE
                 Owner.Display.Value.CombatManager.Characters.DefeatedEvent += _onDefeat;
             
             if (Owner.LustModule.TrySome(out ILustModule lustModule))
-                lustModule.SubscribeComposure(this, allowDuplicates: false);
+                lustModule.SubscribeComposure(modifier: this, allowDuplicates: false);
         }
 
         protected override void OnUnsubscribe()
@@ -94,15 +88,20 @@ namespace Core.Main_Characters.Nema.Combat.Perks.AoE
                 Owner.Display.Value.CombatManager.Characters.DefeatedEvent -= _onDefeat;
             
             if (Owner.LustModule.TrySome(out ILustModule lustModule))
-                lustModule.UnsubscribeComposure(this);
+                lustModule.UnsubscribeComposure(modifier: this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new RegretRecord(Key);
 
-        public void Modify(ref float value, CharacterStateMachine self)
+        public void Modify(ref int value, [NotNull] CharacterStateMachine self)
         {
-            if (self.DownedModule.IsSome && self.DownedModule.Value.GetRemaining() > 0)
+            if (self.DownedModule.IsSome && self.DownedModule.Value.GetRemaining().Ticks > 0)
                 value += DownedComposureModifier;
         }
+
+        [NotNull]
+        public string SharedId => nameof(RegretInstance);
+        public int Priority => 0;
     }
 }

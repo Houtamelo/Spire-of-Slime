@@ -3,7 +3,7 @@
     public enum VariableType
     {
         Bool,
-        Float,
+        Int,
         String,
     }
 }

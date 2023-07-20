@@ -12,14 +12,14 @@ namespace Core.Combat.Scripts.Behaviour
         private static readonly StringBuilder Builder = new();
         
         [SerializeField, DataMember]
-        public byte size;
+        public int size;
         
         [SerializeField, DataMember]
-        public byte startPosition;
+        public int startPosition;
 
         public int Min => startPosition;
 
-        public CharacterPositioning(byte size, byte startPosition)
+        public CharacterPositioning(int size, int startPosition)
         {
             this.size = size;
             this.startPosition = startPosition;
@@ -33,9 +33,9 @@ namespace Core.Combat.Scripts.Behaviour
 
         public ref struct Enumerator
         {
-            private byte _index;
-            private readonly byte _size;
-            private readonly byte _startIndex;
+            private int _index;
+            private readonly int _size;
+            private readonly int _startIndex;
             
             public Enumerator(CharacterPositioning positions)
             {

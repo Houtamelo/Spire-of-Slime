@@ -9,12 +9,14 @@ using Core.Combat.Scripts.Skills.Action;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 
 namespace Core.Main_Characters.Ethel.Combat.Perks.Duelist
 {
     public class Release : PerkScriptable
     {
-        public override PerkInstance CreateInstance(CharacterStateMachine character)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine character)
         {
             ReleaseInstance instance = new(character, Key);
             character.PerksModule.Add(instance);
@@ -35,7 +37,8 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Duelist
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters)
+        [NotNull]
+        public override PerkInstance CreateInstance([NotNull] CharacterStateMachine owner, DirectCharacterEnumerator allCharacters)
         {
             ReleaseInstance instance = new(owner, record: this);
             owner.PerksModule.Add(instance);
@@ -51,7 +54,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Duelist
         {
         }
         
-        public ReleaseInstance(CharacterStateMachine owner, ReleaseRecord record) : base(owner, record)
+        public ReleaseInstance(CharacterStateMachine owner, [NotNull] ReleaseRecord record) : base(owner, record)
         {
         }
 
@@ -65,6 +68,7 @@ namespace Core.Main_Characters.Ethel.Combat.Perks.Duelist
             Owner.Events.RiposteActivatedListeners.Remove(this);
         }
 
+        [NotNull]
         public override PerkRecord GetRecord() => new ReleaseRecord(Key);
 
         public void OnRiposteActivated(ref ActionResult actionResult)

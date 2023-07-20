@@ -4,11 +4,11 @@ using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Patterns;
 using static UnityEngine.EventSystems.PointerEventData;
 
 namespace Core.Combat.Scripts.UI
@@ -73,7 +73,7 @@ namespace Core.Combat.Scripts.UI
                 combatManager.InputHandler.SelectedSkill.Changed -= CheckIfSelected;
         }
 
-        public void SetSkill(ISkill skill)
+        public void SetSkill([CanBeNull] ISkill skill)
         {
             if (skill == null)
             {
@@ -270,10 +270,8 @@ namespace Core.Combat.Scripts.UI
         public void ResetMe()
         {
             if (_isMouseOver)
-            {
                 OnPointerExit(null);
-            }
-            
+
             Skill = Option<ISkill>.None;
             _hasBase = false;
             _hasHighlighted = false;
@@ -294,7 +292,7 @@ namespace Core.Combat.Scripts.UI
             gameObject.SetActive(false);
         }
 
-        private static void AssignSprite(Sprite sprite, Image image, out bool hasSprite)
+        private static void AssignSprite(Sprite sprite, [NotNull] Image image, out bool hasSprite)
         {
             hasSprite = sprite != null;
             if (hasSprite)

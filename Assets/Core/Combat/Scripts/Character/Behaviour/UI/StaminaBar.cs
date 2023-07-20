@@ -6,13 +6,12 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Behaviour.UI
 {
     public class StaminaBar : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        private static float BarFillLerpDuration => CharacterDisplay.BarsFillLerpDuration;
+        private static float BarFillLerpDuration => DisplayModule.BarsFillLerpDuration;
 
         [SerializeField, Required]
         private Image staminaBar;
@@ -21,10 +20,10 @@ namespace Core.Combat.Scripts.Behaviour.UI
         private TMP_Text tmp;
 
         private Tween _tween;
-        private Option<int> _cachedCurrent = Option<int>.None;
-        private Option<int> _cachedMax = Option<int>.None;
+        private Option<int> _cachedCurrent = Option.None;
+        private Option<int> _cachedMax = Option.None;
 
-        public void Set(bool active, uint current, uint max)
+        public void Set(bool active, int current, int max)
         {
             gameObject.SetActive(active);
             if (active == false)

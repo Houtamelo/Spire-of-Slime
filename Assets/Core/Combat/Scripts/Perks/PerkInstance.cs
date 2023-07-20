@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Core.Combat.Scripts.Behaviour;
 using Core.Save_Management.SaveObjects;
+using JetBrains.Annotations;
 
 namespace Core.Combat.Scripts.Perks
 {
@@ -20,7 +21,7 @@ namespace Core.Combat.Scripts.Perks
             Key = key;
         }
 
-        protected PerkInstance(CharacterStateMachine owner, PerkRecord record)
+        protected PerkInstance(CharacterStateMachine owner, [NotNull] PerkRecord record)
         {
             Owner = owner;
             Key = record.Key;

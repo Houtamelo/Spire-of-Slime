@@ -1,5 +1,6 @@
 ﻿using System;
 using Core.Main_Database.Visual_Novel.Enums;
+using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
 
@@ -12,7 +13,7 @@ namespace Core.Main_Database.Visual_Novel.Editor
         private const float ValueWidth = 100f;
         private const float Spacing = 5f;
         
-        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        public override void OnGUI(Rect position, [NotNull] SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, GUIContent.none, property);
             
@@ -29,12 +30,10 @@ namespace Core.Main_Database.Visual_Novel.Editor
             SerializedProperty comparisonTypeProperty = property.FindPropertyRelative("comparisonType");
             ComparisonType comparisonType = (ComparisonType) comparisonTypeProperty.enumValueIndex;
             
-            if (type != VariableType.Float && comparisonType != ComparisonType.Equal && comparisonType != ComparisonType.NotEqual)
-            {
+            if (type != VariableType.Int && comparisonType != ComparisonType.Equal && comparisonType != ComparisonType.NotEqual)
                 comparisonTypeProperty.enumValueIndex = (int) ComparisonType.Equal;
-            }
-            
-            float referenceWidth = position.width - ComparisonTypeWidth - ValueWidth - Spacing * 2;
+
+            float referenceWidth = position.width - ComparisonTypeWidth - ValueWidth - (Spacing * 2);
             Rect referenceRect = new Rect(position.x, position.y, referenceWidth, position.height);
             Rect comparisonTypeRect = new Rect(referenceRect.xMax + Spacing, position.y, ComparisonTypeWidth, position.height);
             Rect valueRect = new Rect(comparisonTypeRect.xMax + Spacing, position.y, ValueWidth, position.height);
@@ -44,8 +43,8 @@ namespace Core.Main_Database.Visual_Novel.Editor
             
             switch (type)
             {
-                case VariableType.Float:
-                    EditorGUI.PropertyField(valueRect, property.FindPropertyRelative("floatValue"), GUIContent.none);
+                case VariableType.Int:
+                    EditorGUI.PropertyField(valueRect, property.FindPropertyRelative("intValue"), GUIContent.none);
                     break;
                 case VariableType.Bool:
                     EditorGUI.PropertyField(valueRect, property.FindPropertyRelative("boolValue"), GUIContent.none);
@@ -54,7 +53,7 @@ namespace Core.Main_Database.Visual_Novel.Editor
                     EditorGUI.PropertyField(valueRect, property.FindPropertyRelative("stringValue"), GUIContent.none);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException(nameof(type), type, message: null);
             }
             
             EditorGUI.EndProperty();

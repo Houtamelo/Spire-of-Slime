@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using JetBrains.Annotations;
 
 namespace Core.World_Map.Scripts
 {
@@ -23,6 +24,7 @@ namespace Core.World_Map.Scripts
 
         public static string FormattedName(this LocationEnum locationEnum) => LocationNames[key: locationEnum];
 
+        [NotNull]
         public static string Description(this LocationEnum locationEnum)
         {
             return locationEnum switch

@@ -5,15 +5,16 @@ using System.Text;
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Effects;
 using Core.Combat.Scripts.Managers;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.Utils.Math;
 using Core.Utils.Objects;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using ListPool;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Cues
 {
@@ -71,7 +72,7 @@ namespace Core.Combat.Scripts.Cues
                 CreateCue();
         }
 
-        public void Enqueue(StatusCueHandler handler)
+        public void Enqueue([NotNull] StatusCueHandler handler)
         {
             if (_pendingCues.TryGetValue(handler.Character, out List<StatusCueHandler> list) == false)
                 _pendingCues[handler.Character] = list = new List<StatusCueHandler>(8);
@@ -148,9 +149,9 @@ namespace Core.Combat.Scripts.Cues
             return anyPlayed || IsBusy();
         }
 
-        private void PlayCue(StatusCueHandler cueHandler)
+        private void PlayCue([NotNull] StatusCueHandler cueHandler)
         {
-            if (cueHandler.Character.Display.TrySome(out CharacterDisplay display) == false)
+            if (cueHandler.Character.Display.TrySome(out DisplayModule display) == false)
                 return;
 
             Option<StatusEffectCue> cue = cueHandler.Type switch
@@ -169,9 +170,9 @@ namespace Core.Combat.Scripts.Cues
             cueHandler.NotifyStart();
         }
 
-        private void PlayGrouped(ReadOnlySpan<StatusCueHandler> handlers, CharacterStateMachine character)
+        private void PlayGrouped(ReadOnlySpan<StatusCueHandler> handlers, [NotNull] CharacterStateMachine character)
         {
-            if (character.Display.TrySome(out CharacterDisplay display) == false)
+            if (character.Display.TrySome(out DisplayModule display) == false)
                 return;
             
             StatusCueHandler first = handlers[0];
@@ -179,9 +180,9 @@ namespace Core.Combat.Scripts.Cues
             switch (first.Type)
             {
                 case StatusCueHandler.CueType.EffectApplied: 
-                    cue = AnimateStatusEffect(display, first.GetEffectType(), first.GetSuccess(), (uint)handlers.Length); break;
+                    cue = AnimateStatusEffect(display, first.GetEffectType(), first.GetSuccess(), handlers.Length); break;
                 case StatusCueHandler.CueType.PoisonTick:
-                    uint totalPoison = 0;
+                    int totalPoison = 0;
                     for (int i = 0; i < handlers.Length; i++)
                         totalPoison += handlers[i].GetPoisonAmount();
                     
@@ -195,7 +196,7 @@ namespace Core.Combat.Scripts.Cues
                     cue = AnimateLustTick(display, totalLust);
                     break;
                 case StatusCueHandler.CueType.TemptationTick:
-                    float totalTemptation = 0f;
+                    int totalTemptation = 0;
                     for (int i = 0; i < handlers.Length; i++)
                         totalTemptation += handlers[i].GetTemptationAmount();
                     
@@ -213,7 +214,7 @@ namespace Core.Combat.Scripts.Cues
                 handler.NotifyStart();
         }
 
-        private Option<StatusEffectCue> AnimateStatusEffect(CharacterDisplay character, EffectType effectType, bool success, uint instanceCount = 1)
+        private Option<StatusEffectCue> AnimateStatusEffect(DisplayModule character, EffectType effectType, bool success, int instanceCount = 1)
         {
             Option<(Sprite sprite, AudioClip clip)> spriteAndAudio = StatusEffectsDatabase.GetStatusSpriteAndSfx(effectType);
             if (spriteAndAudio.IsNone)
@@ -244,7 +245,7 @@ namespace Core.Combat.Scripts.Cues
             return cue;
         }
 
-        private Option<StatusEffectCue> AnimatePoisonTick(CharacterDisplay character, uint damageDealt)
+        private Option<StatusEffectCue> AnimatePoisonTick([NotNull] DisplayModule character, int damageDealt)
         {
             if (character.GetCuePosition().AssertSome(out Vector3 position) == false)
                 return Option.None;
@@ -256,7 +257,7 @@ namespace Core.Combat.Scripts.Cues
             return cue;
         }
 
-        private Option<StatusEffectCue> AnimateLustTick(CharacterDisplay character, int lustDelta)
+        private Option<StatusEffectCue> AnimateLustTick([NotNull] DisplayModule character, int lustDelta)
         {
             if (character.GetCuePosition().AssertSome(out Vector3 position) == false)
                 return Option.None;
@@ -269,19 +270,20 @@ namespace Core.Combat.Scripts.Cues
             return cue;
         }
 
-        private Option<StatusEffectCue> AnimateTemptationTick(CharacterDisplay character, float temptation)
+        private Option<StatusEffectCue> AnimateTemptationTick([NotNull] DisplayModule character, int temptation)
         {
             if (character.GetCuePosition().AssertSome(out Vector3 position) == false)
                 return Option.None;
             
             StatusEffectCue cue = GetAvailableCue();
-            cue.Animate(Option<Sprite>.None, temptation.ToPercentlessStringWithSymbol(digits: 1, decimalDigits: 0), EffectType.Temptation.GetColor(), position, Vector3.up * 0.5f, Option<AudioClip>.None);
+            cue.Animate(Option<Sprite>.None, temptation.ToString("0"), EffectType.Temptation.GetColor(), position, Vector3.up * 0.5f, Option<AudioClip>.None);
             CustomAudioSource targetSource = temptation > 0 ? temptationIncreaseSource : temptationDecreaseSource;
             targetSource.transform.position = character.transform.position;
             targetSource.PlayOneShot(targetSource.Clip);
             return cue;
         }
 
+        [NotNull]
         private StatusEffectCue CreateCue()
         {
             StatusEffectCue cue = _statusEffectCuePrefab.InstantiateWithFixedLocalScale(_statusEffectCuesParent);
@@ -315,7 +317,7 @@ namespace Core.Combat.Scripts.Cues
             _idleCues.Add(cue);
         }
 
-        public void PlayImmediate(CharacterDisplay character, EffectType effectType, bool success)
+        public void PlayImmediate(DisplayModule character, EffectType effectType, bool success)
         {
             if (character == null)
                 return;
@@ -338,6 +340,7 @@ namespace Core.Combat.Scripts.Cues
             cue.Animate(sprite, text, effectType.GetColor(), position, direction, audioClip);
         }
 
+        [NotNull]
         private static string GetEffectDisplayName(EffectType effectType) =>
             effectType switch
             {

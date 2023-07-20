@@ -10,13 +10,10 @@ namespace Core.Utils.Patterns
         [DataMember, SerializeField]
         public float value;
 
-        public ClampedPercentage(float value)
-        {
-            this.value = Mathf.Clamp(value, 0f, 1f);
-        }
-        
-        public static implicit operator float(ClampedPercentage percentage) => percentage.value;
-        public static implicit operator ClampedPercentage(float value) => new(value);
+        public ClampedPercentage(float value) => this.value = Mathf.Clamp01(value);
+
+        public static explicit operator float(ClampedPercentage percentage) => percentage.value;
+        public static explicit operator ClampedPercentage(float value) => new(value);
         
         public static ClampedPercentage operator +(ClampedPercentage a, ClampedPercentage b) => new(a.value + b.value);
         public static ClampedPercentage operator -(ClampedPercentage a, ClampedPercentage b) => new(a.value - b.value);

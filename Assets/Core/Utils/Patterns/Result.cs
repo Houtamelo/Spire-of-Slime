@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 
 namespace Core.Utils.Patterns
 {
@@ -58,9 +59,9 @@ namespace Core.Utils.Patterns
         }
 
         public static Result<T> Ok(T value) => new(true, value);
-        public static Result<T> Error(Exception error) => new(error.Message);
+        public static Result<T> Error([NotNull] Exception error) => new(error.Message);
         public static Result<T> Error(string reason) => new(reason);
         public static implicit operator Result<T>(T value) => Ok(value);
-        public static implicit operator Result<T>(Exception error) => Error(error);
+        public static implicit operator Result<T>([NotNull] Exception error) => Error(error);
     }
 }

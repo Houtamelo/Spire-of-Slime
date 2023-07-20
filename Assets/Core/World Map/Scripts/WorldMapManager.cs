@@ -5,14 +5,14 @@ using Core.Game_Manager.Scripts;
 using Core.Local_Map.Scripts;
 using Core.Main_Database.Local_Map;
 using Core.Main_Database.World_Map;
-using Core.Utils.Extensions;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Patterns;
 using DG.Tweening;
+using JetBrains.Annotations;
 using KGySoft.CoreLibraries;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using UnityEngine;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.World_Map.Scripts
@@ -38,8 +38,8 @@ namespace Core.World_Map.Scripts
         [SerializeField, Required, SceneObjectsOnly]
         private AudioSource badInputAudioSource;
 
-        private IReadOnlyDictionary<LocationEnum, LocationButton> _buttons;
-        private IReadOnlyDictionary<BothWays, DottedLine> _dottedLines;
+        private Dictionary<LocationEnum, LocationButton> _buttons;
+        private Dictionary<BothWays, DottedLine> _dottedLines;
 
         private readonly HashSet<LocationEnum> _currentLocations = new();
         private readonly HashSet<LocationEnum> _previousLocations = new();
@@ -153,9 +153,7 @@ namespace Core.World_Map.Scripts
                 return false;
 
             if (LOG)
-            {
                 Debug.Log($"Generating local map for path: {path.name}", context: path);
-            }
 
             Option<FullPathInfo> fullPathInfo = GeneratePathInfo(new BothWays(saveLocation, buttonLocation));
             if (fullPathInfo.IsNone)
@@ -171,7 +169,7 @@ namespace Core.World_Map.Scripts
             return true;
         }
         
-        public void LocationButtonPointerEnter(LocationButton locationButton)
+        public void LocationButtonPointerEnter([NotNull] LocationButton locationButton)
         {
             LocationEnum saveLocation = Save.Current.Location;
             LocationEnum buttonLocation = locationButton.Location;
@@ -196,7 +194,7 @@ namespace Core.World_Map.Scripts
             }
         }
         
-        public void LocationButtonPointerExit(LocationButton locationButton)
+        public void LocationButtonPointerExit([NotNull] LocationButton locationButton)
         {
             LocationEnum saveLocation = Save.Current.Location;
             LocationEnum buttonLocation = locationButton.Location;
@@ -221,7 +219,7 @@ namespace Core.World_Map.Scripts
             }
         }
 
-        public void DottedLineClicked(DottedLine dottedLine)
+        public void DottedLineClicked([NotNull] DottedLine dottedLine)
         {
             LocationEnum startLocation = dottedLine.StartLocationButton.Location;
             LocationEnum endLocation = dottedLine.EndLocationButton.Location;
@@ -229,13 +227,13 @@ namespace Core.World_Map.Scripts
                 LocationButtonClicked(endLocation);
         }
 
-        public void DottedLinePointerExit(DottedLine dottedLine)
+        public void DottedLinePointerExit([NotNull] DottedLine dottedLine)
         {
             dottedLine.EndLocationButton.LowLight();
             dottedLine.StartLocationButton.LowLight();
         }
 
-        public void DottedLinePointerEnter(DottedLine dottedLine)
+        public void DottedLinePointerEnter([NotNull] DottedLine dottedLine)
         {
             Save save = Save.Current;
             if (dottedLine.StartLocationButton.Location != save.Location && dottedLine.EndLocationButton.Location != save.Location)

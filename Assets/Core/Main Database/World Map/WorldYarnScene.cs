@@ -1,5 +1,6 @@
 ﻿using Core.Main_Database.Visual_Novel;
 using Core.World_Map.Scripts;
+using JetBrains.Annotations;
 using UnityEngine;
 using Save = Core.Save_Management.SaveObjects.Save;
 
@@ -19,13 +20,16 @@ namespace Core.Main_Database.World_Map
         [SerializeField]
         private VariableRequirement[] requirements;
 
+        [NotNull]
         public string SceneName => name.Replace("world-scene_", string.Empty);
 
         public bool AreRequirementsMet(Save save)
         {
             foreach (VariableRequirement variable in requirements)
+            {
                 if (variable.Validate(save) == false)
                     return false;
+            }
 
             return true;
         }

@@ -4,8 +4,8 @@ using Core.Audio.Scripts.MusicControllers;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
+using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Main_Database.Audio
 {
@@ -37,7 +37,7 @@ namespace Core.Main_Database.Audio
         }
         
 #if UNITY_EDITOR
-        public void AssignData(IEnumerable<MusicController> foundControllers)
+        public void AssignData([NotNull] IEnumerable<MusicController> foundControllers)
         {
             controllers = foundControllers.ToArray();
             UnityEditor.EditorUtility.SetDirty(this);

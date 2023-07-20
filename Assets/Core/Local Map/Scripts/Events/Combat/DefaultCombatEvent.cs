@@ -2,7 +2,7 @@
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Async;
 using Core.Utils.Patterns;
-using Utils.Patterns;
+using JetBrains.Annotations;
 
 namespace Core.Local_Map.Scripts.Events.Combat
 {
@@ -11,10 +11,8 @@ namespace Core.Local_Map.Scripts.Events.Combat
         public CleanString Key => "combat_default";
         public bool AllowSaving => true;
 
-        public CoroutineWrapper Execute(TileInfo tileInfo, in Option<float> multiplier)
-        {
-            return CombatEventHandler.HandleCombat(tileInfo, multiplier, Option.None);
-        }
+        [NotNull]
+        public CoroutineWrapper Execute(TileInfo tileInfo, in Option<float> multiplier) => CombatEventHandler.HandleCombat(tileInfo, multiplier, Option.None);
 
         public IconType GetIconType(in Option<float> multiplier)
         {

@@ -45,9 +45,7 @@ namespace UI
             }
             
             if (image.sprite == null)
-            {
                 Debug.LogError("ImageAlphaRaycastSetter: Image sprite not found", this);
-            }
             else  if (!image.sprite.texture.isReadable)
                 Debug.LogError("ImageAlphaRaycastSetter: Image sprite is not readable", this);
         }
@@ -68,9 +66,8 @@ namespace UI
             }
             
             if (image.sprite == null)
-            {
                 Debug.LogError("ImageAlphaRaycastSetter: Image sprite not found", this);
-            }
+
             //else  if (!image.sprite.texture.isReadable)
                 //Debug.LogError("ImageAlphaRaycastSetter: Image sprite is not readable", this);
         }

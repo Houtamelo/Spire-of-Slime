@@ -3,7 +3,6 @@ using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Utils.Patterns;
 
 namespace Core.Game_Manager.Scripts.Tooltips
 {

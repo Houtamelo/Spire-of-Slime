@@ -1,13 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Utils.Collections;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Behaviour.UI
 {
@@ -34,15 +35,18 @@ namespace Core.Combat.Scripts.Behaviour.UI
             }
             
             _reusableSet.Clear();
-            
-            foreach (IBaseStatusScript effect in plan.Value.Skill.TargetEffects)
+
+            ReadOnlySpan<IBaseStatusScript> skillTargetEffects = plan.Value.Skill.TargetEffects;
+            for (int index = 0; index < skillTargetEffects.Length; index++)
             {
+                IBaseStatusScript effect = skillTargetEffects[index];
                 Option<IconType> iconType = effect.GetPredictionIconType();
+
                 if (iconType.IsSome)
                     _reusableSet.Add(iconType.Value);
             }
 
-            if (plan.Value.Skill.BaseDamageMultiplier.IsSome)
+            if (plan.Value.Skill.Power.IsSome)
                 _reusableSet.Add(IconType.Damage);
 
             for (int j = _spawnedIcons.Count; j < _reusableSet.Count; j++)

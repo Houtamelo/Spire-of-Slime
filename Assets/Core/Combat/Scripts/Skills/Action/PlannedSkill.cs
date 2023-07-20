@@ -1,19 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Main_Database.Combat;
+using Core.Utils.Collections;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using ListPool;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Skills.Action
 {
     public sealed class PlannedSkill
     {
+        private static readonly List<CharacterStateMachine> ReusableTargetList = new(capacity: 4);
+        
         public readonly CharacterStateMachine Caster;
         public CharacterStateMachine Target;
         public readonly ISkill Skill;
@@ -25,7 +29,7 @@ namespace Core.Combat.Scripts.Skills.Action
         public bool Enqueued { get; private set; }
         public bool CostFree { get; }
 
-        public PlannedSkill(ISkill skill, CharacterStateMachine caster, CharacterStateMachine target, bool costFree)
+        public PlannedSkill(ISkill skill, CharacterStateMachine caster, [NotNull] CharacterStateMachine target, bool costFree)
         {
             Skill = skill;
             Caster = caster;
@@ -33,7 +37,7 @@ namespace Core.Combat.Scripts.Skills.Action
             
             WasTargetLeft = target.PositionHandler.IsLeftSide;
             
-            TargetInitialPositions = target.Display.TrySome(out CharacterDisplay targetDisplay) ? targetDisplay.CombatManager.PositionManager.ComputePositioning(target) : CharacterPositioning.None;
+            TargetInitialPositions = target.Display.TrySome(out DisplayModule targetDisplay) ? targetDisplay.CombatManager.PositionManager.ComputePositioning(target) : CharacterPositioning.None;
             
 			Guid = Guid.NewGuid();
             CostFree = costFree;
@@ -51,7 +55,7 @@ namespace Core.Combat.Scripts.Skills.Action
             Guid = guid;
         }
 
-        public static Option<PlannedSkill> CreateInstance(PlanRecord record, CombatManager combatManager)
+        public static Option<PlannedSkill> FromRecord([NotNull] PlanRecord record, CombatManager combatManager)
         {
             Option<SkillScriptable> skill = SkillDatabase.GetSkill(record.ScriptKey);
             
@@ -93,7 +97,7 @@ namespace Core.Combat.Scripts.Skills.Action
 
         public void Enqueue()
         {
-            if (Caster.Display.AssertSome(out CharacterDisplay display))
+            if (Caster.Display.AssertSome(out DisplayModule display))
             {
                 Enqueued = true;
                 IActionSequence actionSequence = Skill.CreateActionSequence(plan: this, display.CombatManager);
@@ -103,7 +107,7 @@ namespace Core.Combat.Scripts.Skills.Action
 
         public bool TryPickAnotherTarget()
         {
-            if (Skill.MultiTarget == false || Caster.Display.TrySome(out CharacterDisplay display) == false)
+            if (Skill.MultiTarget == false || Caster.Display.TrySome(out DisplayModule display) == false)
                 return false;
 
             CombatManager combatManager = display.CombatManager;
@@ -162,21 +166,22 @@ namespace Core.Combat.Scripts.Skills.Action
             }
         }
         
-        public void FillTargetList(ISet<CharacterStateMachine> targets, ISet<CharacterStateMachine> outsiders)
+        public void FillTargetList(ICollection<CharacterStateMachine> targets, ICollection<CharacterStateMachine> outsiders)
         {
             if (Caster.StateEvaluator.PureEvaluate() is CharacterState.Defeated or CharacterState.Corpse or CharacterState.Downed or CharacterState.Grappled || Caster.Display.IsNone)
                 return;
             
             TargetResolver resolver = new(Skill, Caster, Target);
-            using (ValueListPool<CharacterStateMachine> targetList = resolver.GetTargetList())
-            {
-                foreach (CharacterStateMachine target in targetList)
-                    targets.Add(target);
-            }
+            ReusableTargetList.Clear();
+            resolver.FillTargetList(fillMe: ReusableTargetList);
+            foreach (CharacterStateMachine target in ReusableTargetList)
+                targets.Add(target);
 
             foreach (CharacterStateMachine character in Caster.Display.Value.CombatManager.Characters.GetAllFixed())
+            {
                 if (targets.Contains(character) == false && character != Caster)
                     outsiders.Add(character);
+            }
         }
     }
 }

@@ -3,6 +3,8 @@ using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Localization.Scripts;
+using Core.Utils.Collections;
 using Core.Utils.Extensions;
 using Core.Utils.Math;
 using Core.Utils.Patterns;
@@ -11,13 +13,13 @@ using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.UI
 {
     public class TargetingInfoBox : MonoBehaviour
     {
         private static readonly StringBuilder Builder = new();
+        private static readonly LocalizedText RedirectedTrans = new("combat_targeting_redirected");
         
         [SerializeField, Required, SceneObjectsOnly]
         private Camera uiCamera;
@@ -54,12 +56,12 @@ namespace Core.Combat.Scripts.UI
         }
 
         public void UpdateInterface(ref SkillStruct skillStruct,
-                                    Option<float> hitChance, ComparisonResult hitChanceComparison, 
-                                    Option<float> criticalChance, ComparisonResult criticalChanceComparison,
-                                    Option<(uint lowerDamage, uint upperDamage)> damage, ComparisonResult damageComparison)
+                                    Option<int> hitChance, ComparisonResult hitChanceComparison, 
+                                    Option<int> criticalChance, ComparisonResult criticalChanceComparison,
+                                    Option<(int lowerDamage, int upperDamage)> damage, ComparisonResult damageComparison)
         {
             ISkill skill = skillStruct.Skill;
-            ref ValueListPool<TargetProperties> allProperties = ref skillStruct.TargetProperties;
+            ref CustomValuePooledList<TargetProperties> allProperties = ref skillStruct.TargetProperties;
             if (allProperties.Count == 0)
             {
                 Debug.LogWarning($"No TargetProperties for {skill.DisplayName}");
@@ -68,90 +70,70 @@ namespace Core.Combat.Scripts.UI
             }
 
             CharacterStateMachine caster = skillStruct.Caster;
+            
             ReadOnlyProperties targetProperties = allProperties[0].ToReadOnly();
             CharacterStateMachine target = targetProperties.Target;
+            
             switch (hitChance.IsSome, hitChanceComparison)
             {
-                case (false, _): targetingHitChanceObject.SetActive(false); break;
-                case (true, ComparisonResult.Equals):
-                    targetingHitChanceTmp.text = hitChance.Value.ToPercentageString();
-                    targetingHitChanceObject.SetActive(true);
-                    break;
-                case (true, ComparisonResult.Bigger):
-                    Builder.Clear();
-                    Builder.Append(ColorReferences.BuffedRichText.start, hitChance.Value.ToPercentageString(), ColorReferences.BuffedRichText.end);
-                    targetingHitChanceTmp.text = Builder.ToString();
-                    targetingHitChanceObject.SetActive(true);
-                    break;
-                case (true, ComparisonResult.Smaller):
-                    Builder.Clear();
-                    Builder.Append(ColorReferences.DebuffedRichText.start, hitChance.Value.ToPercentageString(), ColorReferences.DebuffedRichText.end);
-                    targetingHitChanceTmp.text = Builder.ToString();
-                    targetingHitChanceObject.SetActive(true);
-                    break;
+                case (IsSome: true, ComparisonResult.Equals):
+                    targetingHitChanceTmp.text = hitChance.Value.ToString();
+                    targetingHitChanceObject.SetActive(true); break;
+                case (IsSome: true, ComparisonResult.Bigger):
+                    targetingHitChanceTmp.text = Builder.Override(hitChance.Value.ToString()).Surround(ColorReferences.BuffedRichText).ToString();
+                    targetingHitChanceObject.SetActive(true); break;
+                case (IsSome: true, ComparisonResult.Smaller):
+                    targetingHitChanceTmp.text = Builder.Override(hitChance.Value.ToString()).Surround(ColorReferences.DebuffedRichText).ToString();
+                    targetingHitChanceObject.SetActive(true); break;
+                case (IsSome: false, _): 
+                    targetingHitChanceObject.SetActive(false); break;
                 default:
-                    targetingHitChanceTmp.text = hitChance.Value.ToPercentageString();
-                    targetingHitChanceObject.SetActive(true);
-                    break;
+                    targetingHitChanceTmp.text = hitChance.Value.ToString();
+                    targetingHitChanceObject.SetActive(true); break;
             }
             
             switch (criticalChance.IsSome, criticalChanceComparison)
             {
-                case (false, _): targetingCriticalChanceObject.SetActive(false); break;
-                case (true, ComparisonResult.Equals):
-                    targetingCriticalChanceTmp.text = criticalChance.Value.ToPercentageString();
-                    targetingCriticalChanceObject.SetActive(true);
-                    break;
-                case (true, ComparisonResult.Bigger):
-                    Builder.Clear();
-                    Builder.Append(ColorReferences.BuffedRichText.start, criticalChance.Value.ToPercentageString(), ColorReferences.BuffedRichText.end);
-                    targetingCriticalChanceTmp.text = Builder.ToString();
-                    targetingCriticalChanceObject.SetActive(true);
-                    break;
-                case (true, ComparisonResult.Smaller):
-                    Builder.Clear();
-                    Builder.Append(ColorReferences.DebuffedRichText.start, criticalChance.Value.ToPercentageString(), ColorReferences.DebuffedRichText.end);
-                    targetingCriticalChanceTmp.text = Builder.ToString();
-                    targetingCriticalChanceObject.SetActive(true);
-                    break;
+                case (IsSome: true, ComparisonResult.Equals):
+                    targetingCriticalChanceTmp.text = criticalChance.Value.ToString();
+                    targetingCriticalChanceObject.SetActive(true); break;
+                case (IsSome: true, ComparisonResult.Bigger):
+                    targetingCriticalChanceTmp.text = Builder.Override(criticalChance.Value.ToString()).Surround(ColorReferences.BuffedRichText).ToString();
+                    targetingCriticalChanceObject.SetActive(true); break;
+                case (IsSome: true, ComparisonResult.Smaller):
+                    targetingCriticalChanceTmp.text = Builder.Override(criticalChance.Value.ToString()).Surround(ColorReferences.DebuffedRichText).ToString();
+                    targetingCriticalChanceObject.SetActive(true); break;
+                case (IsSome: false, _):
+                    targetingCriticalChanceObject.SetActive(false); break;
                 default:
-                    targetingCriticalChanceTmp.text = criticalChance.Value.ToPercentageString();
-                    targetingCriticalChanceObject.SetActive(true);
-                    break;
+                    targetingCriticalChanceTmp.text = criticalChance.Value.ToString();
+                    targetingCriticalChanceObject.SetActive(true); break;
             }
             
             switch (damage.IsSome, damageComparison)
             {
-                case (false, _): targetingDamageObject.SetActive(false); break;
-                case (true, ComparisonResult.Equals):
-                    targetingDamageTmp.text = damage.Value.ToDamageFormat();
+                case (IsSome: true, ComparisonResult.Equals):
+                    targetingDamageTmp.text = damage.Value.ToDamageRangeFormat();
+                    targetingDamageObject.SetActive(true); break;
+                case (IsSome: true, ComparisonResult.Bigger):
+                    targetingDamageTmp.text = Builder.Override(damage.Value.ToDamageRangeFormat()).Surround(ColorReferences.BuffedRichText).ToString();
+                    targetingDamageObject.SetActive(true); break;
+                case (IsSome: true, ComparisonResult.Smaller):
+                    targetingDamageTmp.text = Builder.Override(damage.Value.ToDamageRangeFormat()).Surround(ColorReferences.DebuffedRichText).ToString();
                     targetingDamageObject.SetActive(true);
                     break;
-                case (true, ComparisonResult.Bigger):
-                    Builder.Clear();
-                    Builder.Append(ColorReferences.BuffedRichText.start, damage.Value.ToDamageFormat(), ColorReferences.BuffedRichText.end);
-                    targetingDamageTmp.text = Builder.ToString();
-                    targetingDamageObject.SetActive(true);
-                    break;
-                case (true, ComparisonResult.Smaller):
-                    Builder.Clear();
-                    Builder.Append(ColorReferences.DebuffedRichText.start, damage.Value.ToDamageFormat(), ColorReferences.DebuffedRichText.end);
-                    targetingDamageTmp.text = Builder.ToString();
-                    targetingDamageObject.SetActive(true);
-                    break;
+                case (IsSome: false, _): 
+                    targetingDamageObject.SetActive(false); break;
                 default:
-                    targetingDamageTmp.text = damage.Value.ToDamageFormat();
-                    targetingDamageObject.SetActive(true);
-                    break;
+                    targetingDamageTmp.text = damage.Value.ToDamageRangeFormat();
+                    targetingDamageObject.SetActive(true); break;
             }
 
             Builder.Clear();
             if (skill.MultiTarget == false && target != skillStruct.FirstTarget) // likely redirected by Guard status
-            {
-                Builder.Append("<color=red>!Redirected to ", target.Script.CharacterName, "!</color>");
-            }
-            
-            ref ValueListPool<IActualStatusScript> targetEffects = ref skillStruct.TargetEffects;
+                Builder.Append("<color=red>", RedirectedTrans.Translate().GetText(target.Script.CharacterName.Translate().GetText()), "</color>");
+
+            ref CustomValuePooledList<IActualStatusScript> targetEffects = ref skillStruct.TargetEffects;
             foreach (IActualStatusScript statusScript in targetEffects)
             {
                 StatusToApply record = statusScript.GetStatusToApply(caster, target, crit: false, skill);
@@ -159,10 +141,10 @@ namespace Core.Combat.Scripts.UI
                 Builder.AppendLine(record.GetCompactDescription());
             }
             
-            ref ValueListPool<IActualStatusScript> casterEffects = ref skillStruct.CasterEffects;
+            ref CustomValuePooledList<IActualStatusScript> casterEffects = ref skillStruct.CasterEffects;
             if (casterEffects.Count > 0)
             {
-                Builder.AppendLine("<align=center>Self:</align>");
+                Builder.AppendLine("<align=center>", SkillUtils.SelfTrans.Translate().GetText(), "</align>");
                 foreach (IActualStatusScript statusScript in casterEffects)
                 {
                     StatusToApply record = statusScript.GetStatusToApply(caster, caster, crit: false, skill);

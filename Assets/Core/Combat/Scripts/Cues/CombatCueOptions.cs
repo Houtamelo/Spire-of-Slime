@@ -1,5 +1,6 @@
 ﻿using System;
 using Core.Combat.Scripts.Behaviour;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Core.Combat.Scripts.Cues
@@ -42,11 +43,8 @@ namespace Core.Combat.Scripts.Cues
             OnPlay = null;
         }
 
-        public static CombatCueOptions Default(string text, Color color, CharacterDisplay display)
-        {
-            return new CombatCueOptions(canShowOnTopOfOthers: false, text: text, color: color, DefaultPosition(display), speed: DefaultSpeed, duration: DefaultDuration, fontSize: DefaultFontSize, fadeOnComplete: true, shake: false);
-        }
+        public static CombatCueOptions Default(string text, Color color, [NotNull] DisplayModule display) => new(canShowOnTopOfOthers: false, text: text, color: color, DefaultPosition(display), speed: DefaultSpeed, duration: DefaultDuration, fontSize: DefaultFontSize, fadeOnComplete: true, shake: false);
 
-        public static Vector3 DefaultPosition(CharacterDisplay display) => display.GetCuePosition().TrySome(out Vector3 position) ? position : display.transform.position;
+        public static Vector3 DefaultPosition([NotNull] DisplayModule display) => display.GetCuePosition().TrySome(out Vector3 position) ? position : display.transform.position;
     }
 }

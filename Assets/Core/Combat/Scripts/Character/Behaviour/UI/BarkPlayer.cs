@@ -8,7 +8,6 @@ using DG.Tweening;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
-using Utils.Patterns;
 using Random = System.Random;
 
 namespace Core.Combat.Scripts.Behaviour.UI
@@ -116,8 +115,10 @@ namespace Core.Combat.Scripts.Behaviour.UI
                 return;
 
             foreach ((BarkType type, _) in _barkQueue)
+            {
                 if (type == barkType)
                     return;
+            }
 
             if (calculateProbability == false || Random.NextDouble() <= BarkDefaultProbability)
             {

@@ -3,7 +3,7 @@ using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Enums;
 using Core.Utils.Async;
 using Core.Utils.Patterns;
-using Utils.Patterns;
+using JetBrains.Annotations;
 
 namespace Core.Combat.Scripts.Animations
 {
@@ -17,7 +17,7 @@ namespace Core.Combat.Scripts.Animations
             if (character.StateEvaluator.PureEvaluate() is CharacterState.Defeated or CharacterState.Grappled)
                 return false;
 
-            if (character.Display.TrySome(out CharacterDisplay display) == false)
+            if (character.Display.TrySome(out DisplayModule display) == false)
                 return false;
 
             if (display.AnimationStatus is AnimationStatus.Defeated or AnimationStatus.Grappled)
@@ -40,8 +40,10 @@ namespace Core.Combat.Scripts.Animations
             _character = character;
         }
 
+        [NotNull]
         public static AnimationRoutineInfo WithoutCharacter(CoroutineWrapper coroutine) => new(coroutine, Option<CharacterStateMachine>.None) {Validation = NoValidation};
         
+        [NotNull]
         public static AnimationRoutineInfo WithCharacter(CoroutineWrapper coroutine, CharacterStateMachine character, Predicate<CharacterStateMachine> validation)
             => new(coroutine, Option<CharacterStateMachine>.Some(character)) { Validation = validation };
 

@@ -5,9 +5,9 @@ using Core.Local_Map.Scripts.Enums;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 // ReSharper disable Unity.RedundantHideInInspectorAttribute
 
@@ -63,7 +63,7 @@ namespace Core.Main_Database.Local_Map
         }
         
 #if UNITY_EDITOR
-        public void AssignData(IEnumerable<TileInfo> tileInfos)
+        public void AssignData([NotNull] IEnumerable<TileInfo> tileInfos)
         {
             allTiles = tileInfos.ToArray();
             UnityEditor.EditorUtility.SetDirty(this);

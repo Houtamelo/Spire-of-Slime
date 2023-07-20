@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Core.Character_Panel.Scripts.Skills;
 using Core.Save_Management.SaveObjects;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Character_Panel.Scripts.Positioning
@@ -56,7 +57,7 @@ namespace Core.Character_Panel.Scripts.Positioning
             Save.StringChanged -= OnStringChanged;
         }
 
-        public void OnDragEnd(CharacterDragable dragged)
+        public void OnDragEnd([NotNull] CharacterDragable dragged)
         {
             Option<CleanString> characterOption = dragged.Character;
             if (characterOption.IsNone)
@@ -147,11 +148,8 @@ namespace Core.Character_Panel.Scripts.Positioning
             }
         }
 
-        private static bool IsWithinBounds(SerializableBounds bounds, Vector3 position)
-        {
-            return position.x >= bounds[0].x && position.x <= bounds[2].x && position.y >= bounds[0].y && position.y <= bounds[2].y;
-        }
-        
+        private static bool IsWithinBounds(SerializableBounds bounds, Vector3 position) => position.x >= bounds[0].x && position.x <= bounds[2].x && position.y >= bounds[0].y && position.y <= bounds[2].y;
+
         public void SetOpen(bool open)
         {
             canvasGroup.alpha = open ? 1 : 0;
@@ -173,7 +171,7 @@ namespace Core.Character_Panel.Scripts.Positioning
                 Gizmos.DrawLine(bounds[2], bounds[3]);
                 Gizmos.DrawLine(bounds[3], bounds[0]);
                 
-                Vector3 center = bounds[0] + (bounds[2] - bounds[0]) / 2;
+                Vector3 center = bounds[0] + ((bounds[2] - bounds[0]) / 2);
                 UnityEditor.Handles.Label(center, index.ToString());
             }
         }

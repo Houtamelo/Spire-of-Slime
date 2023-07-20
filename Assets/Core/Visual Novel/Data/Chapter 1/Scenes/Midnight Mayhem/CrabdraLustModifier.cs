@@ -8,11 +8,13 @@ using Core.Combat.Scripts.Perks;
 using Core.Main_Database.Combat;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 
 namespace Core.Visual_Novel.Data.Chapter_1.Scenes.Midnight_Mayhem
 {
     public class CrabdraLustModifier : PerkScriptable
     {
+        [NotNull]
         public override PerkInstance CreateInstance(CharacterStateMachine character) => new CrabdraLustModifierInstance(character, Key);
     }
     
@@ -29,15 +31,13 @@ namespace Core.Visual_Novel.Data.Chapter_1.Scenes.Midnight_Mayhem
             return true;
         }
 
-        public override PerkInstance CreateInstance(CharacterStateMachine owner, CharacterEnumerator allCharacters) 
+        [NotNull]
+        public override PerkInstance CreateInstance(CharacterStateMachine owner, DirectCharacterEnumerator allCharacters) 
             => new CrabdraLustModifierInstance(owner, Key);
     }
     
     public class CrabdraLustModifierInstance : PerkInstance, ILustModifier
     {
-        public string SharedId => nameof(CrabdraLustModifierInstance);
-        public int Priority => 99999;
-
         public CrabdraLustModifierInstance(CharacterStateMachine owner, CleanString key) : base(owner, key)
         {
         }
@@ -45,8 +45,13 @@ namespace Core.Visual_Novel.Data.Chapter_1.Scenes.Midnight_Mayhem
         protected override void OnSubscribe() => Owner.StatusApplierModule.LustApplyModifiers.Add(this);
 
         protected override void OnUnsubscribe() => Owner.StatusApplierModule.LustApplyModifiers.Remove(this);
+        [NotNull]
         public override PerkRecord GetRecord() => new CrabdraLustModifierRecord(Key);
 
-        public void Modify(ref LustToApply effectStruct) => effectStruct.Multiplier *= 3f;
+        public void Modify([NotNull] ref LustToApply effectStruct) => effectStruct.LustPower *= 3;
+        
+        [NotNull]
+        public string SharedId => nameof(CrabdraLustModifierInstance);
+        public int Priority => 99999;
     }
 }

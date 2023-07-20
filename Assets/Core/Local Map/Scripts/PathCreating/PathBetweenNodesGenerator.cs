@@ -7,7 +7,6 @@ using Core.World_Map.Scripts;
 using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 using static Core.Utils.Patterns.Option<(Core.Local_Map.Scripts.Events.ILocalMapEvent, float)>;
 
 namespace Core.Local_Map.Scripts.PathCreating
@@ -24,7 +23,7 @@ namespace Core.Local_Map.Scripts.PathCreating
         [SerializeField, LabelText("Max Length"), ShowIf(nameof(randomizeLength)), Range(4, 22)]
         private int lengthMax;
 
-        [UsedImplicitly]
+        [UsedImplicitly, NotNull]
         private string LengthLabel => randomizeLength ? "Min Length" : "Length";
 
         [SerializeField]
@@ -36,7 +35,7 @@ namespace Core.Local_Map.Scripts.PathCreating
         [SerializeField, LabelText("Max Difficulty Multiplier"), ShowIf(nameof(randomizeMultiplier)), Range(0, 3f)]
         private float pathAverageMultiplierMax;
 
-        [UsedImplicitly]
+        [UsedImplicitly, NotNull]
         private string MultiplierLabel => randomizeMultiplier ? "Min Difficulty Multiplier" : "Difficulty Multiplier";
 
         [SerializeField]

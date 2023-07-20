@@ -9,12 +9,12 @@ using Core.Save_Management.SaveObjects;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
-using Utils.Patterns;
 using Random = UnityEngine.Random;
 
 
@@ -54,7 +54,8 @@ namespace Core.Local_Map.Scripts.HexagonObject
         private Transform lightSourceTransform;
 
         private StateMachine _stateMachine;
-        private StateMachine GetStateMachine => _stateMachine ??= new(owner: this);
+        [NotNull]
+        private StateMachine GetStateMachine => _stateMachine ??= new StateMachine(owner: this);
 
         public TileInfo TileInfo { get; private set; }
         private bool _visualsSet;
@@ -104,11 +105,11 @@ namespace Core.Local_Map.Scripts.HexagonObject
             GetStateMachine.CheckState();
         }
 
-        public void Initialize() => _stateMachine ??= new(owner: this);
+        public void Initialize() => _stateMachine ??= new StateMachine(owner: this);
 
         public bool IsNeighbor(Cell cell) => _neighbors.ContainsValue(cell);
         
-        public bool SetEvent(ILocalMapEvent mapEvent, float multiplier, bool overrideExisting)
+        public bool SetEvent([CanBeNull] ILocalMapEvent mapEvent, float multiplier, bool overrideExisting)
         {
             if (mapEvent == null)
             {
@@ -195,7 +196,7 @@ namespace Core.Local_Map.Scripts.HexagonObject
 
         public void CheckState() => GetStateMachine.CheckState();
 
-        public void LoadData(Record record)
+        public void LoadData([NotNull] Record record)
         {
             Option<TileInfo> tileInfo = TileInfoDatabase.GetTileInfo(record.TileInfoKey);
             if (tileInfo.IsSome)
@@ -236,6 +237,7 @@ namespace Core.Local_Map.Scripts.HexagonObject
             SetEvent(localMapEvent.Value, record.EventData.Multiplier, overrideExisting: true);
         }
 
+        [NotNull]
         public Record GenerateRecord() => Record.FromCell(cell: this);
         
         [Button] private void RefreshSize() => RefreshPositionAndSize(origin: Vector3.zero);
@@ -244,7 +246,8 @@ namespace Core.Local_Map.Scripts.HexagonObject
         
         public record Record(CleanString TileInfoKey, int SpriteIndex, int Q, int R, bool ForcedObstacle, bool IsObstacle, bool WasExplored, bool HasEvent, EventRecord EventData)
         {
-            public static Record FromCell(Cell cell)
+            [NotNull]
+            public static Record FromCell([NotNull] Cell cell)
             {
                 bool hasEvent = cell.AssignedEvent.TrySome(out (ILocalMapEvent mapEvent, float multiplier) assignedEvent);
                 EventRecord eventData = hasEvent ? new EventRecord(assignedEvent.mapEvent.Key, assignedEvent.multiplier) : null;
@@ -256,13 +259,13 @@ namespace Core.Local_Map.Scripts.HexagonObject
             {
                 if (TileInfoKey.IsNullOrEmpty())
                 {
-                    errors.AppendLine("Invalid ", nameof(Cell.Record), " data. ", nameof(TileInfoKey), " is null or empty.");
+                    errors.AppendLine("Invalid ", nameof(Record), " data. ", nameof(TileInfoKey), " is null or empty.");
                     return false;
                 }
 
                 if (TileInfoDatabase.GetTileInfo(TileInfoKey).IsNone)
                 {
-                    errors.AppendLine("Invalid ", nameof(Cell.Record), " data. ", nameof(TileInfoKey), " key: ", TileInfoKey.ToString(), " was not found in database.");
+                    errors.AppendLine("Invalid ", nameof(Record), " data. ", nameof(TileInfoKey), " key: ", TileInfoKey.ToString(), " was not found in database.");
                     return false;
                 }
 
@@ -271,19 +274,19 @@ namespace Core.Local_Map.Scripts.HexagonObject
 
                 if (EventData == null)
                 {
-                    errors.AppendLine("Invalid ", nameof(Cell.Record), " data. ", nameof(HasEvent), " is true but ", nameof(EventData), " is null.");
+                    errors.AppendLine("Invalid ", nameof(Record), " data. ", nameof(HasEvent), " is true but ", nameof(EventData), " is null.");
                     return false;
                 }
 
                 if (EventData.Key.IsNullOrEmpty())
                 {
-                    errors.AppendLine("Invalid ", nameof(Cell.Record), " data. ", nameof(HasEvent), " is true but ", nameof(EventData), "'s key is null or empty.");
+                    errors.AppendLine("Invalid ", nameof(Record), " data. ", nameof(HasEvent), " is true but ", nameof(EventData), "'s key is null or empty.");
                     return false;
                 }
 
                 if (MapEventDatabase.GetEvent(EventData.Key).IsNone)
                 {
-                    errors.AppendLine("Invalid ", nameof(Cell.Record), " data. ", nameof(EventData), " key: ", EventData.Key.ToString(), " was not found in database.");
+                    errors.AppendLine("Invalid ", nameof(Record), " data. ", nameof(EventData), " key: ", EventData.Key.ToString(), " was not found in database.");
                     return false;
                 }
                 
@@ -303,7 +306,7 @@ namespace Core.Local_Map.Scripts.HexagonObject
             private State _current;
             private Tween _tween;
             
-            public StateMachine(Cell owner)
+            public StateMachine([NotNull] Cell owner)
             {
                 _owner = owner;
                 _current = EvaluateState();
@@ -360,8 +363,10 @@ namespace Core.Local_Map.Scripts.HexagonObject
         public void FindNeighbors(IReadOnlyDictionary<Axial, Cell> map)
         {
             foreach ((Direction direction, Axial axial) in position.GetClosestNeighbors())
+            {
                 if (map.TryGetValue(axial, out Cell neighbor))
                     _neighbors[direction] = neighbor;
+            }
         }
 
         public bool Equals(Cell other) => other == this;

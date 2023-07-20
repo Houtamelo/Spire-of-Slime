@@ -1,6 +1,11 @@
-﻿using Core.Combat.Scripts.Behaviour;
+﻿using System;
+using System.Collections.Generic;
+using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Utils.Collections;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 using ListPool;
 
 // ReSharper disable FieldCanBeMadeReadOnly.Global
@@ -9,44 +14,46 @@ namespace Core.Combat.Scripts.Skills
 {
     public ref struct SkillStruct
     {
+        private static readonly List<CharacterStateMachine> ReusableTargetList = new(capacity: 4);
+        
         public ISkill Skill { get; }
-        public float Recovery;
-        public ValueListPool<TargetProperties> TargetProperties;
-        public ValueListPool<IActualStatusScript> CasterEffects;
-        public ValueListPool<IActualStatusScript> TargetEffects;
-        public readonly TargetResolver TargetResolver;
+        public TargetResolver TargetResolver { get; }
         public CharacterStateMachine Caster { get; }
         public CharacterStateMachine FirstTarget { get; }
 
-        private SkillStruct(ISkill skill, CharacterStateMachine caster, CharacterStateMachine firstTarget)
+        public TSpan Recovery;
+        public CustomValuePooledList<TargetProperties> TargetProperties;
+        public CustomValuePooledList<IActualStatusScript> CasterEffects;
+        public CustomValuePooledList<IActualStatusScript> TargetEffects;
+
+        private SkillStruct([NotNull] ISkill skill, CharacterStateMachine caster, CharacterStateMachine firstTarget)
         {
             Skill = skill;
-            Recovery = skill.BaseRecovery;
+            Recovery = skill.Recovery;
 
             Caster = caster;
-            TargetResolver = new TargetResolver(skill, caster, firstTarget);
-            using (ValueListPool<CharacterStateMachine> targets = TargetResolver.GetTargetList())
-            {
-                int targetCount = targets.Count;
-                ValueListPool<TargetProperties> targetProperties = new(targetCount);
-                for (int i = 0; i < targetCount; i++)
-                    targetProperties.Add(new TargetProperties(targets[i], skill));
-
-                TargetProperties = targetProperties;
-            }
-            
-            ValueListPool<IActualStatusScript> casterEffects = new(skill.CasterEffects.Count);
-            for (int i = 0; i < skill.CasterEffects.Count; i++)
-                casterEffects.Add(skill.CasterEffects[i].GetActual);
-            
-            CasterEffects = casterEffects;
-            
-            ValueListPool<IActualStatusScript> targetEffects = new(skill.TargetEffects.Count);
-            for (int i = 0; i < skill.TargetEffects.Count; i++)
-                targetEffects.Add(skill.TargetEffects[i].GetActual);
-            
-            TargetEffects = targetEffects;
             FirstTarget = firstTarget;
+
+            TargetResolver = new TargetResolver(skill, caster, firstTarget);
+            ReusableTargetList.Clear();
+            TargetResolver.FillTargetList(ReusableTargetList);
+            
+            int targetCount = ReusableTargetList.Count;
+            
+            TargetProperties = new CustomValuePooledList<TargetProperties>(targetCount);
+            for (int i = 0; i < targetCount; i++)
+                TargetProperties.Add(new TargetProperties(ReusableTargetList[i], skill));
+
+            ReadOnlySpan<IBaseStatusScript> sourceCasterEffects = skill.CasterEffects;
+            CasterEffects = new CustomValuePooledList<IActualStatusScript>(sourceCasterEffects.Length);
+            for (int i = 0; i < sourceCasterEffects.Length; i++)
+                CasterEffects.Add(sourceCasterEffects[i].GetActual);
+
+            ReadOnlySpan<IBaseStatusScript> sourceTargetEffects = skill.TargetEffects;
+            TargetEffects = new CustomValuePooledList<IActualStatusScript>(sourceTargetEffects.Length);
+            for (int i = 0; i < sourceTargetEffects.Length; i++)
+                TargetEffects.Add(sourceTargetEffects[i].GetActual);
+            
             _allocated = true;
         }
 
@@ -56,21 +63,16 @@ namespace Core.Combat.Scripts.Skills
                 customStat.Apply(skillStruct: ref this);
         }
 
-        public static SkillStruct CreateInstance(ISkill skill, CharacterStateMachine caster, CharacterStateMachine firstTarget) => new(skill, caster, firstTarget);
+        public static SkillStruct CreateInstance([NotNull] ISkill skill, CharacterStateMachine caster, CharacterStateMachine firstTarget) => new(skill, caster, firstTarget);
 
         private bool _allocated;
-        private bool Disposed
-        {
-            get => _allocated == false;
-            set => _allocated = value == false;
-        }
-
+     
         public void Dispose()
         {
-            if (Disposed)
+            if (_allocated == false)
                 return;
 
-            Disposed = true;
+            _allocated = false;
             TargetProperties.Dispose();
             CasterEffects.Dispose();
             TargetEffects.Dispose();

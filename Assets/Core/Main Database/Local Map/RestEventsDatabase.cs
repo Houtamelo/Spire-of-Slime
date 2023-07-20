@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using Core.Local_Map.Scripts.Events.Rest;
 using Core.Utils.Patterns;
 using Core.World_Map.Scripts;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Main_Database.Local_Map
 {
@@ -25,7 +24,7 @@ namespace Core.Main_Database.Local_Map
         [SerializeField, Required]
         private RestEventBackground[] backgrounds;
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         public static Option<RestEventBackground> GetBackgroundPrefab(BothWays location)
         {
             RestEventsDatabase database = Instance.RestEventsDatabase;
@@ -42,14 +41,12 @@ namespace Core.Main_Database.Local_Map
             }
 
             if (LOG)
-            {
                 Debug.LogWarning($"No background found for {location}", context: database);
-            }
-            
+
             return Option<RestEventBackground>.None;
         }
 
-        [Pure]
+        [System.Diagnostics.Contracts.Pure]
         public static Option<RestDialogue> GetAvailableDialogue()
         {
             RestEventsDatabase database = Instance.RestEventsDatabase;
@@ -63,7 +60,9 @@ namespace Core.Main_Database.Local_Map
                     continue;
 
                 if (restDialogue.Priority == highestPriority)
+                {
                     ReusableDialogueList.Add(restDialogue);
+                }
                 else if (restDialogue.Priority > highestPriority)
                 {
                     ReusableDialogueList.Clear();
@@ -79,7 +78,7 @@ namespace Core.Main_Database.Local_Map
         }
 
 #if UNITY_EDITOR
-        public void AssignData(IList<RestDialogue> dialogues, IList<RestEventBackground> bgs)
+        public void AssignData([NotNull] IList<RestDialogue> dialogues, [NotNull] IList<RestEventBackground> bgs)
         {
             restDialogues = dialogues.ToArray();
             backgrounds = bgs.ToArray();

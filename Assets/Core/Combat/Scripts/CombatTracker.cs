@@ -6,8 +6,8 @@ using Core.Game_Manager.Scripts;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using Core.Visual_Novel.Scripts;
+using JetBrains.Annotations;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts
 {
@@ -69,6 +69,7 @@ namespace Core.Combat.Scripts
                 }
             }
 
+            [NotNull]
             public override FinishRecord DeepClone() => new StandardLocalMap();
             public override bool IsDataValid(StringBuilder errors) => true;
         }
@@ -87,6 +88,7 @@ namespace Core.Combat.Scripts
                     gameManager.CombatToVisualNovel(state.Result == CombatStatus.LeftSideWon ? OnWin : OnLoss);
             }
 
+            [NotNull]
             public override FinishRecord DeepClone() => new PlayScene(OnWin, OnLoss);
 
             public override bool IsDataValid(StringBuilder errors)

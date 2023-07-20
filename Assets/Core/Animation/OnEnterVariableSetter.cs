@@ -82,9 +82,12 @@ namespace Core.Animation
         private bool ShowBool => variableType == VariableType.Bool && !randomize;
         private bool ShowRandomize => variableType != VariableType.Trigger;
         private bool ShowAnimationCurve => weightedDistribution;
-        
-        [UsedImplicitly] private string IntLabel => randomize ? "Min Value" : "Value";
-        [UsedImplicitly] private string FloatLabel => randomize ? "Min Value" : "Value";
+
+        [UsedImplicitly, NotNull]
+        private string IntLabel => randomize ? "Min Value" : "Value";
+
+        [UsedImplicitly, NotNull]
+        private string FloatLabel => randomize ? "Min Value" : "Value";
         private enum VariableType
         {
             Bool,

@@ -9,7 +9,6 @@ using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.UI;
-using Utils.Patterns;
 using CombatManager = Core.Combat.Scripts.Managers.CombatManager;
 using Save = Core.Save_Management.SaveObjects.Save;
 
@@ -75,7 +74,7 @@ namespace Core.Combat.Scripts
             bool clearingMist = status.SetToClearMist.current;
             bool isStanding = status.IsStanding.current;
 
-            float alpha = GetAlpha(mistExists: mistExists, clearingMist: clearingMist, isStanding: isStanding, exhaustion: exhaustion);
+            float alpha = GetAlpha(mistExists, clearingMist, isStanding, exhaustion);
 
             FadeAlpha(alpha, FadeDuration);
         }
@@ -93,7 +92,7 @@ namespace Core.Combat.Scripts
                     ExhaustionEnum.None => 0f, 
                     ExhaustionEnum.Low => lowAlpha, 
                     ExhaustionEnum.Medium => mediumAlpha,
-                    ExhaustionEnum.High => highAlpha, _ => throw new ArgumentOutOfRangeException($"Unknown ExhaustionEnum: {exhaustion}")
+                    ExhaustionEnum.High => highAlpha, _ => throw new ArgumentOutOfRangeException(nameof(exhaustion), exhaustion, message: null)
                 };
             
             return alpha;

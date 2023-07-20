@@ -11,6 +11,7 @@ using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.UI;
 using Core.Combat.Scripts.WinningCondition;
 using Core.Game_Manager.Scripts;
+using Core.Main_Characters.Ethel.Combat;
 using Core.Main_Characters.Nema.Combat;
 using Core.Main_Database.Combat;
 using Core.Misc;
@@ -20,23 +21,23 @@ using Core.Save_Management.SaveObjects;
 using Core.Utils.Async;
 using Core.Utils.Extensions;
 using Core.Utils.Handlers;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
 using Core.Visual_Novel.Scripts;
-using Data.Main_Characters.Ethel;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
-using Utils.Patterns;
 using Save = Core.Save_Management.SaveObjects.Save;
 
 namespace Core.Combat.Scripts.Managers
 {
     public class CombatManager : Singleton<CombatManager>
     {
-        public static float TimePerStep => 1f / PauseMenuManager.CombatTickRateHandler.Value;
+        public static TSpan TimePerStep => TSpan.FromSeconds(1.0 / PauseMenuManager.CombatTickRateHandler.Value);
         
-        private const float IntervalBetweenExhaustionIncrease = 1.3f;
+        private static readonly TSpan IntervalBetweenExhaustionIncrease = TSpan.FromSeconds(1.3);
         
         public const float WinningConditionAnnounceDuration = 3f;
         public const float DefaultAnnounceDelay = 1f;
@@ -102,10 +103,10 @@ namespace Core.Combat.Scripts.Managers
 
         public Option<CombatBackground> Background { get; private set; }
 
-        public float ElapsedTime { get; private set; }
+        public TSpan ElapsedTime { get; private set; }
 
-        public float AccumulatedStepTime { get; private set; }
-        public float AccumulatedExhaustionTime { get; private set; }
+        public TSpan AccumulatedStepTime { get; private set; }
+        public TSpan AccumulatedExhaustionTime { get; private set; }
 
         public bool Running { get; private set; }
         public IWinningCondition WinningCondition { get; private set; }
@@ -139,7 +140,7 @@ namespace Core.Combat.Scripts.Managers
 
         public void PauseTime()
         {
-            AccumulatedStepTime = 0;
+            AccumulatedStepTime = TSpan.Zero;
             if (PauseHandler.Value == false)
                 PauseHandler.SetValue(true);
         }
@@ -166,9 +167,10 @@ namespace Core.Combat.Scripts.Managers
                 PauseTime();
         }
 
+        [NotNull]
         public CombatRecord GenerateRecord() => CombatRecord.FromCombat(combatManager: this);
 
-        public void AnnouncePlan(PlannedSkill plan, float startDuration, float popDuration)
+        public void AnnouncePlan([NotNull] PlannedSkill plan, float startDuration, float popDuration)
         {
             announceSkillSound.Play();
             announcer.Announce(plan, startDuration, popDuration, IActionSequence.SpeedMultiplier);
@@ -184,7 +186,7 @@ namespace Core.Combat.Scripts.Managers
             if (Save.AssertInstance(out Save save) == false)
                 return;
 
-            float timeStep = Time.deltaTime * SpeedHandler;
+            TSpan timeStep = TSpan.FromSeconds(Time.deltaTime * SpeedHandler);
             AccumulatedStepTime += timeStep;
             ElapsedTime += timeStep;
             timeTmp.text = WinningCondition.GetTimeToDisplay().ToString("0.00");
@@ -196,13 +198,13 @@ namespace Core.Combat.Scripts.Managers
                 if (CombatSetupInfo.MistExists)
                 {
                     NemaStatus nemaStatus = save.GetFullNemaStatus();
-                    if (nemaStatus.SetToClearMist.current && nemaStatus.IsInCombat.current && nemaStatus.IsStanding.current && nemaStatus.Exhaustion.current < 1f)
+                    if (nemaStatus.SetToClearMist.current && nemaStatus.IsInCombat.current && nemaStatus.IsStanding.current && nemaStatus.Exhaustion.current < NemaStatus.HighExhaustion)
                         AccumulatedExhaustionTime += TimePerStep;
 
                     while (AccumulatedExhaustionTime >= IntervalBetweenExhaustionIncrease)
                     {
                         AccumulatedExhaustionTime -= IntervalBetweenExhaustionIncrease;
-                        save.ChangeNemaExhaustion(+0.01f);
+                        save.ChangeNemaExhaustion(delta: +1);
                     }
                 }
                 
@@ -252,27 +254,27 @@ namespace Core.Combat.Scripts.Managers
                 yield break;
             }
 
-            (ICharacterScript script, CombatSetupInfo.RecoveryInfo, float expAtStart, bool bindToSave)[] allies = CombatSetupInfo.Allies;
-            List<(ICharacterScript script, float startExp, float currentExp)> saveBoundAllies = new(allies.Length);
-            Option<float> expectedEarnings = Option<float>.None;
+            (ICharacterScript script, CombatSetupInfo.RecoveryInfo, int expAtStart, bool bindToSave)[] allies = CombatSetupInfo.Allies;
+            List<(ICharacterScript script, int startExp, int currentExp)> saveBoundAllies = new(allies.Length);
+            Option<int> expectedEarnings = Option.None;
             for (int index = 0; index < allies.Length; index++)
             {
-                (ICharacterScript script, _, float startExp, bool bindToSave) = allies[index];
+                (ICharacterScript script, _, int startExp, bool bindToSave) = allies[index];
                 if (bindToSave == false)
                     continue;
                 
                 Option<IReadonlyCharacterStats> statsOption = save.GetReadOnlyStats(script.Key);
                 if (statsOption.AssertSome(out IReadonlyCharacterStats stats))
                 {
-                    float currentExp = stats.Experience;
-                    expectedEarnings = Option<float>.Some(currentExp - startExp);
+                    int currentExp = stats.TotalExperience;
+                    expectedEarnings = Option<int>.Some(currentExp - startExp);
                     break;
                 }
             }
 
             for (int index = 0; index < allies.Length; index++)
             {
-                (ICharacterScript script, _, float startExp, bool bindToSave) = allies[index];
+                (ICharacterScript script, _, int startExp, bool bindToSave) = allies[index];
                 if (bindToSave == false)
                     continue;
                 
@@ -280,11 +282,11 @@ namespace Core.Combat.Scripts.Managers
                 if (statsOption.AssertSome(out IReadonlyCharacterStats stats) == false)
                     continue;
 
-                float currentExp = stats.Experience;
+                int currentExp = stats.TotalExperience;
                 saveBoundAllies.Add((script, startExp, currentExp));
                 
-                float earnedExp = currentExp - startExp;
-                if (Math.Abs(earnedExp - expectedEarnings.Value) > 0.0001f)
+                int earnedExp = currentExp - startExp;
+                if (earnedExp != expectedEarnings.Value)
                     Debug.LogWarning($"Character {allies[0].script.CharacterName} earned {expectedEarnings.Value} exp but {script.CharacterName} earned {earnedExp} exp!");
             }
 
@@ -297,8 +299,8 @@ namespace Core.Combat.Scripts.Managers
                 // otherwise, they just get one orgasm "restoration" so that they can participate on the next combat.
                 if (stats.OrgasmLimit > stats.OrgasmCount)
                 {
-                    ClampedPercentage temptation = stats.Temptation;
-                    temptation -= 0.05f + temptation * 0.2f;
+                    int temptation = stats.Temptation;
+                    temptation = temptation - 5 + (temptation / 5);
                     save.SetTemptation(stats.Key, temptation);
                 }
                 else
@@ -311,6 +313,7 @@ namespace Core.Combat.Scripts.Managers
         }
         
         /// <summary> Does not start automatically. </summary>
+        [NotNull]
         public CoroutineWrapper CameraZoomAt(float zoomLevel, Vector3 worldPosition, float zoomDuration, float stayDuration)
         {
             worldPosition.z = _defaultWorldSpaceCameraPosition.z;
@@ -351,13 +354,11 @@ namespace Core.Combat.Scripts.Managers
                 musicManager.NotifyEvent(targetEvent);
         }
 
-        public void SetupCombatFromBeginning(in CombatSetupInfo combatSetupInfo, CombatTracker tracker, WinningConditionGenerator winningConditionGenerator, CleanString backgroundKey)
+        public void SetupCombatFromBeginning(in CombatSetupInfo combatSetupInfo, CombatTracker tracker, [NotNull] WinningConditionGenerator winningConditionGenerator, CleanString backgroundKey)
         {
             if (Tracker.TrySome(out CombatTracker oldTracker) && oldTracker is { IsDone: false })
-            {
                 Debug.LogWarning("Trying to setup new combat without the previous one ending, this should not happen", this);
-            }
-            
+
             CombatSetupInfo = combatSetupInfo;
 
             Background = BackgroundDatabase.SpawnBackground(worldSpaceCamera, backgroundKey);
@@ -368,7 +369,7 @@ namespace Core.Combat.Scripts.Managers
 
             characters.SetupCharacters(combatSetupInfo);
 
-            ElapsedTime = 0f;
+            ElapsedTime = TSpan.Zero;
 
             Running = true;
             Tracker = tracker;

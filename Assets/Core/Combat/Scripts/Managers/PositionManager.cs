@@ -3,19 +3,19 @@ using System.Collections;
 using System.Collections.Generic;
 using Core.Combat.Scripts.Animations;
 using Core.Combat.Scripts.Behaviour;
+using Core.Combat.Scripts.Behaviour.Modules;
 using Core.Combat.Scripts.Enums;
-using Core.Combat.Scripts.Interfaces.Modules;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Utils.Async;
 using Core.Utils.Collections;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
 using Core.Utils.Patterns;
 using JetBrains.Annotations;
 using KGySoft.CoreLibraries;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Utils.Patterns;
 
 namespace Core.Combat.Scripts.Managers
 {
@@ -58,7 +58,7 @@ namespace Core.Combat.Scripts.Managers
         }
         
         [MustUseReturnValue]
-        public CharacterPositioning ComputePositioning(CharacterStateMachine requester)
+        public CharacterPositioning ComputePositioning([NotNull] CharacterStateMachine requester)
         {
             if (requester.StateEvaluator.PureEvaluate() is CharacterState.Defeated or CharacterState.Grappled)
                 return default;
@@ -67,7 +67,7 @@ namespace Core.Combat.Scripts.Managers
             IReadOnlyList<CharacterStateMachine> allies = CharacterManager.GetEditable(selfPositionHandler.IsLeftSide);
             int selfIndex = allies.IndexOf(requester);
             
-            byte startPosition = 0;
+            int startPosition = 0;
             for (int i = 0; i < selfIndex; i++)
             {
                 CharacterStateMachine ally = allies[i];
@@ -85,9 +85,11 @@ namespace Core.Combat.Scripts.Managers
         {
             ReadOnlySpan<(CharacterStateMachine character, Vector3 position)> allPositions = ComputeAllDefaultPositions();
             foreach ((CharacterStateMachine character, Vector3 position) in allPositions)
+            {
                 if (character == requester)
                     return position;
-            
+            }
+
             Debug.LogError($"Character {requester} not found in all positions");
             return Vector3.zero;
         }
@@ -101,25 +103,25 @@ namespace Core.Combat.Scripts.Managers
 
             float currentX = LeftEdge;
             int currentIndex = 0;
-            IReadOnlyList<CharacterStateMachine> leftSide = CharacterManager.GetLeftEditable();
+            IndexableHashSet<CharacterStateMachine> leftSide = CharacterManager.GetLeftEditable();
             for (int i = 0; i < leftSide.Count; i++, currentIndex++)
             {
                 CharacterStateMachine character = leftSide[i];
                 float requiredGraphicalX = character.PositionHandler.GetRequiredGraphicalX();
                 currentX += requiredGraphicalX;
                 ReusableGraphicalXArray[currentIndex] = requiredGraphicalX;
-                ReusablePositionArray[currentIndex] = (character, new Vector3(currentX - requiredGraphicalX / 2f, paddingSettings.EvenY, 0f));
+                ReusablePositionArray[currentIndex] = (character, new Vector3(currentX - (requiredGraphicalX / 2f), paddingSettings.EvenY, 0f));
             }
 
             currentX += paddingSettings.LeftMiddle + paddingSettings.RightMiddle; //todo! Merge middles
-            IReadOnlyList<CharacterStateMachine> rightSide = CharacterManager.GetRightEditable();
+            IndexableHashSet<CharacterStateMachine> rightSide = CharacterManager.GetRightEditable();
             for (int i = 0; i < rightSide.Count; i++, currentIndex++)
             {
                 CharacterStateMachine character = rightSide[i];
                 float requiredGraphicalX = character.PositionHandler.GetRequiredGraphicalX();
                 currentX += requiredGraphicalX;
                 ReusableGraphicalXArray[currentIndex] = requiredGraphicalX;
-                ReusablePositionArray[currentIndex] = (character, new Vector3(currentX - requiredGraphicalX / 2f, paddingSettings.EvenY, 0f));
+                ReusablePositionArray[currentIndex] = (character, new Vector3(currentX - (requiredGraphicalX / 2f), paddingSettings.EvenY, 0f));
             }
             
             float occupiedWidth = currentX + ScreenHalfWidth;
@@ -127,9 +129,7 @@ namespace Core.Combat.Scripts.Managers
             if (ratio < 1f) // check if we exceeded the screen's bounds, if yes, we'll overlap the characters by re-scaling their graphicalXes
             {
                 for (int i = 0; i < currentIndex; i++)
-                {
                     ReusableGraphicalXArray[i] *= ratio;
-                }
 
                 currentX = LeftEdge;
                 currentIndex = 0;
@@ -138,7 +138,7 @@ namespace Core.Combat.Scripts.Managers
                     CharacterStateMachine character = ReusablePositionArray[currentIndex].character;
                     float requiredGraphicalX = ReusableGraphicalXArray[currentIndex];
                     currentX += requiredGraphicalX;
-                    ReusablePositionArray[currentIndex] = (character, new Vector3(currentX - requiredGraphicalX / 2f, paddingSettings.EvenY, 0f));
+                    ReusablePositionArray[currentIndex] = (character, new Vector3(currentX - (requiredGraphicalX / 2f), paddingSettings.EvenY, 0f));
                 }
                 
                 currentX += (paddingSettings.LeftMiddle + paddingSettings.RightMiddle) * ratio;
@@ -147,7 +147,7 @@ namespace Core.Combat.Scripts.Managers
                     CharacterStateMachine character = ReusablePositionArray[currentIndex].character;
                     float requiredGraphicalX = ReusableGraphicalXArray[currentIndex];
                     currentX += requiredGraphicalX;
-                    ReusablePositionArray[currentIndex] = (character, new Vector3(currentX - requiredGraphicalX / 2f, paddingSettings.EvenY, 0f));
+                    ReusablePositionArray[currentIndex] = (character, new Vector3(currentX - (requiredGraphicalX / 2f), paddingSettings.EvenY, 0f));
                 }
             }
             
@@ -195,14 +195,14 @@ namespace Core.Combat.Scripts.Managers
                 return split;
 
             if (isLeftSide)
-                split.x += -middlePadding - position * inBetweenPadding;
+                split.x += -middlePadding - (position * inBetweenPadding);
             else
-                split.x += +middlePadding + position * inBetweenPadding;
+                split.x += +middlePadding + (position * inBetweenPadding);
 
             return split;
         }
 
-        public void FillDefaultAnimationPositions(IDictionary<CharacterStateMachine, Vector3> positions, CharacterStateMachine caster, HashSet<CharacterStateMachine> charactersToCalculate, ISkill skill)
+        public void FillDefaultAnimationPositions(Dictionary<CharacterStateMachine, Vector3> positions, [NotNull] CharacterStateMachine caster, HashSet<CharacterStateMachine> charactersToCalculate, [NotNull] ISkill skill)
         {
             ReadOnlyPaddingSettings paddingSettings = skill.GetPaddingSettings();
             float inBetweenPadding = paddingSettings.InBetweenPadding;
@@ -220,17 +220,23 @@ namespace Core.Combat.Scripts.Managers
             
             int leftCount = 0;
             foreach (CharacterStateMachine character in CharacterManager.FixedOnLeftSide)
+            {
                 if (charactersToCalculate.Contains(character))
                     AddPositionToDictionary(positions, character, ref leftCount, leftMiddlePadding, inBetweenPadding);
+            }
 
             int rightCount = 0;
             foreach (CharacterStateMachine character in CharacterManager.FixedOnRightSide)
+            {
                 if (charactersToCalculate.Contains(character))
                     AddPositionToDictionary(positions, character, ref rightCount, rightMiddlePadding, inBetweenPadding);
+            }
 
-            static void AddPositionToDictionary(IDictionary<CharacterStateMachine, Vector3> source, CharacterStateMachine character, ref int count, float middlePadding, float inBetweenPadding)
+            return;
+
+            static void AddPositionToDictionary(Dictionary<CharacterStateMachine, Vector3> source, [NotNull] CharacterStateMachine character, ref int count, float middlePadding, float inBetweenPadding)
             {
-                if (character.Display.AssertSome(out CharacterDisplay characterGameObject) == false)
+                if (character.Display.AssertSome(out DisplayModule characterGameObject) == false)
                     return;
 
                 if (character.StateEvaluator.PureEvaluate() is CharacterState.Grappled or CharacterState.Defeated)
@@ -257,7 +263,7 @@ namespace Core.Combat.Scripts.Managers
             }
         }
 
-        public void FillTemptAnimationPositions(IDictionary<CharacterStateMachine, Vector3> positions, CharacterStateMachine caster, HashSet<CharacterStateMachine> charactersToCalculate)
+        public static void FillTemptAnimationPositions([NotNull] Dictionary<CharacterStateMachine, Vector3> positions, [NotNull] CharacterStateMachine caster, [NotNull] HashSet<CharacterStateMachine> charactersToCalculate)
         {
             Vector3 center = new(0f, IActionSequence.YPosition, 0f);
             positions[caster] = center;
@@ -271,15 +277,17 @@ namespace Core.Combat.Scripts.Managers
 
             if (baseDuration.TrySome(out float duration))
             {
-                CoroutineWrapper wrapper = new(MoveAllToDefaultPositionRoutine(duration), nameof(MoveAllToDefaultPositionRoutine), this, autoStart: false);
+                CoroutineWrapper wrapper = new(MoveAllToDefaultPositionRoutine(duration), nameof(MoveAllToDefaultPositionRoutine), context: this, autoStart: false);
                 AnimationRoutineInfo info = AnimationRoutineInfo.WithoutCharacter(wrapper);
                 combatManager.Animations.PriorityEnqueue(info);
             }
             else
             {
                 foreach ((CharacterStateMachine character, Vector3 position) in ComputeAllDefaultPositions())
-                    if (character.Display.TrySome(out CharacterDisplay display))
+                {
+                    if (character.Display.TrySome(out DisplayModule display))
                         display.MoveToPosition(position, baseDuration: Option.None);
+                }
             }
         }
         
@@ -290,24 +298,30 @@ namespace Core.Combat.Scripts.Managers
             while (AnyMoving())
                 yield return null;
 
+            yield break;
+
             void MoveAll() // cannot inline due to Enumerator being ref struct
             {
                 foreach ((CharacterStateMachine character, Vector3 position) in ComputeAllDefaultPositions())
-                    if (character.Display.TrySome(out CharacterDisplay display))
+                {
+                    if (character.Display.TrySome(out DisplayModule display))
                         display.MoveToPosition(position, baseDuration: Option<float>.Some(duration));
+                }
             }
 
             bool AnyMoving()
             {
                 foreach (CharacterStateMachine character in CharacterManager.GetAllFixed())
-                    if (character.Display.TrySome(out CharacterDisplay display) && display.IsBusy)
+                {
+                    if (character.Display.TrySome(out DisplayModule display) && display.IsBusy)
                         return true;
+                }
 
                 return false;
             }
         }
         
-        public CharacterPositioning PredictPositionsOnMove(CharacterStateMachine target, byte delta, out bool anyMovement)
+        public CharacterPositioning PredictPositionsOnMove([NotNull] CharacterStateMachine target, byte delta, out bool anyMovement)
         {
             List<CharacterStateMachine> allies = CharacterManager.GetEditable(isLeftSide: target.PositionHandler.IsLeftSide);
             int currentIndex = allies.IndexOf(target);

@@ -28,15 +28,14 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// <summary>
 		/// Return whether or not this hex belongs to an odd-numbered row.
 		/// </summary>
-		public bool IsOddRow { get { return ( RowParity == ParityEnum.Odd ); } }
+		public bool IsOddRow => ( RowParity == ParityEnum.Odd );
 
-		
 		/// <summary>
 		/// Return the row parity of the hex (whether its row number is even or odd).
 		/// </summary>
-		public ParityEnum RowParity { get { return (ParityEnum)( row & 1 ); } }
+		public ParityEnum RowParity => (ParityEnum)( row & 1 );
 
-		#endregion
+#endregion
 		
 		
 		#region Constructors
@@ -64,7 +63,7 @@ namespace Core.Local_Map.Scripts.Coordinates
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Cubic ToCubic()
 		{
-			int q = col - (row - (row & 1)) / 2;
+			int q = col - ((row - (row & 1)) / 2);
 			int r = row;
 			return new Cubic(q: q, r: r, s: -q - r);
 		}
@@ -72,7 +71,7 @@ namespace Core.Local_Map.Scripts.Coordinates
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Axial ToAxial()
 		{
-			int q = col - (row - (row & 1)) / 2;
+			int q = col - ((row - (row & 1)) / 2);
 			int r = row;
 			return new Axial(q1: q, r1: r);
 		}
@@ -121,12 +120,8 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// <param name="rhs">The OffsetHexCoord on the right-hand side of the == sign.</param>
 		/// <returns>A bool representing whether or not the OffsetHexCoords are equal.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool operator ==( Offset lhs, Offset rhs ) 
-		{
-			return ( lhs.col == rhs.col ) && ( lhs.row == rhs.row );
-		}
+		public static bool operator ==( Offset lhs, Offset rhs ) => ( lhs.col == rhs.col ) && ( lhs.row == rhs.row );
 
-		
 		/// <summary>
 		/// Check if 2 OffsetHexCoords represent the different hexes on the grid.
 		/// </summary>
@@ -134,11 +129,7 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// <param name="rhs">The OffsetHexCoord on the right-hand side of the != sign.</param>
 		/// <returns>A bool representing whether or not the OffsetHexCoords are unequal.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool operator !=( Offset lhs, Offset rhs ) 
-		{
-			return ( lhs.col != rhs.col ) || ( lhs.row != rhs.row );
-		}
-
+		public static bool operator !=( Offset lhs, Offset rhs ) => ( lhs.col != rhs.col ) || ( lhs.row != rhs.row );
 
 		/// <summary>
 		/// Get a hash reflecting the contents of the OffsetHexCoord.
@@ -149,8 +140,8 @@ namespace Core.Local_Map.Scripts.Coordinates
 			unchecked
 			{
 				int hash = 17;
-				hash = hash * 23 + col.GetHashCode();
-				hash = hash * 23 + row.GetHashCode();
+				hash = (hash * 23) + col.GetHashCode();
+				hash = (hash * 23) + row.GetHashCode();
 				return hash;
 			}
 		}
@@ -163,9 +154,7 @@ namespace Core.Local_Map.Scripts.Coordinates
 		public override bool Equals( object obj )
 		{
 			if ( obj == null  || GetType() != obj.GetType())
-			{
 				return false;
-			}
 
 			Offset other = (Offset) obj;
 

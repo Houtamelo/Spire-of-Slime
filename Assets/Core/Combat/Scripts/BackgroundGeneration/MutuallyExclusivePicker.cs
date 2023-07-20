@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Text;
+using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
+using JetBrains.Annotations;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -42,7 +44,7 @@ namespace Core.Combat.Scripts.BackgroundGeneration
             spriteRenderer.sprite = sprites.GetRandom();
         }
 
-        public void GenerateFromRecord(BackgroundChildRecord record)
+        public void GenerateFromRecord([CanBeNull] BackgroundChildRecord record)
         {
             if (record is not MutuallyExclusivePickerRecord mutuallyExclusivePickerRecord)
             {
@@ -69,6 +71,7 @@ namespace Core.Combat.Scripts.BackgroundGeneration
             spriteRenderer.sprite = sprites[mutuallyExclusivePickerRecord.SpriteIndex];
         }
 
+        [NotNull]
         public BackgroundChildRecord GetRecord()
         {
             bool isActive = gameObject.activeSelf;
@@ -80,7 +83,7 @@ namespace Core.Combat.Scripts.BackgroundGeneration
             return new MutuallyExclusivePickerRecord(isActive, spriteIndex == -1 ? 0 : spriteIndex);
         }
 
-        public bool IsDataValid(BackgroundChildRecord data, StringBuilder errors)
+        public bool IsDataValid([CanBeNull] BackgroundChildRecord data, StringBuilder errors)
         {
             if (data is not MutuallyExclusivePickerRecord mutuallyExclusivePickerRecord)
             {

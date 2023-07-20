@@ -1,5 +1,7 @@
 ﻿using System.Text;
 using Core.Combat.Scripts.Behaviour;
+using Core.Utils.Math;
+using JetBrains.Annotations;
 using UnityEngine;
 using CombatManager = Core.Combat.Scripts.Managers.CombatManager;
 
@@ -7,6 +9,7 @@ namespace Core.Combat.Scripts.WinningCondition
 {
     public record DefeatAllRecord() : WinningConditionRecord(ConditionType.DefeatAll)
     {
+        [NotNull]
         public override IWinningCondition Deserialize(CombatManager combatManager) => new DefeatAll(combatManager);
         public override bool IsDataValid(StringBuilder errors) => true;
     }
@@ -50,8 +53,10 @@ namespace Core.Combat.Scripts.WinningCondition
             };
         }
 
+        [NotNull]
         public WinningConditionRecord Serialize() => new DefeatAllRecord();
+        [NotNull]
         public string DisplayName => "Defeat all enemies";
-        public float GetTimeToDisplay() => _combatManager.ElapsedTime;
+        public TSpan GetTimeToDisplay() => _combatManager.ElapsedTime;
     }
 }

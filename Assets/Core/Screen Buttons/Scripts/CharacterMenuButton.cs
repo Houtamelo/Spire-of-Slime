@@ -46,12 +46,12 @@ namespace Core.Screen_Buttons.Scripts
                     characterMenu.Open();
             });
             
-            Save.FloatChanged += OnFloatChanged;
+            Save.IntChanged += OnIntChanged;
             levelUpFlasher.ResetMaterial();
         }
         private void OnDestroy()
         {
-            Save.FloatChanged -= OnFloatChanged;
+            Save.IntChanged -= OnIntChanged;
         }
 
         public void OnPointerEnter(PointerEventData _)
@@ -66,20 +66,18 @@ namespace Core.Screen_Buttons.Scripts
                  save.NemaStats.AvailablePerkPoints > 0 ||
                  save.NemaStats.AvailablePrimaryPoints > 0 ||
                  save.NemaStats.AvailableSecondaryPoints > 0))
-            {
                 pointsAvailableMessage.SetActive(true);
-            }
         }
 
         public void OnPointerExit(PointerEventData _) => pointsAvailableMessage.SetActive(false);
 
-        private void OnFloatChanged(CleanString variableName, float oldValue, float newValue)
+        private void OnIntChanged(CleanString variableName, int oldValue, int newValue)
         {
             if (variableName != VariablesName.Ethel_Experience && variableName != VariablesName.Nema_Experience)
                 return;
 
-            int oldLevel = Mathf.FloorToInt(oldValue / ExperienceCalculator.ExperienceNeededForLevelUp);
-            int newLevel = Mathf.FloorToInt(newValue / ExperienceCalculator.ExperienceNeededForLevelUp);
+            int oldLevel = oldValue / ExperienceCalculator.ExperienceNeededForLevelUp;
+            int newLevel = newValue / ExperienceCalculator.ExperienceNeededForLevelUp;
             if (oldLevel >= newLevel)
                 return;
             

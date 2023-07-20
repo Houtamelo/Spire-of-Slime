@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using Core.Local_Map.Scripts.Enums;
+using JetBrains.Annotations;
 
 namespace Core.Local_Map.Scripts.Coordinates
 {
@@ -87,7 +88,7 @@ namespace Core.Local_Map.Scripts.Coordinates
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Offset ToOffset()
 		{
-			int q1 = q + (r - (r & 1 )) / 2;
+			int q1 = q + ((r - (r & 1 )) / 2);
 			int r1 = r;
 
 			return new Offset( col: q1, row: r1 );
@@ -138,12 +139,8 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// <param name="rhs">The CubicHexCoord on the right-hand side of the == sign.</param>
 		/// <returns>A bool representing whether or not the CubicHexCoords are equal.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool operator ==( Cubic lhs, Cubic rhs ) 
-		{
-			return ( lhs.q == rhs.q ) && ( lhs.r == rhs.r ) && ( lhs.s == rhs.s );
-		}
+		public static bool operator ==( Cubic lhs, Cubic rhs ) => ( lhs.q == rhs.q ) && ( lhs.r == rhs.r ) && ( lhs.s == rhs.s );
 
-		
 		/// <summary>
 		/// Check if 2 CubicHexCoords represent the different hexes on the grid.
 		/// </summary>
@@ -151,11 +148,7 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// <param name="rhs">The CubicHexCoord on the right-hand side of the != sign.</param>
 		/// <returns>A bool representing whether or not the CubicHexCoords are unequal.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool operator !=( Cubic lhs, Cubic rhs ) 
-		{
-			return ( lhs.q != rhs.q ) || ( lhs.r != rhs.r ) || ( lhs.s != rhs.s );
-		}
-
+		public static bool operator !=( Cubic lhs, Cubic rhs ) => ( lhs.q != rhs.q ) || ( lhs.r != rhs.r ) || ( lhs.s != rhs.s );
 
 		/// <summary>
 		/// Get a hash reflecting the contents of the CubicHexCoord.
@@ -166,9 +159,9 @@ namespace Core.Local_Map.Scripts.Coordinates
 			unchecked
 			{
 				int hash = 17;
-				hash = hash * 23 + q.GetHashCode();
-				hash = hash * 23 + r.GetHashCode();
-				hash = hash * 23 + s.GetHashCode();
+				hash = (hash * 23) + q.GetHashCode();
+				hash = (hash * 23) + r.GetHashCode();
+				hash = (hash * 23) + s.GetHashCode();
 				return hash;
 			}
 		}
@@ -201,7 +194,7 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// CubicHexCoords will be returned for.</param>
 		/// <returns>An array of CubicHexCoords within the given range from this hex (including 
 		/// this hex) in no particular order.</returns>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(MethodImplOptions.AggressiveInlining), NotNull]
 		public Cubic[] AreaAround( int range ) => Area( center: this, range: range );
 
 		/// <summary>
@@ -220,6 +213,7 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// </summary>
 		/// <returns>An array of CubicHexCoords representing this hex's diagonals (in clockwise
 		/// order).</returns>
+		[NotNull]
 		public Cubic[] Diagonals() => new[] {
 			                                    this + DIAGONALS[ (int)DiagonalEnum.ESE ], 
 			                                    this + DIAGONALS[ (int)DiagonalEnum.S   ],
@@ -247,7 +241,7 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// </summary>
 		/// <param name="other">The CubicHexCoord representing the last hex in the line.</param>
 		/// <returns>An array of CubicHexCoords ordered as a line from start to end.</returns>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(MethodImplOptions.AggressiveInlining), NotNull]
 		public Cubic[] LineTo(Cubic other) => Line(start: this, end: other);
 
 
@@ -266,6 +260,7 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// </summary>
 		/// <returns>An array of CubicHexCoords representing this hex's neighbors (in clockwise
 		/// order).</returns>
+		[NotNull]
 		public Cubic[] Neighbors()
 		{
 			return new[] {
@@ -289,6 +284,7 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// <param name="startDirection">The direction in which the first CubicHexCoord of the 
 		/// ring will appear in.</param>
 		/// <returns>An array of CubicHexCoords ordered as a ring.</returns>
+		[NotNull]
 		public Cubic[] RingAround( int range, Direction startDirection = Direction.East ) => Ring( center: this, range: range, startDirection: startDirection );
 
 		/// <summary>
@@ -313,6 +309,7 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// spiral will appear in.</param>
 		/// <returns>An array of CubicHexCoords ordered as a spiral, beginning from the center
 		/// and proceeding clockwise until it reaches the outside of the spiral.</returns>
+		[NotNull]
 		public Cubic[] SpiralAroundInward( int range, Direction startDirection = Direction.East ) => SpiralInward( center: this, range: range, startDirection: startDirection );
 
 		/// <summary>
@@ -328,6 +325,7 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// <returns>An array of CubicHexCoords ordered as a spiral, beginning from the outside
 		/// and proceeding clockwise until it reaches the center of the spiral.</returns>
 		/// <returns></returns>
+		[NotNull]
 		public Cubic[] SpiralAroundOutward( int range, Direction startDirection = Direction.East ) => SpiralOutward( center: this, range: range, startDirection: startDirection );
 
 		#endregion
@@ -344,23 +342,17 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// CubicHexCoords will be returned for.</param>
 		/// <returns>An array of CubicHexCoords within the given range from the given center 
 		/// (including the center itself) in no particular order.</returns>
+		[NotNull]
 		public static Cubic[] Area( Cubic center, int range )
 		{
 			if ( range < 0 )
-			{
 				throw new ArgumentOutOfRangeException( paramName: "range must be a non-negative integer value." );
-			}
 			else if ( range == 0 )
-			{
 				return new[] { center };
-			}
 
 			int arraySize = 1;
 			for ( int i = range; i > 0; i-- )
-			{
 				arraySize += 6 * i;
-			}
-
 
 			Cubic[] result = new Cubic[ arraySize ];
 
@@ -387,12 +379,8 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// <param name="direction">The diagonal direction to return a diff for.</param>
 		/// <returns>A CubicHexCoord representing the diff between some hex and its diagonal in 
 		/// the given diagonal direction.</returns>
-		public static Cubic DiagonalDiff( DiagonalEnum direction )
-		{
-			return DIAGONALS[ (int)direction ];
-		}
+		public static Cubic DiagonalDiff( DiagonalEnum direction ) => DIAGONALS[ (int)direction ];
 
-		
 		/// <summary>
 		/// Returns a CubicHexCoord representing the diff between some hex and its neighbor in 
 		/// the given direction.
@@ -400,11 +388,8 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// <param name="direction">The direction to return a diff for.</param>
 		/// <returns>A CubicHexCoord representing the diff between some hex and its neighbor in 
 		/// the given direction.</returns>
-		public static Cubic DirectionDiff( Direction direction )
-		{
-			return DIRECTIONS[ (int)direction ];
-		}
-		
+		public static Cubic DirectionDiff( Direction direction ) => DIRECTIONS[ (int)direction ];
+
 		/// <summary>
 		/// Returns the minimum number of grid steps to get from a to b.
 		/// </summary>
@@ -431,6 +416,7 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// <param name="start">The CubicHexCoord representing the first hex in the line.</param>
 		/// <param name="end">The CubicHexCoord representing the last hex in the line.</param>
 		/// <returns>An array of CubicHexCoords ordered as a line from start to end.</returns>
+		[NotNull]
 		public static Cubic[] Line( Cubic start, Cubic end )
 		{
 			int distance = Distance( a: start, b: end );
@@ -439,9 +425,9 @@ namespace Core.Local_Map.Scripts.Coordinates
 
 			for ( int i = 0; i <= distance; i++ )
 			{
-				float xLerp = start.q + ( end.q - start.q ) * 1f / distance * i;
-				float yLerp = start.r + ( end.r - start.r ) * 1f / distance * i;
-				float zLerp = start.s + ( end.s - start.s ) * 1f / distance * i;
+				float xLerp = start.q + (( end.q - start.q ) * 1f / distance * i);
+				float yLerp = start.r + (( end.r - start.r ) * 1f / distance * i);
+				float zLerp = start.s + (( end.s - start.s ) * 1f / distance * i);
 
 				result[ i ] = new FloatCubic( x: xLerp, y: yLerp, z: zLerp ).Round();
 			}
@@ -461,22 +447,19 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// <param name="startDirection">The direction in which the first CubicHexCoord of the 
 		/// ring will appear in.</param>
 		/// <returns>An array of CubicHexCoords ordered as a ring.</returns>
+		[NotNull]
 		public static Cubic[] Ring( Cubic center, int range, Direction startDirection = Direction.East )
 		{
 			if ( range <= 0 )
-			{
 				throw new ArgumentOutOfRangeException( paramName: "range must be a positive integer value." );
-			}
-			
+
 			Cubic[] result = new Cubic[ 6 * range ];
 
 			Cubic cube = center + DIRECTIONS[ (int)startDirection ].Scale( factor: range );
 
 			int[] directions = new int[ 6 ];
 			for ( int i = 0; i < 6; i++ )
-			{
 				directions[ i ] = ( (int)startDirection + i ) % 6;
-			}
 
 			int index = 0;
 			for ( int i = 0; i < 6; i++ )
@@ -505,22 +488,17 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// spiral will appear in.</param>
 		/// <returns>An array of CubicHexCoords ordered as a spiral, beginning from the center
 		/// and proceeding clockwise until it reaches the outside of the spiral.</returns>
+		[NotNull]
 		public static Cubic[] SpiralInward( Cubic center, int range, Direction startDirection = Direction.East )
 		{
 			if ( range < 0 )
-			{
 				throw new ArgumentOutOfRangeException( paramName: "range must be a positive integer value." );
-			}
 			else if ( range == 0 )
-			{
 				return new[] { center };
-			}
 
 			int arraySize = 1;
 			for ( int i = range; i > 0; i-- )
-			{
 				arraySize += 6 * i;
-			}
 
 			Cubic[] result = new Cubic[ arraySize ];
 
@@ -550,22 +528,17 @@ namespace Core.Local_Map.Scripts.Coordinates
 		/// spiral will appear in.</param>
 		/// <returns>An array of CubicHexCoords ordered as a spiral, beginning from the outside
 		/// and proceeding clockwise until it reaches the center of the spiral.</returns>
+		[NotNull]
 		public static Cubic[] SpiralOutward( Cubic center, int range, Direction startDirection = Direction.East )
 		{
 			if ( range < 0 )
-			{
 				throw new ArgumentOutOfRangeException( paramName: "range must be a positive integer value." );
-			}
 			else if ( range == 0 )
-			{
 				return new[] { center };
-			}
 
 			int arraySize = 1;
 			for ( int i = range; i > 0; i-- )
-			{
 				arraySize += 6 * i;
-			}
 
 			Cubic[] result = new Cubic[ arraySize ];
 

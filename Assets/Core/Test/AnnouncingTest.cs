@@ -1,5 +1,6 @@
 ﻿using Core.Combat.Scripts;
 using DG.Tweening;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
@@ -27,6 +28,7 @@ namespace Core.Test
         private float threshold;
 
         private DOTweenTMPAnimator _tmpAnimator;
+        [NotNull]
         private DOTweenTMPAnimator TmpAnimator => _tmpAnimator ??= new DOTweenTMPAnimator(tmp);
 
         [Button]
