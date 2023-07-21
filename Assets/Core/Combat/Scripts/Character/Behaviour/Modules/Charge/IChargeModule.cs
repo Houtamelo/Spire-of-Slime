@@ -22,6 +22,8 @@ namespace Core.Combat.Scripts.Behaviour.Modules
         
         TSpan GetEstimatedRemaining();
 
+        TSpan EstimateCharge(TSpan input);
+
         protected void SetInitialInternal(TSpan clampedDuration);
         public sealed void SetInitial(TSpan duration)
         {

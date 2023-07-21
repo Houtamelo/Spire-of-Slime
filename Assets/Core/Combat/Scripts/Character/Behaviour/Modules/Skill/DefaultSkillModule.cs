@@ -80,20 +80,24 @@ namespace Core.Combat.Scripts.Behaviour.Modules
             
             return true;
         }
-
-        public void PlanSkill(ISkill skill, CharacterStateMachine target)
+        
+        /// <returns> Charge Time</returns>
+        public TSpan PlanSkill([NotNull] ISkill skill, [NotNull] CharacterStateMachine target)
         {
-            if (PlannedSkill is { IsSome: true, Value: { IsDoneOrCancelled: false } })
-                return;
-            
-            ChargeStruct chargeStruct = new(skill, _owner, target);
+            Debug.Assert(PlannedSkill is { IsSome: true, Value: { IsDoneOrCancelled: false } }, message: "Trying to plan a skill while another is already planned");
+
+            ChargeStruct chargeStruct = new(skill, caster: _owner, target);
             ModifyCharge(ref chargeStruct);
-            _owner.ChargeModule.SetInitial(duration: chargeStruct.Charge);
             
+            TSpan chargeTime = chargeStruct.Charge;
+            _owner.ChargeModule.SetInitial(chargeTime);
+
             chargeStruct.Dispose();
-            _plannedSkill = new PlannedSkill(skill, _owner, target, costFree: false);
-            if (_owner.Display.AssertSome(out DisplayModule display))
+            _plannedSkill = new PlannedSkill(skill, caster: _owner, target, costFree: false);
+            if (_owner.PositionHandler.IsRightSide && _owner.Display.AssertSome(out DisplayModule display))
                 display.UpdatePredictionIcon(_plannedSkill);
+            
+            return chargeTime;
         }
 
         public bool HasSkill([CanBeNull] ISkill skill)

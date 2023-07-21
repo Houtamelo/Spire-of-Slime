@@ -37,7 +37,7 @@ namespace Core.Combat.Scripts.Skills.Action
         
         bool IsPlaying { get; }
         bool IsDone { get; }
-        void Play();
+        void Play(bool announce);
         void ForceStop();
         
         void UpdateCharactersStartPosition();

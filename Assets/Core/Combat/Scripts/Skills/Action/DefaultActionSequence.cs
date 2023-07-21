@@ -79,7 +79,7 @@ namespace Core.Combat.Scripts.Skills.Action
         
         public void AddOutsider([NotNull] CharacterStateMachine outsider) => _outsiders.Add(outsider);
 
-        public void Play()
+        public void Play(bool announce)
         {
             _isPlaying = true;
             
@@ -96,15 +96,21 @@ namespace Core.Combat.Scripts.Skills.Action
             }
 
             ActionUtils.IncrementSkillCounter(Plan, Caster);
-            ActionUtils.AnimateIndicators(Caster, Targets, _startPositions);
             ActionUtils.FillDefaultEndPositions(_combatManager, Targets, Plan, Caster, _endPositions);
-            _combatManager.AnnouncePlan(Plan,StartDuration, PopDuration);
 
             Sequence sequence = DOTween.Sequence(target: this).SetUpdate(isIndependentUpdate: false);
 
-            sequence.AppendInterval(StartDuration - BarsFadeDuration);
-            
-            sequence.AppendCallback(() => ActionUtils.FadeDownAllBars(_combatManager, BarsFadeDuration));
+            if (announce)
+            {
+                ActionUtils.AnimateIndicators(Caster, Targets, _startPositions);
+                _combatManager.AnnouncePlan(Plan, StartDuration, PopDuration);
+                sequence.AppendInterval(StartDuration - BarsFadeDuration);
+                sequence.AppendCallback(() => ActionUtils.FadeDownAllBars(_combatManager, BarsFadeDuration));
+            }
+            else
+            {
+                ActionUtils.FadeDownAllBars(_combatManager, BarsFadeDuration);
+            }
             
             sequence.AppendInterval(BarsFadeDuration * 0.75f);
 

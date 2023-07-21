@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace Core.Combat.Scripts.Skills.Action
 {
-    public sealed class PlannedSkill
+    public class PlannedSkill
     {
         private static readonly List<CharacterStateMachine> ReusableTargetList = new(capacity: 4);
         
@@ -95,14 +95,18 @@ namespace Core.Combat.Scripts.Skills.Action
             IsDoneOrCancelled = true;
         }
 
-        public void Enqueue()
+        public IActionSequence Enqueue()
         {
             if (Caster.Display.AssertSome(out DisplayModule display))
             {
                 Enqueued = true;
                 IActionSequence actionSequence = Skill.CreateActionSequence(plan: this, display.CombatManager);
                 display.CombatManager.Animations.Enqueue(actionSequence);
+                return actionSequence;
             }
+            
+            Debug.LogError($"Caster {Caster} has no display module");
+            return null;
         }
 
         public bool TryPickAnotherTarget()

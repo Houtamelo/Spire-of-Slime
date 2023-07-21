@@ -8,6 +8,7 @@ using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Interfaces;
 using Core.Combat.Scripts.Skills.Action;
+using Core.Combat.Scripts.Timeline;
 using Core.Combat.Scripts.UI;
 using Core.Combat.Scripts.WinningCondition;
 using Core.Game_Manager.Scripts;
@@ -19,6 +20,7 @@ using Core.Pause_Menu.Scripts;
 using Core.Save_Management;
 using Core.Save_Management.SaveObjects;
 using Core.Utils.Async;
+using Core.Utils.Collections;
 using Core.Utils.Extensions;
 using Core.Utils.Handlers;
 using Core.Utils.Math;
@@ -35,7 +37,7 @@ namespace Core.Combat.Scripts.Managers
 {
     public class CombatManager : Singleton<CombatManager>
     {
-        public static TSpan TimePerStep => TSpan.FromSeconds(1.0 / PauseMenuManager.CombatTickRateHandler.Value);
+        //public static TSpan TimePerStep => TSpan.FromSeconds(1.0 / PauseMenuManager.CombatTickRateHandler.Value);
         
         private static readonly TSpan IntervalBetweenExhaustionIncrease = TSpan.FromSeconds(1.3);
         
@@ -92,6 +94,10 @@ namespace Core.Combat.Scripts.Managers
         private Transform overlayAnimatorsParent;
         public Transform OverlayAnimatorsParent => overlayAnimatorsParent;
 
+        [SerializeField, Required, SceneObjectsOnly]
+        private TimelineManager timelineManager;
+        public TimelineManager TimelineManager => timelineManager;
+
         [NonSerialized]
         public readonly FloatHandler SpeedHandler = new();
 
@@ -104,8 +110,6 @@ namespace Core.Combat.Scripts.Managers
         public Option<CombatBackground> Background { get; private set; }
 
         public TSpan ElapsedTime { get; private set; }
-
-        public TSpan AccumulatedStepTime { get; private set; }
         public TSpan AccumulatedExhaustionTime { get; private set; }
 
         public bool Running { get; private set; }
@@ -140,7 +144,6 @@ namespace Core.Combat.Scripts.Managers
 
         public void PauseTime()
         {
-            AccumulatedStepTime = TSpan.Zero;
             if (PauseHandler.Value == false)
                 PauseHandler.SetValue(true);
         }
@@ -186,33 +189,24 @@ namespace Core.Combat.Scripts.Managers
             if (Save.AssertInstance(out Save save) == false)
                 return;
 
-            TSpan timeStep = TSpan.FromSeconds(Time.deltaTime * SpeedHandler);
-            AccumulatedStepTime += timeStep;
+            CombatEvent nextEvent = timelineManager.UpdateEvents();
+            TSpan timeStep = nextEvent.Time;
+            
             ElapsedTime += timeStep;
-            timeTmp.text = WinningCondition.GetTimeToDisplay().ToString("0.00");
+            timeTmp.text = WinningCondition.GetTimeToDisplay().Seconds.ToString("0.00");
 
-            while (AccumulatedStepTime >= TimePerStep)
+            if (CombatSetupInfo.MistExists)
             {
-                AccumulatedStepTime -= TimePerStep;
-                
-                if (CombatSetupInfo.MistExists)
-                {
-                    NemaStatus nemaStatus = save.GetFullNemaStatus();
-                    if (nemaStatus.SetToClearMist.current && nemaStatus.IsInCombat.current && nemaStatus.IsStanding.current && nemaStatus.Exhaustion.current < NemaStatus.HighExhaustion)
-                        AccumulatedExhaustionTime += TimePerStep;
+                NemaStatus nemaStatus = save.GetFullNemaStatus();
+                if (nemaStatus.SetToClearMist.current && nemaStatus.IsInCombat.current && nemaStatus.IsStanding.current && nemaStatus.Exhaustion.current < NemaStatus.HighExhaustion)
+                    AccumulatedExhaustionTime += timeStep;
 
-                    while (AccumulatedExhaustionTime >= IntervalBetweenExhaustionIncrease)
-                    {
-                        AccumulatedExhaustionTime -= IntervalBetweenExhaustionIncrease;
-                        save.ChangeNemaExhaustion(delta: +1);
-                    }
-                }
-                
-                characters.PerformTimeStep(TimePerStep);
-                
-                if (CanKeepStepping() == false)
-                    return;
+                int exhaustionTicks = (int)(AccumulatedExhaustionTime.Seconds / IntervalBetweenExhaustionIncrease.Seconds);
+                AccumulatedExhaustionTime -= TSpan.FromSeconds(exhaustionTicks * IntervalBetweenExhaustionIncrease.Seconds);
+                save.ChangeNemaExhaustion(delta: exhaustionTicks * 1);
             }
+            
+            characters.PerformTimeStep(timeStep);
 
             RelevantPropertiesChanged?.Invoke();
         }
@@ -222,7 +216,8 @@ namespace Core.Combat.Scripts.Managers
             if (PauseHandler.Value || Running == false || announcer.IsBusy)
                 return false;
 
-            CombatStatus status = WinningCondition.Tick();
+            CombatStatus status = WinningCondition.Evaluate();
+            
             if (status != CombatStatus.InProgress)
             {
                 Running = false;
@@ -236,6 +231,12 @@ namespace Core.Combat.Scripts.Managers
 
             if (PauseHandler.Value || Running == false)
                 return false;
+
+            foreach (CharacterStateMachine character in characters.FixedOnLeftSide)
+            {
+                if (character.StateEvaluator.PureEvaluate() is CharacterState.Idle) // can step time if it's the player's turn
+                    return false;
+            }
             
             return true;
         }
@@ -441,25 +442,5 @@ namespace Core.Combat.Scripts.Managers
         }
 
         public void PlayerRequestsEscape() { throw new NotImplementedException(); }
-        
-        /*public bool CharacterRequestsLustPrompt(CharacterStateMachine character)
-        {
-            foreach (CharacterStateMachine enemy in characters.GetOnSide(character.PositionHandler.IsRightSide))
-            {
-                Option<(string parameter, float graphicalX)> doesActiveSex = enemy.Script.DoesActiveSex(character);
-                if (doesActiveSex.IsNone || enemy.StateEvaluator.PureEvaluate() is CharacterState.Defeated or CharacterState.Corpse or CharacterState.Downed or CharacterState.Grappled or CharacterState.Grappling)
-                    continue;
-
-                (string parameter, float graphicalX) = doesActiveSex.Value;
-                Option<LustPromptRequest> prompt = LustPromptRequest.Create(character, enemy, parameter, graphicalX);
-                if (prompt.IsNone)
-                    return false;
-                    
-                animations.Enqueue(prompt.Value);
-                return true;
-            }
-
-            return false;
-        }*/
     }
 }

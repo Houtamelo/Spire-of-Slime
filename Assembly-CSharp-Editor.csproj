@@ -85,6 +85,7 @@
      <Compile Include="Assets\Core\Utils\Editor\AnchorSetter.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\Editor\Editors\InMemoryVariableStorageEditor.cs" />
      <Compile Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\Editor\Editors\LocalizationEditor.cs" />
+     <Compile Include="Assets\Core\Utils\Math\Editor\TSpanPropertyDrawer.cs" />
      <Compile Include="Assets\Core\Utils\Editor\FindMissingScriptsRecursively.cs" />
      <Compile Include="Assets\Core\Combat\Scripts\Editor\Deprecated\LustPromptRequest.cs" />
      <Compile Include="Assets\Core\Main Database\Editor\YarnChecker.cs" />
@@ -118,6 +119,7 @@
      <None Include="Assets\Core\Localization\Scripts\Editor\Plugs\Microsoft.Extensions.DependencyInjection.xml" />
      <None Include="Assets\Core\Localization\Scripts\Editor\Plugs\System.Text.Json.xml" />
      <None Include="Assets\Core\Localization\Scripts\Editor\Plugs\Microsoft.Extensions.Http.xml" />
+     <Folder Include="Assets\Core\Utils\Math\Editor" />
      <Folder Include="Assets\Core\World Map\Scripts\Editor" />
      <Folder Include="Assets\Core\UI\Editor" />
      <Folder Include="Assets\Custom Packages\YarnSpinner-Unity-2.2.4\Editor\Icons" />

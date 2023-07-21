@@ -34,7 +34,7 @@ namespace Core.Combat.Scripts.WinningCondition
             _duration = duration;
         }
 
-        public CombatStatus Tick() => this.DefaultTick(_combatManager, _duration);
+        public CombatStatus Evaluate() => this.DefaultTick(_combatManager, _duration);
 
         [NotNull]
         public WinningConditionRecord Serialize() => new SurviveDurationRecord(_duration);

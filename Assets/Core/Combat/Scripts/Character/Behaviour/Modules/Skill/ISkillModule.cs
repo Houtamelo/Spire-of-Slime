@@ -5,6 +5,7 @@ using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Utils.Collections;
+using Core.Utils.Math;
 using Core.Utils.Patterns;
 
 namespace Core.Combat.Scripts.Behaviour.Modules
@@ -18,7 +19,7 @@ namespace Core.Combat.Scripts.Behaviour.Modules
     public interface ISkillModule : IModule
     {
         Option<PlannedSkill> PlannedSkill { get; }
-        void PlanSkill(ISkill skill, CharacterStateMachine target);
+        TSpan PlanSkill(ISkill skill, CharacterStateMachine target);
         void SetActionWithoutNotify(PlannedSkill action);
         void UnplanIfTargeting(CharacterStateMachine target);
         void CancelPlan();

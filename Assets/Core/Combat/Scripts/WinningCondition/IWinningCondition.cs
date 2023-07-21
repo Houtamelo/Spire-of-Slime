@@ -4,7 +4,7 @@ namespace Core.Combat.Scripts.WinningCondition
 {
     public interface IWinningCondition
     {
-        CombatStatus Tick();
+        CombatStatus Evaluate();
         WinningConditionRecord Serialize();
         string DisplayName { get; }
         TSpan GetTimeToDisplay();

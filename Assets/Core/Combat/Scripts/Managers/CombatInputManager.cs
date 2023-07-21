@@ -5,12 +5,14 @@ using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Cues;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Skills;
+using Core.Combat.Scripts.Skills.Action;
 using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Combat.Scripts.UI;
 using Core.Combat.Scripts.UI.Selected;
 using Core.Main_Characters.Ethel.Combat;
 using Core.Main_Characters.Nema.Combat;
 using Core.Utils.Handlers;
+using Core.Utils.Math;
 using Core.Utils.Objects;
 using Core.Utils.Patterns;
 using JetBrains.Annotations;
@@ -66,7 +68,6 @@ namespace Core.Combat.Scripts.Managers
         {
             escapeButton.onClick.AddListener(() => combatManager.PlayerRequestsEscape());
         }
-
         private void Update()
         {
             if (combatManager.Running == false || combatManager.Announcer.IsBusy || animations.Tick())
@@ -124,13 +125,38 @@ namespace Core.Combat.Scripts.Managers
             if (selectedCharacter != null && selectedCharacter.SkillModule.HasSkill(selectedSkill) && selectedCharacter.StateEvaluator.PureEvaluate() is CharacterState.Idle &&
                 selectedSkill.FullCastingAndTargetingOk(caster: selectedCharacter, target: clickedCharacter))
             {
-                _forceSkipActionCharacters.Clear();
-                skillPlannedSound.Play();
-                selectedCharacter.SkillModule.PlanSkill(selectedSkill, target: clickedCharacter);
+                PlanSkill(manager: this, clickedCharacter, selectedCharacter, selectedSkill);
+            }
+            else if (clickedCharacter != SelectedCharacter.Value && (CombatManager.DEBUGMODE || (clickedCharacter.Script.IsControlledByPlayer && clickedCharacter.PositionHandler.IsLeftSide)))
+            {
                 SelectedSkill.SetValue(null);
+                SelectedCharacter.SetValue(clickedCharacter);
+            }
+
+            return;
+
+            static void PlanSkill([NotNull] CombatInputManager manager, CharacterStateMachine clickedCharacter, [NotNull] CharacterStateMachine selectedCharacter, ISkill selectedSkill)
+            {
+                manager._forceSkipActionCharacters.Clear();
+                
+                TSpan chargeTime = selectedCharacter.SkillModule.PlanSkill(selectedSkill, target: clickedCharacter);
+                
+                manager.SelectedSkill.SetValue(null);
+
+                if (chargeTime.Ticks <= 0 && selectedCharacter.SkillModule.PlannedSkill.AssertSome(out PlannedSkill plannedSkill)) // animate immediately
+                {
+                    manager.combatManager.UnPauseTime();
+                    manager.SelectedCharacter.SetValue(null);
+                    IActionSequence actionSequence = plannedSkill.Enqueue();
+                    manager.animations.PlayQueuedActionImmediate(actionSequence);
+                    return;
+                }
+                
+                manager.skillPlannedSound.Play();
 
                 Option<CharacterStateMachine> anotherIdleCharacter = Option<CharacterStateMachine>.None;
-                foreach (CharacterStateMachine character in characters.FixedOnLeftSide)
+
+                foreach (CharacterStateMachine character in manager.characters.FixedOnLeftSide)
                 {
                     if (((CombatManager.DEBUGMODE && Application.isEditor) || character.Script.IsControlledByPlayer)
                      && character.StateEvaluator.PureEvaluate() is CharacterState.Idle)
@@ -142,18 +168,13 @@ namespace Core.Combat.Scripts.Managers
 
                 if (anotherIdleCharacter.IsSome)
                 {
-                    SelectedCharacter.SetValue(anotherIdleCharacter.Value);
+                    manager.SelectedCharacter.SetValue(anotherIdleCharacter.Value);
                 }
                 else
                 {
-                    combatManager.UnPauseTime();
-                    SelectedCharacter.SetValue(null);
+                    manager.combatManager.UnPauseTime();
+                    manager.SelectedCharacter.SetValue(null);
                 }
-            }
-            else if (clickedCharacter != SelectedCharacter.Value && (CombatManager.DEBUGMODE || (clickedCharacter.Script.IsControlledByPlayer && clickedCharacter.PositionHandler.IsLeftSide)))
-            {
-                SelectedSkill.SetValue(null);
-                SelectedCharacter.SetValue(clickedCharacter);
             }
         }
 

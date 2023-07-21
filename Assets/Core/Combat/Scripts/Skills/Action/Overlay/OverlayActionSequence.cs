@@ -6,7 +6,6 @@ using Collections.Pooled;
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Managers;
-using Core.Combat.Scripts.Skills.Action.Overlay;
 using Core.Pause_Menu.Scripts;
 using Core.Utils.Collections;
 using Core.Utils.Extensions;
@@ -20,7 +19,7 @@ using Utils.Patterns;
 using static Core.Combat.Scripts.Skills.Action.IActionSequence;
 using Object = UnityEngine.Object;
 
-namespace Core.Combat.Scripts.Skills.Action
+namespace Core.Combat.Scripts.Skills.Action.Overlay
 {
     public class OverlayActionSequence : IActionSequence
     {
@@ -86,7 +85,7 @@ namespace Core.Combat.Scripts.Skills.Action
         
         public void AddOutsider([NotNull] CharacterStateMachine outsider) => _outsiders.Add(outsider);
 
-        public void Play()
+        public void Play(bool announce)
         {
             _isPlaying = true;
             
@@ -103,15 +102,21 @@ namespace Core.Combat.Scripts.Skills.Action
             }
 
             ActionUtils.IncrementSkillCounter(Plan, Caster);
-            ActionUtils.AnimateIndicators(Caster, Targets, _startPositions);
             ActionUtils.FillEndPositionsForOverlay(_combatManager, Targets, Caster, _endPositions);
-            _combatManager.AnnouncePlan(Plan, StartDuration, PopDuration);
 
             Sequence sequence = DOTween.Sequence(target: this).SetUpdate(isIndependentUpdate: false);
 
-            sequence.AppendInterval(StartDuration - BarsFadeDuration);
-            
-            sequence.AppendCallback(() => ActionUtils.FadeDownAllBars(_combatManager, BarsFadeDuration));
+            if (announce)
+            {
+                ActionUtils.AnimateIndicators(Caster, Targets, _startPositions);
+                _combatManager.AnnouncePlan(Plan, StartDuration, PopDuration);
+                sequence.AppendInterval(StartDuration - BarsFadeDuration);
+                sequence.AppendCallback(() => ActionUtils.FadeDownAllBars(_combatManager, BarsFadeDuration));
+            }
+            else
+            {
+                ActionUtils.FadeDownAllBars(_combatManager, BarsFadeDuration);
+            }
             
             sequence.AppendInterval(BarsFadeDuration * 0.75f);
 
@@ -125,6 +130,7 @@ namespace Core.Combat.Scripts.Skills.Action
             sequence.AppendInterval(PopDuration);
 
             Reference<OverlayAnimator> animatorInstance = new(null);
+            
             sequence.AppendCallback(() =>
             {
                 animatorInstance.Value = _overlayPrefab.InstantiateWithFixedLocalScale(_combatManager.OverlayAnimatorsParent);
@@ -206,15 +212,7 @@ namespace Core.Combat.Scripts.Skills.Action
                     
                     targetDisplay.SetBaseSpeed(SpeedMultiplier);
                 }
-
-            // if (Caster.Display.AssertSome(out CharacterDisplay display))
-            // {
-            //     CasterContext casterContext = new(_results.ToArray());
-            //     CombatAnimation animation = new(Plan.Skill.AnimationParameter, casterContext, Option<TargetContext>.None);
-            //     display.SetBaseSpeed(SpeedMultiplier);
-            //     display.SetAnimationWithoutNotifyStatus(animation);
-            // }
-
+            
             _cachedRecovery = skillStruct.Recovery;
             skillStruct.Dispose();
         }

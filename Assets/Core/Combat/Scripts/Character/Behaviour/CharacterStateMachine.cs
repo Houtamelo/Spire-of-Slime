@@ -245,7 +245,6 @@ namespace Core.Combat.Scripts.Behaviour
             StunModule.ForceUpdateDisplay(display);
             RecoveryModule.ForceUpdateDisplay(display);
             ChargeModule.ForceUpdateDisplay(display);
-            ForceUpdateTimelineCue();
 
             display.CheckIndicators();
         }
@@ -266,7 +265,6 @@ namespace Core.Combat.Scripts.Behaviour
             
             RecoveryModule.ForceUpdateDisplay(display);
             ChargeModule.ForceUpdateDisplay(display);
-            ForceUpdateTimelineCue();
             
             display.CheckIndicators();
         }
@@ -300,42 +298,6 @@ namespace Core.Combat.Scripts.Behaviour
             }
 
             StatusReceiverModule.FillTimelineEvents(events);
-        }
-
-        public void ForceUpdateTimelineCue()
-        {
-            //!todo fix this mess
-            /*if (Display.IsNone)
-                return;
-
-            CharacterDisplay display = Display.Value;
-            if (DownedModule.TrySome(out IDownedModule downedModule) && downedModule.GetRemaining() > 0)
-                display.SetTimelineCuePosition(downedModule.GetEstimatedRemaining(), "Gets up", ColorReferences.Heal);
-            else if (StunModule.GetRemaining() > 0)
-                display.SetTimelineCuePosition(StunModule.GetEstimatedRemaining(), "Stun ends", ColorReferences.Stun);
-            else if (RecoveryModule.GetRemaining() > 0)
-                display.SetTimelineCuePosition(RecoveryModule.GetEstimatedRemaining(), "Recovery ends", ColorReferences.Recovery);
-            else if (ChargeModule.GetRemaining() > 0)
-            {
-                string label;
-                Color color;
-                if ((CombatManager.DEBUGMODE || PositionHandler.IsLeftSide) && SkillModule.PlannedSkill.TrySome(out PlannedSkill plannedSkill))
-                {
-                    color = plannedSkill.Skill.AllowAllies ? ColorReferences.Buff : ColorReferences.Debuff;
-                    label = $"{plannedSkill.Skill.DisplayName}=>{plannedSkill.Target.Script.CharacterName}";
-                }
-                else
-                {
-                    label = "Action";
-                    color = ColorReferences.Damage;
-                }
-                
-                display.SetTimelineCuePosition(ChargeModule.GetEstimatedRemaining(), label, color);
-            }
-            else
-            {
-                display.AllowTimelineIcon(false);
-            }*/
         }
 
         public void OnZeroStamina()

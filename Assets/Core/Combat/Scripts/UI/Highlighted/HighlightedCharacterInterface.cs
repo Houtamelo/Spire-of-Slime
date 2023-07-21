@@ -7,6 +7,7 @@ using Core.Combat.Scripts.Enums;
 using Core.Combat.Scripts.Managers;
 using Core.Combat.Scripts.Skills;
 using Core.Combat.Scripts.Skills.Interfaces;
+using Core.Combat.Scripts.Timeline;
 using Core.Utils.Collections;
 using Core.Utils.Extensions;
 using Core.Utils.Math;
@@ -29,6 +30,9 @@ namespace Core.Combat.Scripts.UI.Highlighted
 
         [SerializeField, Required, SceneObjectsOnly]
         private CombatInputManager inputHandler;
+
+        [SerializeField, Required, SceneObjectsOnly]
+        private TimelineManager timelineManager;
 
         [SerializeField, Required, SceneObjectsOnly]
         private CanvasGroup canvasGroup;
@@ -101,11 +105,11 @@ namespace Core.Combat.Scripts.UI.Highlighted
             
             if (target == null)
             {
-                caster?.ForceUpdateTimelineCue();
                 canvasGroup.alpha = 0;
                 canvasGroup.blocksRaycasts = false;
                 canvasGroup.interactable = false;
                 targetingInfoBox.Hide();
+                timelineManager.HideTemporaryTargetingIcon();
                 return;
             }
             
@@ -145,72 +149,82 @@ namespace Core.Combat.Scripts.UI.Highlighted
             for (; i < skillDisplayers.Length; i++) 
                 skillDisplayers[i].text = string.Empty;
 
-            if (caster == null || (CombatManager.DEBUGMODE == false && (caster.Script.IsControlledByPlayer == false || caster.PositionHandler.IsLeftSide == false)) || skill == null ||
-                skill.FullCastingAndTargetingOk(caster, target) == false)
+            if (caster == null
+             || (CombatManager.DEBUGMODE == false && (caster.Script.IsControlledByPlayer == false || caster.PositionHandler.IsLeftSide == false))
+             || skill == null
+             || skill.FullCastingAndTargetingOk(caster, target) == false)
             {
                 targetingInfoBox.Hide();
                 return;
             }
-            
+
+            UpdateTargetingInfoBox(target, skill, caster);
+
+            if (caster.StateEvaluator.PureEvaluate() is not CharacterState.Idle)
+                return;
+
+            ChargeStruct chargeStruct = new(skill, caster, target);
+            caster.SkillModule.ModifyCharge(ref chargeStruct);
+
+            TSpan chargeTime = caster.ChargeModule.EstimateCharge(chargeStruct.Charge);
+
+            if (chargeTime.Ticks > 0)
+                timelineManager.ShowTemporaryTargetingIcon(caster, chargeTime, skill);
+
+            chargeStruct.Dispose();
+        }
+
+        private void UpdateTargetingInfoBox(CharacterStateMachine target, ISkill skill, CharacterStateMachine caster)
+        {
             SkillStruct skillStruct = SkillStruct.CreateInstance(skill, caster, target);
             ref CustomValuePooledList<TargetProperties> allProperties = ref skillStruct.TargetProperties;
+
             if (allProperties.Count == 0)
             {
                 targetingInfoBox.Hide();
+                return;
             }
+
+            ReadOnlyProperties targetProperties = allProperties[0].ToReadOnly();
+            Option<int> rawHitChance = SkillCalculator.FinalHitChance(ref skillStruct, targetProperties);
+            Option<int> rawCriticalChance = SkillCalculator.FinalCriticalChance(ref skillStruct, targetProperties);
+            Option<(int lowerDamage, int upperDamage)> rawDamage = SkillCalculator.FinalDamage(ref skillStruct, targetProperties, crit: false);
+
+            skillStruct.ApplyCustomStats();
+            caster.SkillModule.ModifySkill(ref skillStruct);
+
+            Option<int> hitChance = SkillCalculator.FinalHitChance(ref skillStruct, targetProperties);
+            Option<int> criticalChance = SkillCalculator.FinalCriticalChance(ref skillStruct, targetProperties);
+            Option<(int lowerDamage, int upperDamage)> damage = SkillCalculator.FinalDamage(ref skillStruct, targetProperties, crit: false);
+
+            ComparisonResult hitChanceComparison;
+
+            if (rawHitChance == hitChance)
+                hitChanceComparison = ComparisonResult.Equals;
+            else if (hitChance.IsSome && (rawHitChance.IsNone || rawHitChance.Value < hitChance.Value))
+                hitChanceComparison = ComparisonResult.Bigger;
             else
-            {
-                ReadOnlyProperties targetProperties = allProperties[0].ToReadOnly();
-                Option<int> rawHitChance = SkillCalculator.FinalHitChance(ref skillStruct, targetProperties);
-                Option<int> rawCriticalChance = SkillCalculator.FinalCriticalChance(ref skillStruct, targetProperties);
-                Option<(int lowerDamage, int upperDamage)> rawDamage = SkillCalculator.FinalDamage(ref skillStruct, targetProperties, crit: false);
+                hitChanceComparison = ComparisonResult.Smaller;
 
-                skillStruct.ApplyCustomStats();
-                caster.SkillModule.ModifySkill(ref skillStruct);
+            ComparisonResult criticalChanceComparison;
 
-                Option<int> hitChance = SkillCalculator.FinalHitChance(ref skillStruct, targetProperties);
-                Option<int> criticalChance = SkillCalculator.FinalCriticalChance(ref skillStruct, targetProperties);
-                Option<(int lowerDamage, int upperDamage)> damage = SkillCalculator.FinalDamage(ref skillStruct, targetProperties, crit: false);
-
-                ComparisonResult hitChanceComparison;
-                if (rawHitChance == hitChance)
-                    hitChanceComparison = ComparisonResult.Equals;
-                else if (hitChance.IsSome && (rawHitChance.IsNone || rawHitChance.Value < hitChance.Value))
-                    hitChanceComparison = ComparisonResult.Bigger;
-                else
-                    hitChanceComparison = ComparisonResult.Smaller;
-
-                ComparisonResult criticalChanceComparison;
-                if (rawCriticalChance == criticalChance)
-                    criticalChanceComparison = ComparisonResult.Equals;
-                else if (criticalChance.IsSome && (rawCriticalChance.IsNone || rawCriticalChance.Value < criticalChance.Value))
-                    criticalChanceComparison = ComparisonResult.Bigger;
-                else
-                    criticalChanceComparison = ComparisonResult.Smaller;
-
-                ComparisonResult damageComparison;
-                if (rawDamage == damage)
-                    damageComparison = ComparisonResult.Equals;
-                else if (damage.IsSome && (rawDamage.IsNone || rawDamage.Value.lowerDamage < damage.Value.lowerDamage || rawDamage.Value.upperDamage < damage.Value.upperDamage))
-                    damageComparison = ComparisonResult.Bigger;
-                else
-                    damageComparison = ComparisonResult.Smaller;
-
-                targetingInfoBox.UpdateInterface(ref skillStruct, hitChance, hitChanceComparison, criticalChance, criticalChanceComparison, damage, damageComparison);
-            }
-
-            if (caster.StateEvaluator.PureEvaluate() is not CharacterState.Idle || caster.Display.AssertSome(out DisplayModule display) == false)
-            {
-                caster.ForceUpdateTimelineCue();
-            }
+            if (rawCriticalChance == criticalChance)
+                criticalChanceComparison = ComparisonResult.Equals;
+            else if (criticalChance.IsSome && (rawCriticalChance.IsNone || rawCriticalChance.Value < criticalChance.Value))
+                criticalChanceComparison = ComparisonResult.Bigger;
             else
-            {
-                //SerialTimeSpan estimatedRealCharge = new(ticks: (long)(skillStruct.Skill.BaseCharge.Ticks / caster.StatsModule.GetSpeed()));
-                //Color color = skill.AllowAllies ? ColorReferences.Buff : ColorReferences.Debuff;
-                // !todo update new interface here
-            }
+                criticalChanceComparison = ComparisonResult.Smaller;
 
-            skillStruct.Dispose();
+            ComparisonResult damageComparison;
+
+            if (rawDamage == damage)
+                damageComparison = ComparisonResult.Equals;
+            else if (damage.IsSome && (rawDamage.IsNone || rawDamage.Value.lowerDamage < damage.Value.lowerDamage || rawDamage.Value.upperDamage < damage.Value.upperDamage))
+                damageComparison = ComparisonResult.Bigger;
+            else
+                damageComparison = ComparisonResult.Smaller;
+
+            targetingInfoBox.UpdateInterface(ref skillStruct, hitChance, hitChanceComparison, criticalChance, criticalChanceComparison, damage, damageComparison);
         }
 
         private void UpdateStaminaAndResilience([NotNull] CharacterStateMachine caster)

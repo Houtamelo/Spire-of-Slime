@@ -80,7 +80,7 @@ namespace Core.Visual_Novel.Data.Chapter_1.Scenes.Midnight_Mayhem
             _lastUpdate = lastUpdate;
         }
 
-        public CombatStatus Tick()
+        public CombatStatus Evaluate()
         {
             CombatStatus status = this.DefaultTick(_combatManager, _duration);
             TSpan deltaTime = _combatManager.ElapsedTime - _lastUpdate;

@@ -4,6 +4,7 @@ using System.Linq;
 using Core.Combat.Scripts.Behaviour;
 using Core.Combat.Scripts.Effects.BaseTypes;
 using Core.Combat.Scripts.Managers;
+using Core.Combat.Scripts.Skills.Interfaces;
 using Core.Utils.Collections;
 using Core.Utils.Collections.Extensions;
 using Core.Utils.Extensions;
@@ -36,6 +37,8 @@ namespace Core.Combat.Scripts.Timeline
         private readonly List<TimelineIcon> _spawnedIcons = new(capacity: 32);
         private readonly Dictionary<TimelineData, TimelineIcon> _activeIcons = new(32);
         private readonly SelfSortingList<CombatEvent> _events = new(capacity: 32, new EventTimeComparer());
+        
+        private TimelineIcon _targetingTemporaryIcon;
 
         [NotNull]
         private TimelineIcon CreateIcon()
@@ -51,9 +54,62 @@ namespace Core.Combat.Scripts.Timeline
         {
             for (int i = 0; i < 16; i++)
                 CreateIcon();
+            
+            _targetingTemporaryIcon = iconPrefab.InstantiateWithFixedLocalScaleAndAnchoredPosition(iconsParent);
+            _targetingTemporaryIcon.Initialize(timelineIconsManager: this);
+            _targetingTemporaryIcon.gameObject.SetActive(false);
         }
 
-        private void UpdateEvents()
+        public void ShowTemporaryTargetingIcon([NotNull] CharacterStateMachine caster, TSpan chargeTime, [NotNull] ISkill skill)
+        {
+            ReusableDataSortedList.Clear();
+
+            foreach (TimelineData data in _activeIcons.Keys)
+                ReusableDataSortedList.Add(data);
+            
+            TimelineData temporaryChargeData = new(caster, chargeTime, CombatEvent.GetActionDescription(), HashCode.Combine(caster.GetHashCode(), skill.GetHashCode()), CombatEvent.Type.Action);
+            ReusableDataSortedList.Add(temporaryChargeData);
+            
+            int temporaryIndex = ReusableDataSortedList.IndexOf(temporaryChargeData);
+
+            if (temporaryIndex == -1)
+            {
+                Debug.LogWarning("Temporary charge data that was just generated not found in ReusableDataSortedList.");
+                return;
+            }
+            
+            _targetingTemporaryIcon.SetData(temporaryChargeData);
+            _activeIcons[temporaryChargeData] = _targetingTemporaryIcon;
+
+            for (int i = 0; i < ReusableDataSortedList.Count; i++)
+            {
+                TimelineData data = ReusableDataSortedList[i];
+                TimelineIcon icon = _activeIcons[data];
+                icon.SetTimelinePosition(i);
+            }
+            
+            _activeIcons.RemoveValue(_targetingTemporaryIcon);
+        }
+
+        public void HideTemporaryTargetingIcon()
+        {
+            _targetingTemporaryIcon.Deactivate();
+            
+            ReusableDataSortedList.Clear();
+
+            foreach (TimelineData data in _activeIcons.Keys)
+                ReusableDataSortedList.Add(data);
+            
+            for (int i = 0; i < ReusableDataSortedList.Count; i++)
+            {
+                TimelineData data = ReusableDataSortedList[i];
+                TimelineIcon icon = _activeIcons[data];
+                icon.SetTimelinePosition(i);
+            }
+        }
+        
+        /// <returns> The next event. </returns>
+        public CombatEvent UpdateEvents()
         {
             _events.Clear();
             foreach (CharacterStateMachine character in characters.GetAllFixed())
@@ -84,9 +140,20 @@ namespace Core.Combat.Scripts.Timeline
                 icon.Deactivate();
                 _activeIcons.RemoveValue(icon);
             }
+
+            if (_events.Count == 0)
+            {
+                Debug.LogError("No events in timeline. Stepping dummy 1 second.");
+                
+                return CombatEvent.FromTurn(characters.GetLeftEditable().Count > 0 ? characters.GetLeftEditable()[0] 
+                                            : characters.GetRightEditable().Count > 0 ? characters.GetRightEditable()[0] : throw new Exception("No characters in combat, it should end."), 
+                                            TSpan.OneSecond);
+            }
+            
+            return _events[0];
         }
 
-        private static void ConvertEventsToData([NotNull] in IReadOnlyList<CombatEvent> source, [NotNull] in IList<TimelineData> target)
+        private static void ConvertEventsToData([NotNull] in SelfSortingList<CombatEvent> source, [NotNull] in SelfSortingList<TimelineData> target)
         {
             target.Clear();
             for (int index = 0; index < source.Count; index++)

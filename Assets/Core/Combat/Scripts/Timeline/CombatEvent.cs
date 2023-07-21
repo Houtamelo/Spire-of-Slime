@@ -39,18 +39,16 @@ namespace Core.Combat.Scripts.Timeline
 
         public string GetDescription()
         {
-            LocalizedText label = DescriptionTranslation(EventType);
-            
             return EventType switch
             {
-                Type.Turn       => label.Translate().GetText(),
                 Type.PoisonTick => GetPoisonTickDescription(PoisonAmount),
                 Type.LustTick   => GetLustTickDescription(LustDelta),
                 Type.HealTick   => GetHealTickDescription(HealAmount),
-                Type.StunEnd    => label.Translate().GetText(),
-                Type.DownedEnd  => label.Translate().GetText(),
-                Type.StatusEnd  => label.Translate().GetText(Status.EffectType.UpperCaseName().Translate().GetText()),
-                Type.Action     => label.Translate().GetText(),
+                Type.Action     => GetActionDescription(),
+                Type.Turn       => DescriptionTranslation(EventType).Translate().GetText(),
+                Type.StunEnd    => DescriptionTranslation(EventType).Translate().GetText(),
+                Type.DownedEnd  => DescriptionTranslation(EventType).Translate().GetText(),
+                Type.StatusEnd  => DescriptionTranslation(EventType).Translate().GetText(Status.EffectType.UpperCaseName().Translate().GetText()),
                 _ => throw new ArgumentOutOfRangeException(nameof(EventType), EventType, null)
             };
         }
@@ -77,6 +75,8 @@ namespace Core.Combat.Scripts.Timeline
         public static string GetLustTickDescription(int lustDelta) => DescriptionTranslation(Type.LustTick).Translate().GetText(lustDelta.WithSymbol());
         
         public static string GetHealTickDescription(int healAmount) => DescriptionTranslation(Type.HealTick).Translate().GetText(healAmount.ToString("0"));
+
+        public static string GetActionDescription() => DescriptionTranslation(Type.Action).Translate().GetText();
 
         /// Take this, memory allocation, also take this, time spent. ** Still allocates string **
         [NotNull]

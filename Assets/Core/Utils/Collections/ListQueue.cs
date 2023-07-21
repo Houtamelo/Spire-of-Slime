@@ -8,7 +8,7 @@ namespace Core.Utils.Collections
         public Option<T> Dequeue()
         {
             if (Count == 0)
-                return Option<T>.None;
+                return Option.None;
             
             T value = this[0];
             RemoveAt(0);
@@ -18,6 +18,14 @@ namespace Core.Utils.Collections
         public void Enqueue(T value)
         {
             Add(value);
+        }
+        
+        public Option<T> Peek()
+        {
+            if (Count == 0)
+                return Option.None;
+            
+            return this[0];
         }
     }
 }

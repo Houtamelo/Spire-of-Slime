@@ -19,7 +19,7 @@ namespace Core.Combat.Scripts.WinningCondition
         private CombatManager _combatManager;
         public DefeatAll(CombatManager combatManager) => _combatManager = combatManager;
 
-        public CombatStatus Tick()
+        public CombatStatus Evaluate()
         {
             if (ReferenceEquals(_combatManager, null))
             {

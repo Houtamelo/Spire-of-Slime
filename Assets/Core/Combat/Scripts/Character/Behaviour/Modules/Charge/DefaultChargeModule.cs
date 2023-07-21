@@ -43,6 +43,8 @@ namespace Core.Combat.Scripts.Behaviour.Modules
         TSpan IChargeModule.Remaining => _remaining;
 
         public TSpan GetEstimatedRemaining() => TSpan.FromTicks((100 * _remaining.Ticks) / _owner.StatsModule.GetSpeed());
+        
+        public TSpan EstimateCharge(TSpan input) => TSpan.FromTicks((100 * input.Ticks) / _owner.StatsModule.GetSpeed());
 
         void IChargeModule.SetInitialInternal(TSpan clampedDuration)
         {
